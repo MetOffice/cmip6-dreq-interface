@@ -1,0 +1,21 @@
+# Emacs backups & auto save files
+*~
+\#*\#
+.\#*
+
+# OSX rubbish
+.DS_Store
+.localized
+
+# Python bytecode
+*.pyc
+*.pyo
+
+# Python build noise
+build/
+dist/
+*.egg-info
+
+# and some scratch directories
+tmp/
+scratch/
