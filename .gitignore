@@ -16,6 +16,9 @@ build/
 dist/
 *.egg-info
 
+# iPython notebook checkpoints
+.ipynb_checkpoints/
+
 # and some scratch directories
 tmp/
 scratch/
