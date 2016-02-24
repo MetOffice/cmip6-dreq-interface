@@ -1,6 +1,5 @@
 # See makeTables.py
 
-from collections import defaultdict
 from dreqPy.dreq import loadDreq
 
 dq = loadDreq()
