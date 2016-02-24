@@ -62,9 +62,9 @@ for table in miptables:
                 tshp = dq.inx.uid[strc.tmid] # temporal shape
                 if validp(sshp) and validp(tshp):
                     # grovel out the dimensions
-                    dims = (sshp.dimensions.split("|")
-                            + tshp.dimensions.split("|")
-                            + strc.odims.split("|"))
+                    dims = (sshp.dimensions,
+                            tshp.dimensions,
+                            strc.odims)
 
                     out = (var.label, var.title, cmv.defaultPriority, var.units,
                            var.description, var.sn,
