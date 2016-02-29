@@ -1,7 +1,8 @@
 # A walker for the dreq
 #
 
-_all_ = ['walk_dq', 'Badness']
+# Nothing is private here, but just export the toplevel for simple use
+_all_ = ['walk_dq']
 
 
 # Exceptions
@@ -191,14 +192,12 @@ def mips_of_cmv(cmv, dq):
             # group of experiments: they all must belong to the same
             # MIP I think, so this just picks the first
             expt = dq.inx.uid[dq.inx.iref_by_sect[esid].a['experiment'][0]]
-            exptlabel = expt._h.label
-            if exptlabel == 'experiment':
-                # just add its MIP
-                mips.add(expt.mip)
-            elif exptlabel == 'remarks':
-                # something missing I think?
-                pass
-            else:
-                raise BadDreq("{} isn't an experiment".format(exptlabel))
+            if validp(expt):
+                exptlabel = expt._h.label
+                if exptlabel == 'experiment':
+                    # just add its MIP
+                    mips.add(expt.mip)
+                else:
+                    raise BadDreq("{} isn't an experiment".format(exptlabel))
 
     return mips
