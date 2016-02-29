@@ -51,7 +51,7 @@ default_rules = {'CMORvar': ('defaultPriority',
                              'prov',
                              'provNote',
                              'rowIndex',
-                             ('mips', 
+                             ('mips',
                               (lambda cmv, rules, dq:
                                    sorted(mips_of_cmv(cmv, dq)))),
                              ('var', ('vid', 'var')),
@@ -74,7 +74,7 @@ def walk_dq(dq, rules=None):
     # dict mapping from miptable to the names of the CMORvars that
     # refer to it.
     rules = rules if rules else default_rules
-    cmvs = sorted(dq.coll['CMORvar'].items, 
+    cmvs = sorted(dq.coll['CMORvar'].items,
                   cmp=lambda x,y: cmp(x.label, y.label))
     return {table: {cmv.label: walk_thing(cmv, "CMORvar", rules, dq)
                     for cmv in cmvs if cmv.mipTable == table}
@@ -150,7 +150,7 @@ def mips_of_cmv(cmv, dq):
         vgid = rv.vgid          # its group
         if vgid not in vgpri or rvp > vgpri[vgid]:
             vgpri[vgid] = rvp
-    
+
     linkids = set()
     for (vgid, pri) in vgpri.iteritems():
         if dq.inx.iref_by_sect[vgid].a.has_key('requestLink'):
@@ -180,7 +180,7 @@ def mips_of_cmv(cmv, dq):
 
     # Empty IDs can leak in (which is looks like is a bug?)
     esids.discard('')
-    
+
     for esid in esids:
         # what sort of thing is this
         label = dq.inx.uid[esid]._h.label
@@ -200,8 +200,5 @@ def mips_of_cmv(cmv, dq):
                 pass
             else:
                 raise BadDreq("{} isn't an experiment".format(exptlabel))
-    
+
     return mips
-
-
-        
