@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+#
+# Just run the walker and dump some mildly pretty-printed text
+#
+
+from sys import stdout
+from dqwalker import walk_dq
+from dreqPy.dreq import loadDreq
+
+
+def spaces(n, to):
+    for i in range(n):
+        to.write(" ")
+
+def terpri(to):
+    to.write("\n")
+
+def dump(thing, to, depth=0, incr=2):
+    if isinstance(thing, dict):
+        if depth != 0:
+            terpri(to)
+        for k in sorted(thing.keys()):
+            spaces(depth, to)
+            to.write("{}: ".format(k))
+            dump(thing[k], to, depth + incr, incr)
+    elif isinstance(thing, list):
+        l = len(thing) - 1
+        for i in range(len(thing)):
+            to.write(str(thing[i]))
+            if i != l:
+                to.write(", ")
+            else:
+                terpri(to)
+    elif isinstance(thing, str) or isinstance(thing, unicode):
+        to.write(thing)
+        terpri(to)
+    else:                       # could merge with previous case
+        to.write(str(thing))
+        terpri(to)
+
+dump(walk_dq(loadDreq()), stdout)
+
