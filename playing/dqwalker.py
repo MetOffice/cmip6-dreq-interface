@@ -3,19 +3,34 @@
 
 _all_ = ['walk_dq', 'Badness']
 
+
+# Exceptions
+#
+# It would be good to classify these by whether they are bugs in the
+# request, the rules or the code, but it is vague
+#
+
 class Badness(Exception):
     pass
 
 class MissingRule(Badness):
+    # problem with rules, not request
     pass
 
 class MutantRule(Badness):
+    # problem with rules, not request
     pass
 
 class MissingAttribute(Badness):
+    # probably a problem with the rules
     pass
 
 class BadLink(Badness):
+    # could be either?
+    pass
+
+class BadDreq(Badness):
+    # definitely the request
     pass
 
 # The rules of how to walk things.  This is a dict which maps from the
@@ -137,17 +152,56 @@ def mips_of_cmv(cmv, dq):
             vgpri[vgid] = rvp
     
     linkids = set()
-    for vgid in vgpri:
+    for (vgid, pri) in vgpri.iteritems():
         if dq.inx.iref_by_sect[vgid].a.has_key('requestLink'):
             for rlid in dq.inx.iref_by_sect[vgid].a['requestLink']:
                 rl = dq.inx.uid[rlid] # requestLink
                 if rl.opt == 'priority':
                     # if it has a priority, add it if it is high enough
                     p = int(float(rl.opar)) # this is what he does: rounding?
-                    if vgpri[vgid] <= p:
+                    if p > pri:
                         linkids.add(rlid)
                 else:
                     # no priority, just add it
                     linkids.add(rlid)
 
-    return set(dq.inx.uid[rlid].mip for rlid in linkids)
+    # OK, so here is the first chunk of mips: just the mip fields of
+    # all these requestLink objects
+    mips = set(dq.inx.uid[rlid].mip for rlid in linkids)
+
+    # Now deal with experiments
+    #
+
+    # The IDs of all the experiments corresponding to the
+    # requestLinks, I think
+    esids = set(dq.inx.uid[u].esid
+                for rlid in linkids
+                for u in dq.inx.iref_by_sect[rlid].a['requestItem'])
+
+    # Empty IDs can leak in (which is looks like is a bug?)
+    esids.discard('')
+    
+    for esid in esids:
+        # what sort of thing is this
+        label = dq.inx.uid[esid]._h.label
+        if label == 'mip':
+            # it's a MIP, directly
+            mips.add(esid)
+        elif label == 'exptgroup':
+            # group of experiments: they all must belong to the same
+            # MIP I think, so this just picks the first
+            expt = dq.inx.uid[dq.inx.iref_by_sect[esid].a['experiment'][0]]
+            exptlabel = expt._h.label
+            if exptlabel == 'experiment':
+                # just add its MIP
+                mips.add(expt.mip)
+            elif exptlabel == 'remarks':
+                # something missing I think?
+                pass
+            else:
+                raise BadDreq("{} isn't an experiment".format(exptlabel))
+    
+    return mips
+
+
+        
