@@ -23,9 +23,10 @@ class BadLink(Badness):
 # - a string: just extract that field;
 # - a two-element tuple which should be a name to use and one of:
 #   - a function to call which will return the value;
-#   - a two-element tuple of (id, dreq-type) which will use id to extract
-#     something which is assumed to be of dreq-type if valid.
-#
+#   - a two-element tuple of (id, dreq-type) which will use id to
+#     extract something which is assumed to be of dreq-type if valid.
+#     If dreq-type is None, then the type is inferred from the object,
+#     as <object>._h.label.
 #
 default_rules = {'CMORvar': ('defaultPriority',
                              'positive',
@@ -36,7 +37,8 @@ default_rules = {'CMORvar': ('defaultPriority',
                              'provNote',
                              'rowIndex',
                              ('mips', 
-                              lambda cmv, dq: sorted(mips_of_cmv(cmv, dq))),
+                              (lambda cmv, rules, dq:
+                                   sorted(mips_of_cmv(cmv, dq)))),
                              ('var', ('vid', 'var')),
                              ('structure', ('stid', 'structure'))),
                  'var': ('label',
@@ -78,7 +80,7 @@ def walk_thing(thing, dqt, rules, dq):
         elif isinstance(rule, tuple) and len(rule) == 2:
             (name, action) = rule
             if callable(action):
-                result[name] = action(thing, dq)
+                result[name] = action(thing, rules, dq)
             elif isinstance(action, tuple) and len(action) == 2:
                 (child_attr, child_dqt) = action
                 if not hasattr(thing, child_attr):
@@ -90,7 +92,11 @@ def walk_thing(thing, dqt, rules, dq):
                 child = dq.inx.uid[child_id]
                 if validp(child):
                     # OK recurse
-                    result[name] = walk_thing(child, child_dqt, rules, dq)
+                    result[name] = walk_thing(child,
+                                              child._h.label
+                                              if child_dqt is None
+                                              else child_dqt,
+                                              rules, dq)
                 else:
                     # Leave a trace that the child was invalid
                     result[name] = None
