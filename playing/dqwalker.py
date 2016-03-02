@@ -2,7 +2,7 @@
 #
 
 # Nothing is private here, but just export the toplevel for simple use
-_all_ = ['walk_dq']
+__all__ = ['walk_dq']
 
 
 # Exceptions
@@ -44,37 +44,13 @@ class BadDreq(Badness):
 #     If dreq-type is None, then the type is inferred from the object,
 #     as <object>._h.label.
 #
-default_rules = {'CMORvar': ('defaultPriority',
-                             'positive',
-                             'type',
-                             'modeling_realm',
-                             'frequency',
-                             'prov',
-                             'provNote',
-                             'rowIndex',
-                             ('mips',
-                              (lambda cmv, rules, dq:
-                                   tuple(sorted(mips_of_cmv(cmv, dq))))),
-                             ('var', ('vid', 'var')),
-                             ('structure', ('stid', 'structure'))),
-                 'var': ('label',
-                         'title',
-                         'units',
-                         'description',
-                         'sn'),
-                 'structure': ('cell_measures',
-                               'cell_methods',
-                               'odims',
-                               ('spatialShape', ('spid', 'spatialShape')),
-                               ('temporalShape', ('tmid', 'temporalShape'))),
-                 'spatialShape': ('dimensions',), # FUCK PYTHON
-                 'temporalShape': ('dimensions',)}
+fallback_rules = {'CMORvar': ()} # just enough to run it
 
 def walk_dq(dq, rules=None):
     # walk the dq: this constructs the top of the tree, which is a
     # dict mapping from miptable to the names of the CMORvars that
     # refer to it.
-    rules = rules if rules else default_rules
+    rules = rules if rules else fallback_rules
     cmvs = sorted(dq.coll['CMORvar'].items,
                   cmp=lambda x,y: cmp(x.label, y.label))
     return {table: {cmv.label: walk_thing(cmv, "CMORvar", rules, dq)
