@@ -54,7 +54,7 @@ default_rules = {'CMORvar': ('defaultPriority',
                              'rowIndex',
                              ('mips',
                               (lambda cmv, rules, dq:
-                                   sorted(mips_of_cmv(cmv, dq)))),
+                                   tuple(sorted(mips_of_cmv(cmv, dq))))),
                              ('var', ('vid', 'var')),
                              ('structure', ('stid', 'structure'))),
                  'var': ('label',
