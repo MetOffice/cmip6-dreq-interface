@@ -3,6 +3,9 @@
 \#*\#
 .\#*
 
+# Emacs tags
+TAGS
+
 # OSX rubbish
 .DS_Store
 .localized
