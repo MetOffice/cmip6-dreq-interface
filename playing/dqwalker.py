@@ -39,12 +39,17 @@ class BadDreq(Badness):
 # - a string: just extract that field;
 # - a two-element tuple which should be a name to use and one of:
 #   - a function to call which will return the value;
+#   - an id, which will be extracted and whose type will be inferred
+#     (see dqtype)
 #   - a two-element tuple of (id, dreq-type) which will use id to
 #     extract something which is assumed to be of dreq-type if valid.
-#     If dreq-type is None, then the type is inferred from the object,
-#     as <object>._h.label.
+#     If dreq-type is None, then the type is inferred from the object
+#     by dqtype
 #
-fallback_rules = {'CMORvar': ()} # just enough to run it
+# Additionally there can be a rule for None which will match anything:
+# you can use this as a fallback rule
+#
+fallback_rules = {None: ()} # just enough to run it
 
 def walk_dq(dq, rules=None):
     # walk the dq: this constructs the top of the tree, which is a
@@ -60,12 +65,35 @@ def walk_dq(dq, rules=None):
 def walk_thing(thing, dqt, rules, dq):
     # Walk the rules for thing, returning a suitable dict
     # Real Programmers would write this as a huge dict comprehension
+
+    def walk_into(child_attr, child_dqt):
+        # Recurse.  Note that child_dqt may be None which means 'to be
+        # inferred by walk_thing': nothing here even cares.
+        if not hasattr(thing, child_attr):
+            raise MissingAttribute( "{} is missing {}".format(dqt, child_attr))
+        child_id = getattr(thing, child_attr)
+        if child_id not in dq.inx.uid:
+            raise BadLink("missing {}".format(child_id))
+        child = dq.inx.uid[child_id]
+        if validp(child):
+            # OK recurse (note that child_dqt may be None: see above)
+            return walk_thing(child, child_dqt, rules, dq)
+        else:
+            # Leave a trace that the child was invalid
+            return None
+
     if dqt is None:             # no type given for thing
-        dqt = thing._h.label    # so infer it from thing's section
-    if dqt not in rules:
+        dqt = dqtype(thing)     # so infer
+    if dqt not in rules and None not in rules:
         raise MissingRule("no rule for {}".format(dqt))
+    rules_for_dqt = rules[dqt] if dqt in rules else rules[None]
+    if not (isinstance(rules_for_dqt, list)
+            or isinstance(rules_for_dqt, tuple)):
+        # ('x') is a really common mistake for ('x',) because Python is crap
+        raise MutantRule("ruleset {} isn't: tuple syntax lossage?"
+                         .format(rules_for_dqt))
     result = {}
-    for rule in rules[dqt]:
+    for rule in rules_for_dqt:
         if isinstance(rule, str) or isinstance(rule, unicode):
             if hasattr(thing, rule):
                 result[rule] = getattr(thing, rule)
@@ -75,32 +103,23 @@ def walk_thing(thing, dqt, rules, dq):
             (name, action) = rule
             if callable(action):
                 result[name] = action(thing, rules, dq)
+            elif isinstance(action, str) or isinstance(action, unicode):
+                result[name] = walk_into(action, None)
             elif isinstance(action, tuple) and len(action) == 2:
-                (child_attr, child_dqt) = action
-                if not hasattr(thing, child_attr):
-                    raise MissingAttribute(
-                        "{} is missing {}".format(dqt, child_attr))
-                child_id = getattr(thing, child_attr)
-                if child_id not in dq.inx.uid:
-                    raise BadLink("missing {}".format(child_id))
-                child = dq.inx.uid[child_id]
-                if validp(child):
-                    # OK recurse (note that child_dqt may be None: see above)
-                    result[name] = walk_thing(child, child_dqt, rules, dq)
-                else:
-                    # Leave a trace that the child was invalid
-                    result[name] = None
+                result[name] = walk_into(action[0], action[1])
             else:
-                raise MutantRule("mutant tuple {}".format(rule))
-        elif isinstance(rule, tuple):
-            raise MutantRule("mutant tuple {}".format(rule))
+                raise MutantRule("mutant tuple rule {}".format(rule))
         else:
-            raise MutantRule("{} is hopeless".format(rule))
+            raise MutantRule("rule {} is hopeless".format(rule))
     return result
 
+def dqtype(item):
+    # an item's type in the request
+    return item._h.label
+
 def validp(item):
-    # something is valid if its header isn't labelled 'remarks'
-    return item._h.label != 'remarks'
+    # something is valid if its dqt is not 'remarks'
+    return dqtype(item) != 'remarks'
 
 def mips_of_cmv(cmv, dq):
     # Return a set of the mips of a CMORvar in dq
@@ -158,20 +177,20 @@ def mips_of_cmv(cmv, dq):
 
     for esid in esids:
         # what sort of thing is this
-        label = dq.inx.uid[esid]._h.label
-        if label == 'mip':
+        dqt = dqtype(dq.inx.uid[esid])
+        if dqt == 'mip':
             # it's a MIP, directly
             mips.add(esid)
-        elif label == 'exptgroup':
+        elif dqt == 'exptgroup':
             # group of experiments: they all must belong to the same
             # MIP I think, so this just picks the first
             expt = dq.inx.uid[dq.inx.iref_by_sect[esid].a['experiment'][0]]
             if validp(expt):
-                exptlabel = expt._h.label
-                if exptlabel == 'experiment':
+                exptdqt = dqtype(expt)
+                if exptdqt == 'experiment':
                     # just add its MIP
                     mips.add(expt.mip)
                 else:
-                    raise BadDreq("{} isn't an experiment".format(exptlabel))
+                    raise BadDreq("{} isn't an experiment".format(exptdqt))
 
     return mips
