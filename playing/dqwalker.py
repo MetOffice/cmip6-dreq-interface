@@ -60,6 +60,8 @@ def walk_dq(dq, rules=None):
 def walk_thing(thing, dqt, rules, dq):
     # Walk the rules for thing, returning a suitable dict
     # Real Programmers would write this as a huge dict comprehension
+    if dqt is None:             # no type given for thing
+        dqt = thing._h.label    # so infer it from thing's section
     if dqt not in rules:
         raise MissingRule("no rule for {}".format(dqt))
     result = {}
@@ -83,12 +85,8 @@ def walk_thing(thing, dqt, rules, dq):
                     raise BadLink("missing {}".format(child_id))
                 child = dq.inx.uid[child_id]
                 if validp(child):
-                    # OK recurse
-                    result[name] = walk_thing(child,
-                                              child._h.label
-                                              if child_dqt is None
-                                              else child_dqt,
-                                              rules, dq)
+                    # OK recurse (note that child_dqt may be None: see above)
+                    result[name] = walk_thing(child, child_dqt, rules, dq)
                 else:
                     # Leave a trace that the child was invalid
                     result[name] = None
