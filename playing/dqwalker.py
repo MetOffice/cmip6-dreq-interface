@@ -121,8 +121,9 @@ def validp(item):
     # something is valid if its dqt is not 'remarks'
     return dqtype(item) != 'remarks'
 
-def mips_of_cmv(cmv, dq):
-    # Return a set of the mips of a CMORvar in dq
+def mips_of_cmv(cmv, dq, direct=False):
+    # Return a set of the mips of a CMORvar in dq.  If direct is true,
+    # only use the MIP directly, not its experiments
     #
     # This is a simplified version of vrev.checkVar.chkCmv (in
     # vrev.py) But it is simpler in the sense that I do not understand
@@ -163,34 +164,35 @@ def mips_of_cmv(cmv, dq):
     # all these requestLink objects
     mips = set(dq.inx.uid[rlid].mip for rlid in linkids)
 
-    # Now deal with experiments
-    #
+    if not direct:
+        # Now deal with experiments, if asked
+        #
 
-    # The IDs of all the experiments corresponding to the
-    # requestLinks, I think
-    esids = set(dq.inx.uid[u].esid
-                for rlid in linkids
-                for u in dq.inx.iref_by_sect[rlid].a['requestItem'])
+        # The IDs of all the experiments corresponding to the
+        # requestLinks, I think
+        esids = set(dq.inx.uid[u].esid
+                    for rlid in linkids
+                    for u in dq.inx.iref_by_sect[rlid].a['requestItem'])
 
-    # Empty IDs can leak in (which is looks like is a bug?)
-    esids.discard('')
+        # Empty IDs can leak in (which is looks like is a bug?)
+        esids.discard('')
 
-    for esid in esids:
-        # what sort of thing is this
-        dqt = dqtype(dq.inx.uid[esid])
-        if dqt == 'mip':
-            # it's a MIP, directly
-            mips.add(esid)
-        elif dqt == 'exptgroup':
-            # group of experiments: they all must belong to the same
-            # MIP I think, so this just picks the first
-            expt = dq.inx.uid[dq.inx.iref_by_sect[esid].a['experiment'][0]]
-            if validp(expt):
-                exptdqt = dqtype(expt)
-                if exptdqt == 'experiment':
-                    # just add its MIP
-                    mips.add(expt.mip)
-                else:
-                    raise BadDreq("{} isn't an experiment".format(exptdqt))
+        for esid in esids:
+            # what sort of thing is this
+            dqt = dqtype(dq.inx.uid[esid])
+            if dqt == 'mip':
+                # it's a MIP, directly
+                mips.add(esid)
+            elif dqt == 'exptgroup':
+                # group of experiments: they all must belong to the
+                # same MIP I think, so this just picks the first
+                expt = dq.inx.uid[dq.inx.iref_by_sect[esid].a['experiment'][0]]
+                if validp(expt):
+                    exptdqt = dqtype(expt)
+                    if exptdqt == 'experiment':
+                        # just add its MIP
+                        mips.add(expt.mip)
+                    else:
+                        raise BadDreq("{} isn't an experiment".format(exptdqt))
 
     return mips

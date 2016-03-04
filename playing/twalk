@@ -5,7 +5,7 @@
 
 from sys import stdout
 from dqwalker import walk_dq
-from rulesets import spreadsheet
+from rulesets import original
 from dreqPy.dreq import loadDreq
 
 
@@ -39,5 +39,5 @@ def dump(thing, to, depth=0, incr=2):
         to.write(str(thing))
         terpri(to)
 
-dump(walk_dq(loadDreq(), rules=spreadsheet), stdout)
+dump(walk_dq(loadDreq(), rules=original), stdout)
 
