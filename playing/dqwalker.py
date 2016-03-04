@@ -152,9 +152,9 @@ def mips_of_cmv(cmv, dq, direct=False):
             for rlid in dq.inx.iref_by_sect[vgid].a['requestLink']:
                 rl = dq.inx.uid[rlid] # requestLink
                 if rl.opt == 'priority':
-                    # if it has a priority, add it if it is high enough
-                    p = int(float(rl.opar)) # this is what he does: rounding?
-                    if p > pri:
+                    # if it has a priority, add it if it is high
+                    # enough. This is what he does: rounding?
+                    if int(float(rl.opar)) > pri:
                         linkids.add(rlid)
                 else:
                     # no priority, just add it
@@ -183,10 +183,13 @@ def mips_of_cmv(cmv, dq, direct=False):
             if dqt == 'mip':
                 # it's a MIP, directly
                 mips.add(esid)
-            elif dqt == 'exptgroup':
-                # group of experiments: they all must belong to the
-                # same MIP I think, so this just picks the first
-                expt = dq.inx.uid[dq.inx.iref_by_sect[esid].a['experiment'][0]]
+            else:
+                # if it's a group of experiments they all must belong
+                # to the same MIP I think, so this just picks the
+                # first.  Otherwiwise assume it is an experiment itself
+                expt = (dq.inx.uid[dq.inx.iref_by_sect[esid].a['experiment'][0]]
+                        if dqt == 'exptgroup'
+                        else dq.inx.uid[esid])
                 if validp(expt):
                     exptdqt = dqtype(expt)
                     if exptdqt == 'experiment':
