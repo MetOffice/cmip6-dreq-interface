@@ -51,24 +51,35 @@ class BadDreq(Badness):
 #
 fallback_rules = {None: ()} # just enough to run it
 
-def walk_dq(dq, rules=None):
+def walk_dq(dq, rules=None, for_side_effect=False):
     # walk the dq: this constructs the top of the tree, which is a
     # dict mapping from miptable to the names of the CMORvars that
-    # refer to it.
+    # refer to it.  If for_side_effect is true the walk is done purely
+    # for side effect: no result is returned and no data structure is
+    # built.
     rules = rules if rules else fallback_rules
     cmvs = sorted(dq.coll['CMORvar'].items,
                   cmp=lambda x,y: cmp(x.label, y.label))
-    return {table: {cmv.label: walk_thing(cmv, "CMORvar", rules, dq)
-                    for cmv in cmvs if cmv.mipTable == table}
-            for table in sorted(set(v.mipTable for v in cmvs))}
+    if not for_side_effect:
+        return {table: {cmv.label: walk_thing(cmv, "CMORvar", rules, dq)
+                        for cmv in cmvs if cmv.mipTable == table}
+                for table in sorted(set(v.mipTable for v in cmvs))}
+    else:
+        for table in sorted(set(v.mipTable for v in cmvs)):
+            for cmv in cmvs:
+                if cmv.mipTable == table:
+                    walk_thing(cmv, "CMORvar", rules, dq,
+                               for_side_effect=True)
 
-def walk_thing(thing, dqt, rules, dq):
-    # Walk the rules for thing, returning a suitable dict
+def walk_thing(thing, dqt, rules, dq, for_side_effect=False):
+    # Walk the rules for thing returning a suitable dict
     # Real Programmers would write this as a huge dict comprehension
 
     def walk_into(child_attr, child_dqt):
         # Recurse.  Note that child_dqt may be None which means 'to be
-        # inferred by walk_thing': nothing here even cares.
+        # inferred by walk_thing': nothing here even cares.  This
+        # doesn't care about for_side_effect as it builds no structure
+        # of its own, but just passes it down.
         if not hasattr(thing, child_attr):
             raise MissingAttribute( "{} is missing {}".format(dqt, child_attr))
         child_id = getattr(thing, child_attr)
@@ -77,10 +88,16 @@ def walk_thing(thing, dqt, rules, dq):
         child = dq.inx.uid[child_id]
         if validp(child):
             # OK recurse (note that child_dqt may be None: see above)
-            return walk_thing(child, child_dqt, rules, dq)
+            return walk_thing(child, child_dqt, rules, dq,
+                              for_side_effect=for_side_effect)
         else:
             # Leave a trace that the child was invalid
             return None
+
+    result = {} if not for_side_effect else None
+    def record(rule, value):
+        if not for_side_effect:
+            result[rule] = value
 
     if dqt is None:             # no type given for thing
         dqt = dqtype(thing)     # so infer
@@ -92,26 +109,29 @@ def walk_thing(thing, dqt, rules, dq):
         # ('x') is a really common mistake for ('x',) because Python is crap
         raise MutantRule("ruleset {} isn't: tuple syntax lossage?"
                          .format(rules_for_dqt))
-    result = {}
+
     for rule in rules_for_dqt:
         if isinstance(rule, str) or isinstance(rule, unicode):
             if hasattr(thing, rule):
-                result[rule] = getattr(thing, rule)
+                record(rule, getattr(thing, rule))
             else:
                 raise MissingAttribute("{} is missing  {}".format(dqt, rule))
         elif isinstance(rule, tuple) and len(rule) == 2:
             (name, action) = rule
             if callable(action):
-                result[name] = action(thing, rules, dq)
+                record(name, action(thing, rules, dq))
             elif isinstance(action, str) or isinstance(action, unicode):
-                result[name] = walk_into(action, None)
+                record(name, walk_into(action, None))
             elif isinstance(action, tuple) and len(action) == 2:
-                result[name] = walk_into(action[0], action[1])
+                record(name, walk_into(action[0], action[1]))
             else:
                 raise MutantRule("mutant tuple rule {}".format(rule))
         else:
             raise MutantRule("rule {} is hopeless".format(rule))
-    return result
+    if not for_side_effect:
+        return result
+    else:
+        return
 
 def dqtype(item):
     # an item's type in the request
