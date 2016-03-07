@@ -35,10 +35,12 @@ class BadDreq(Badness):
     pass
 
 # The rules of how to walk things.  This is a dict which maps from the
-# type of thing (dreq section) to a tuple, whose elements may be:
+# type of thing (dreq section) to something, which is either a
+# callable, which is called and whose result is the result of the
+# walk, or a list of tuple, whose elements may be:
 # - a string: just extract that field;
 # - a two-element tuple which should be a name to use and one of:
-#   - a function to call which will return the value;
+#   - a callable which is called and should return the value;
 #   - an id, which will be extracted and whose type will be inferred
 #     (see dqtype)
 #   - a two-element tuple of (id, dreq-type) which will use id to
@@ -47,21 +49,29 @@ class BadDreq(Badness):
 #     by dqtype
 #
 # Additionally there can be a rule for None which will match anything:
-# you can use this as a fallback rule
+# you can use this as a fallback rule.
+#
+# Callables are called with:
+# - the thing being walked;
+# - its dq-type, either inferred or provided;
+# - the rules;
+# - the dq object;
+# - for_side_effect as a keyword argument;
+# - any other keyword arguments passed down
 #
 fallback_rules = {None: ()} # just enough to run it
 
-def walk_dq(dq, rules=None, for_side_effect=False):
+def walk_dq(dq, rules=None, for_side_effect=False, **kws):
     # walk the dq: this constructs the top of the tree, which is a
     # dict mapping from miptable to the names of the CMORvars that
     # refer to it.  If for_side_effect is true the walk is done purely
     # for side effect: no result is returned and no data structure is
-    # built.
+    # built.  Any extra keyword arguments are passed down.
     rules = rules if rules else fallback_rules
     cmvs = sorted(dq.coll['CMORvar'].items,
                   cmp=lambda x,y: cmp(x.label, y.label))
     if not for_side_effect:
-        return {table: {cmv.label: walk_thing(cmv, "CMORvar", rules, dq)
+        return {table: {cmv.label: walk_thing(cmv, "CMORvar", rules, dq, **kws)
                         for cmv in cmvs if cmv.mipTable == table}
                 for table in sorted(set(v.mipTable for v in cmvs))}
     else:
@@ -69,9 +79,9 @@ def walk_dq(dq, rules=None, for_side_effect=False):
             for cmv in cmvs:
                 if cmv.mipTable == table:
                     walk_thing(cmv, "CMORvar", rules, dq,
-                               for_side_effect=True)
+                               for_side_effect=True, **kws)
 
-def walk_thing(thing, dqt, rules, dq, for_side_effect=False):
+def walk_thing(thing, dqt, rules, dq, for_side_effect=False, **kws):
     # Walk the rules for thing returning a suitable dict
     # Real Programmers would write this as a huge dict comprehension
 
@@ -103,35 +113,42 @@ def walk_thing(thing, dqt, rules, dq, for_side_effect=False):
         dqt = dqtype(thing)     # so infer
     if dqt not in rules and None not in rules:
         raise MissingRule("no rule for {}".format(dqt))
-    rules_for_dqt = rules[dqt] if dqt in rules else rules[None]
-    if not (isinstance(rules_for_dqt, list)
-            or isinstance(rules_for_dqt, tuple)):
+    for_dqt = rules[dqt] if dqt in rules else rules[None]
+    if not (callable(for_dqt)
+            or isinstance(for_dqt, tuple)
+            or isinstance(for_dqt, list)):
         # ('x') is a really common mistake for ('x',) because Python is crap
         raise MutantRule("ruleset {} isn't: tuple syntax lossage?"
-                         .format(rules_for_dqt))
+                         .format(for_dqt))
 
-    for rule in rules_for_dqt:
-        if isinstance(rule, str) or isinstance(rule, unicode):
-            if hasattr(thing, rule):
-                record(rule, getattr(thing, rule))
-            else:
-                raise MissingAttribute("{} is missing  {}".format(dqt, rule))
-        elif isinstance(rule, tuple) and len(rule) == 2:
-            (name, action) = rule
-            if callable(action):
-                record(name, action(thing, rules, dq))
-            elif isinstance(action, str) or isinstance(action, unicode):
-                record(name, walk_into(action, None))
-            elif isinstance(action, tuple) and len(action) == 2:
-                record(name, walk_into(action[0], action[1]))
-            else:
-                raise MutantRule("mutant tuple rule {}".format(rule))
-        else:
-            raise MutantRule("rule {} is hopeless".format(rule))
-    if not for_side_effect:
-        return result
+    if callable(for_dqt):
+        return for_dqt(thing, dqt, rules, dq,
+                       for_side_effect=for_side_effect, **kws)
     else:
-        return
+        for rule in for_dqt:
+            if isinstance(rule, str) or isinstance(rule, unicode):
+                if hasattr(thing, rule):
+                    record(rule, getattr(thing, rule))
+                else:
+                    raise MissingAttribute("{} is missing  {}"
+                                           .format(dqt, rule))
+            elif isinstance(rule, tuple) and len(rule) == 2:
+                (name, action) = rule
+                if callable(action):
+                    record(name, action(thing, dqt, rules, dq,
+                                        for_side_effect=for_side_effect, **kws))
+                elif isinstance(action, str) or isinstance(action, unicode):
+                    record(name, walk_into(action, None))
+                elif isinstance(action, tuple) and len(action) == 2:
+                    record(name, walk_into(action[0], action[1]))
+                else:
+                    raise MutantRule("mutant tuple rule {}".format(rule))
+            else:
+                raise MutantRule("rule {} is hopeless".format(rule))
+        if not for_side_effect:
+            return result
+        else:
+            return
 
 def dqtype(item):
     # an item's type in the request

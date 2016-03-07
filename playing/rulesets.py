@@ -14,8 +14,11 @@ original = {'CMORvar': ('defaultPriority',
                            'provNote',
                            'rowIndex',
                            ('mips',
-                            (lambda cmv, rules, dq:
-                                 tuple(sorted(mips_of_cmv(cmv, dq))))),
+                            (lambda cmv, dqt, rules, dq, for_side_effect=False,
+                                    **junk:
+                                 (tuple(sorted(mips_of_cmv(cmv, dq)))
+                                  if not for_side_effect
+                                  else None))),
                            ('var', 'vid'),
                            ('structure', 'stid')),
                'var': ('label',
@@ -40,14 +43,19 @@ spreadsheet = {'CMORvar': ('defaultPriority',
                            'provNote',
                            'rowIndex',
                            ('direct_mips',
-                            (lambda cmv, rules, dq:
-                                 tuple(sorted(mips_of_cmv(cmv, dq,
-                                                          direct=True))))),
+                            (lambda cmv, dqt, rules, dq, for_side_effect=False,
+                                    **junk:
+                                 (tuple(sorted(mips_of_cmv(cmv, dq,
+                                                           direct=True)))
+                                  if not for_side_effect
+                                  else None))),
                            ('all_mips',
-                            (lambda cmv, rules, dq:
-                                 tuple(sorted(mips_of_cmv(cmv, dq,
-                                                          direct=False))))),
-
+                            (lambda cmv, dqt, rules, dq, for_side_effect=False,
+                                    **junk:
+                                 (tuple(sorted(mips_of_cmv(cmv, dq,
+                                                          direct=False)))
+                                  if not for_side_effect
+                                  else None))),
                            ('var', 'vid'),
                            ('structure', 'stid')),
                'var': ('label',
