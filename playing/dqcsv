@@ -1,0 +1,63 @@
+#!/usr/bin/env python
+
+from sys import exit
+from os import curdir, makedirs
+from os.path import join, isdir
+from argparse import ArgumentParser # 2.7
+from csv import writer
+from dqwalker import walk_dq, walk_thing
+from rulesets import spreadsheet
+from pathdict import PathDict
+from dreqPy.dreq import loadDreq
+
+paths = ('defaultPriority',
+         ('var', 'title'),
+         ('var', 'units'),
+         ('var', 'description'),
+         ('var', 'label'),
+         ('var', 'sn'),
+         ('structure', 'cell_methods'),
+         'positive',
+         'type',
+         ('structure', 'spatialShape', 'dimensions'),
+         ('structure', 'temporalShape', 'dimensions'),
+         ('structure', 'odims'),
+         'modeling_realm',
+         'frequency',
+         ('structure', 'cell_measures'),
+         'prov', 'provNote',
+         'rowIndex',
+         'direct_mips',
+         'all_mips')
+
+def walk(outdir):
+    walked=walk_dq(loadDreq(), spreadsheet)
+    for table in walked.keys():
+        with open(join(outdir, "{}.csv".format(table)), 'w') as out:
+            w = writer(out)
+            for row in sorted((PathDict(walked[table][var]) 
+                               for var in walked[table].keys()),
+                              None, lambda r: r['rowIndex']):
+                w.writerow(tuple(row[path] if path in row else "?"
+                                 for path in paths))
+
+if __name__ == '__main__':
+    try:
+        parser = ArgumentParser(
+            description="Create CSV files for each MIP table")
+        parser.add_argument("outdir", nargs='?', default=curdir,
+                            help="output directory, default %(default)s")
+        args = parser.parse_args()
+        outdir = args.outdir
+        if not isdir(outdir):
+            # this will raise an exception if it exists and is a file:
+            # that's fine
+            makedirs(outdir)
+        walk(outdir)
+    except Exception as e:
+        exit(e)
+
+    
+
+    
+    
