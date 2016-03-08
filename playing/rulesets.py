@@ -35,7 +35,8 @@ original = {'CMORvar': ('defaultPriority',
                'spatialShape': ('dimensions',),
                'temporalShape': ('dimensions',)}
 
-spreadsheet = {'CMORvar': ('defaultPriority',
+spreadsheet = {'CMORvar': ('label',
+                           'defaultPriority',
                            'positive',
                            'type',
                            'modeling_realm',

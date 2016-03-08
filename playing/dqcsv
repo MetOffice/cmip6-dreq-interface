@@ -10,22 +10,27 @@ from rulesets import spreadsheet
 from pathdict import PathDict
 from dreqPy.dreq import loadDreq
 
+# I think this is the order in the spreadsheet
+#
 paths = ('defaultPriority',
          ('var', 'title'),
          ('var', 'units'),
-         ('var', 'description'),
+         ('var', 'description'), # is this description & comments?
          ('var', 'label'),
          ('var', 'sn'),
          ('structure', 'cell_methods'),
          'positive',
          'type',
+         # these three are merged into 'dimensions'
          ('structure', 'spatialShape', 'dimensions'),
          ('structure', 'temporalShape', 'dimensions'),
          ('structure', 'odims'),
+         'label'                # of the CMORvar itself
          'modeling_realm',
          'frequency',
          ('structure', 'cell_measures'),
-         'prov', 'provNote',
+         'prov',
+         'provNote',
          'rowIndex',
          'direct_mips',
          'all_mips')
