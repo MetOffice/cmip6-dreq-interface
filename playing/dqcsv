@@ -2,13 +2,13 @@
 
 from sys import exit
 from os import curdir, makedirs
-from os.path import join, isdir
+from os.path import split, join, isdir
 from argparse import ArgumentParser # 2.7
 from csv import writer
 from dqwalker import walk_dq, walk_thing
 from rulesets import spreadsheet
 from pathdict import PathDict
-from dreqPy.dreq import loadDreq
+from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
 
 # I think this is the order in the spreadsheet
 #
@@ -35,8 +35,9 @@ paths = ('defaultPriority',
          'direct_mips',
          'all_mips')
 
-def walk(outdir):
-    walked=walk_dq(loadDreq(), spreadsheet)
+def walk(outdir, dqroot=None):
+    (dqxml, dqconfig) = compute_dq_paths(dqroot)
+    walked=walk_dq(loadDreq(dreqXML=dqxml, configdoc=dqconfig), spreadsheet)
     for table in walked.keys():
         with open(join(outdir, "{}.csv".format(table)), 'w') as out:
             w = writer(out)
@@ -46,23 +47,33 @@ def walk(outdir):
                 w.writerow(tuple(row[path] if path in row else "?"
                                  for path in paths))
 
+def compute_dq_paths(root):
+    if root is None:
+        return (defaultDreqPath, defaultConfigPath)
+    else:
+        return (join(root, split(defaultDreqPath)[1]),
+                join(root, split(defaultConfigPath)[1]))
+
 if __name__ == '__main__':
+    parser = ArgumentParser(description="Create CSV files for each MIP table")
+    parser.add_argument("outdir", nargs='?', default=curdir,
+                        help="output directory, default %(default)s")
+    parser.add_argument("-r", "--request-directory",
+                        default=None, metavar="root", dest='root',
+                        help="directory where the data request files live")
+    parser.add_argument("-D", action='store_true', dest='debug',
+                        help="debugging (don't suppress backtraces)")
+    args = parser.parse_args()
+    outdir = args.outdir
     try:
-        parser = ArgumentParser(
-            description="Create CSV files for each MIP table")
-        parser.add_argument("outdir", nargs='?', default=curdir,
-                            help="output directory, default %(default)s")
-        args = parser.parse_args()
-        outdir = args.outdir
         if not isdir(outdir):
             # this will raise an exception if it exists and is a file:
             # that's fine
             makedirs(outdir)
-        walk(outdir)
+        walk(outdir, args.root)
     except Exception as e:
-        exit(e)
-
-    
-
-    
+        if not args.debug:
+            exit(e)
+        else:
+            raise
     
