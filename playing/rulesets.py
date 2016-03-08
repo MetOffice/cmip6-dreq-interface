@@ -6,21 +6,22 @@ from dqwalker import mips_of_cmv
 __all__ = ['spreadsheet']
 
 original = {'CMORvar': ('defaultPriority',
-                           'positive',
-                           'type',
-                           'modeling_realm',
-                           'frequency',
-                           'prov',
-                           'provNote',
-                           'rowIndex',
-                           ('mips',
-                            (lambda cmv, dqt, rules, dq, for_side_effect=False,
-                                    **junk:
-                                 (tuple(sorted(mips_of_cmv(cmv, dq)))
-                                  if not for_side_effect
-                                  else None))),
-                           ('var', 'vid'),
-                           ('structure', 'stid')),
+                        'positive',
+                        'type',
+                        'modeling_realm',
+                        'frequency',
+                        'prov',
+                        'provNote',
+                        'rowIndex',
+                        ('mips',
+                         (lambda cmv, dqt, rules, dq, for_side_effect=False,
+                                 **junk:
+                              (tuple(sorted(mips_of_cmv(cmv, dq)))
+                               if not for_side_effect
+                               else None))),
+                        ('var', 'vid'),
+                        ('structure', 'stid'),
+                        ('self', (lambda cmv, dqt, rules, dq, **junk: cmv))),
                'var': ('label',
                        'title',
                        'units',
@@ -57,7 +58,8 @@ spreadsheet = {'CMORvar': ('defaultPriority',
                                   if not for_side_effect
                                   else None))),
                            ('var', 'vid'),
-                           ('structure', 'stid')),
+                           ('structure', 'stid'),
+                           ('self', (lambda cmv, dqt, rules, dq, **junk: cmv))),
                'var': ('label',
                        'title',
                        'units',
