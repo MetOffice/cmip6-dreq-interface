@@ -39,5 +39,5 @@ def dump(thing, to, depth=0, incr=2):
         to.write(str(thing))
         terpri(to)
 
-dump(walk_dq(loadDreq(), rules=original), stdout)
+dump(walk_dq(loadDreq(), ruleset=original), stdout)
 

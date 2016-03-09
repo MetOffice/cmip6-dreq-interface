@@ -37,7 +37,8 @@ paths = ('defaultPriority',
 
 def walk(outdir, dqroot=None):
     (dqxml, dqconfig) = compute_dq_paths(dqroot)
-    walked=walk_dq(loadDreq(dreqXML=dqxml, configdoc=dqconfig), spreadsheet)
+    walked=walk_dq(loadDreq(dreqXML=dqxml, configdoc=dqconfig),
+                   ruleset=spreadsheet)
     for table in walked.keys():
         with open(join(outdir, "{}.csv".format(table)), 'w') as out:
             w = writer(out)

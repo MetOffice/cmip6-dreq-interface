@@ -9,5 +9,5 @@ from dqwalker import walk_dq
 from rulesets import original
 from dreqPy.dreq import loadDreq
 
-dump(walk_dq(loadDreq(), rules=original), stdout, indent=2, sort_keys=True)
+dump(walk_dq(loadDreq(), ruleset=original), stdout, indent=2, sort_keys=True)
 print ""

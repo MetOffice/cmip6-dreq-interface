@@ -34,56 +34,154 @@ class BadDreq(Badness):
     # definitely the request
     pass
 
-# The rules of how to walk things.  This is a dict which maps from the
-# type of thing (dreq section) to something, which is either a
-# callable, which is called and whose result is the result of the
-# walk, or a list of tuple, whose elements may be:
-# - a string: just extract that field;
-# - a two-element tuple which should be a name to use and one of:
-#   - a callable which is called and should return the value;
-#   - an id, which will be extracted and whose type will be inferred
-#     (see dqtype)
-#   - a two-element tuple of (id, dreq-type) which will use id to
-#     extract something which is assumed to be of dreq-type if valid.
-#     If dreq-type is None, then the type is inferred from the object
-#     by dqtype
+# The rules of how to walk things.
 #
-# Additionally there can be a rule for None which will match anything:
-# you can use this as a fallback rule.
+# This is a dict which maps from the type of thing (dreq section) to a
+# rule for that type.  There can also be a wildcard rule, whose type
+# is None.
+#
+# Each rule is one of the following.
+# - A callable, which is called and which returns the result of the
+#   walk for this rule (see below for calling conventions).
+# - A list of tuples of two elements: [(p, r), ...]: this is a
+#   conditional, and each p is called in turn until one returns true,
+#   when its r is used as the rule. It is fine if none return true.
+# - A tuple of instructions, each of which is processed in turn
+#
+# Each instruction is one of the following.
+# - A string: that field is extracted and recorded in the dictionary
+#   returned;
+# - A two-element tuple of (name, action): the result of action is
+#   recorded under name.
+# - A list of tuples [(p, i), ...]: this is a conditional, but the
+#   matching i is evaluated as an instruction, not a rule.  Again, no
+#   predicate needs to return true.
+#
+# Finally, each action in a tuple instruction is one of the following.
+# - A callable: this is called, and its value recorded under the
+#   instruction's name.
+# - A string: the corresponding attribute is recorded.
+# - A single-element tuple (attr): the attribute is retrieved, its
+#   type is inferred, the rule for this type evaluated for it and the
+#   result recorded.
+# - A two-element tuple (attr, type): the attribute is retrieved, the
+# - rule for type is then evaluated for it and the result recorded.
+#
 #
 # Callables are called with:
 # - the thing being walked;
-# - its dq-type, either inferred or provided;
+# - its dqtype, either inferred or provided;
 # - the rules;
 # - the dq object;
 # - for_side_effect as a keyword argument;
 # - any other keyword arguments passed down
 #
-fallback_rules = {None: ()} # just enough to run it
+fallback_ruleset = {None: ()} # just enough to run it
 
-def walk_dq(dq, rules=None, for_side_effect=False, **kws):
+def walk_dq(dq, ruleset=None, for_side_effect=False, **kws):
     # walk the dq: this constructs the top of the tree, which is a
     # dict mapping from miptable to the names of the CMORvars that
     # refer to it.  If for_side_effect is true the walk is done purely
     # for side effect: no result is returned and no data structure is
     # built.  Any extra keyword arguments are passed down.
-    rules = rules if rules else fallback_rules
+    if ruleset is None:
+        ruleset = fallback_ruleset
     cmvs = sorted(dq.coll['CMORvar'].items,
                   cmp=lambda x,y: cmp(x.label, y.label))
     if not for_side_effect:
-        return {table: {cmv.label: walk_thing(cmv, "CMORvar", rules, dq, **kws)
+        return {table: {cmv.label: walk_thing(cmv, "CMORvar", ruleset, dq,
+                                              **kws)
                         for cmv in cmvs if cmv.mipTable == table}
                 for table in sorted(set(v.mipTable for v in cmvs))}
     else:
         for table in sorted(set(v.mipTable for v in cmvs)):
             for cmv in cmvs:
                 if cmv.mipTable == table:
-                    walk_thing(cmv, "CMORvar", rules, dq,
+                    walk_thing(cmv, "CMORvar", ruleset, dq,
                                for_side_effect=True, **kws)
 
-def walk_thing(thing, dqt, rules, dq, for_side_effect=False, **kws):
-    # Walk the rules for thing returning a suitable dict
-    # Real Programmers would write this as a huge dict comprehension
+def walk_thing(thing, dqt, ruleset, dq, for_side_effect=False, **kws):
+    # This is just a recursive descent parser for the rules for thing
+    if dqt is None:
+        dqt = dqtype(thing)
+
+    result = {} if not for_side_effect else None
+
+    def record(name, value):
+        # record a value for a name
+        if not for_side_effect:
+            result[name] = value
+
+    def eval_rule(rule):
+        if callable(rule):
+            # function: just return its result
+            result = rule(thing, dqt, ruleset, dq,
+                          for_side_effect=for_side_effect, **kws)
+        elif isinstance(rule, list):
+            # cond
+            eval_cond(rule, eval_rule)
+        elif isinstance(rule, tuple):
+            # a sequence of instructions
+            for instruction in rule:
+                eval_instruction(instruction)
+        else:
+            # no other sorts of rules are legal
+            raise MutantRule("{} makes no sense for {}: tuple syntax lossage?"
+                             .format(rules, thing))
+
+    def eval_cond(cond, continuation):
+        # evaluate a cond clause [(p,v), ...], obviously inspired by
+        # http://www-formal.stanford.edu/jmc/recursive.html.  It is
+        # fine for no clauses to match
+        for clause in cond:
+            if not ((isinstance(clause, tuple) or isinstance(clause, list))
+                    and len(clause) == 2):
+                raise MutantRule("bogus cond clause {}".format(clause))
+            (p, v) = clause
+            if not callable(p):
+                raise MutantRule("{} in {} is not callable".format(p, cond))
+            if p(thing, dqt, ruleset, dq,
+                 for_side_effect=for_side_effect, **kws):
+                return continuation(v)
+
+    def eval_instruction(instruction):
+        if isinstance(instruction, str) or isinstance(instruction, unicode):
+            # trivial instruction: record a field
+            if hasattr(thing, instruction):
+                record(instruction, getattr(thing, instruction))
+            else:
+                raise MissingAttribute("{} is missing  {}"
+                                       .format(dqt, instruction))
+        elif isinstance(instruction, tuple) and len(instruction) == 2:
+            # record something under a name
+            (name, action) = instruction
+            if callable(action):
+                record(name, action(thing, dqt, ruleset, dq,
+                                    for_side_effect=for_side_effect, **kws))
+            elif isinstance(action, str) or isinstance(action, unicode):
+                # record a field under a different name
+                if hasattr(thing, action):
+                    record(name, getattr(thing, action))
+                else:
+                    raise MissingAttribute("{} is missing  {}"
+                                           .format(dqt, action))
+            elif isinstance(action, tuple):
+                if len(action) == 1:
+                    # recurse with implicit dqtype
+                    record(name, walk_into(action[0], None))
+                elif len(action) == 2:
+                    # recurse with explicit dqtype
+                    record(name, walk_into(action[0], action[1]))
+                else:
+                    raise MutantRule("mutant recursive instruction {}"
+                                     .format(instruction))
+            else:
+                raise MutantRule("mutant compound instruction {}"
+                                 .format(instruction))
+        elif isinstance(instruction, list):
+            eval_cond(instruction, eval_instruction)
+        else:
+            raise MutantRule("instruction {} is hopeless".format(instruction))
 
     def walk_into(child_attr, child_dqt):
         # Recurse.  Note that child_dqt may be None which means 'to be
@@ -98,57 +196,21 @@ def walk_thing(thing, dqt, rules, dq, for_side_effect=False, **kws):
         child = dq.inx.uid[child_id]
         if validp(child):
             # OK recurse (note that child_dqt may be None: see above)
-            return walk_thing(child, child_dqt, rules, dq,
-                              for_side_effect=for_side_effect)
+            return walk_thing(child, child_dqt, ruleset, dq,
+                              for_side_effect=for_side_effect, **kws)
         else:
             # Leave a trace that the child was invalid
             return None
 
-    result = {} if not for_side_effect else None
-    def record(rule, value):
-        if not for_side_effect:
-            result[rule] = value
-
-    if dqt is None:             # no type given for thing
-        dqt = dqtype(thing)     # so infer
-    if dqt not in rules and None not in rules:
+    # OK, go
+    if dqt not in ruleset and None not in ruleset:
         raise MissingRule("no rule for {}".format(dqt))
-    for_dqt = rules[dqt] if dqt in rules else rules[None]
-    if not (callable(for_dqt)
-            or isinstance(for_dqt, tuple)
-            or isinstance(for_dqt, list)):
-        # ('x') is a really common mistake for ('x',) because Python is crap
-        raise MutantRule("ruleset {} isn't: tuple syntax lossage?"
-                         .format(for_dqt))
+    eval_rule(ruleset[dqt] if dqt in ruleset else ruleset[None])
 
-    if callable(for_dqt):
-        return for_dqt(thing, dqt, rules, dq,
-                       for_side_effect=for_side_effect, **kws)
+    if not for_side_effect:
+        return result
     else:
-        for rule in for_dqt:
-            if isinstance(rule, str) or isinstance(rule, unicode):
-                if hasattr(thing, rule):
-                    record(rule, getattr(thing, rule))
-                else:
-                    raise MissingAttribute("{} is missing  {}"
-                                           .format(dqt, rule))
-            elif isinstance(rule, tuple) and len(rule) == 2:
-                (name, action) = rule
-                if callable(action):
-                    record(name, action(thing, dqt, rules, dq,
-                                        for_side_effect=for_side_effect, **kws))
-                elif isinstance(action, str) or isinstance(action, unicode):
-                    record(name, walk_into(action, None))
-                elif isinstance(action, tuple) and len(action) == 2:
-                    record(name, walk_into(action[0], action[1]))
-                else:
-                    raise MutantRule("mutant tuple rule {}".format(rule))
-            else:
-                raise MutantRule("rule {} is hopeless".format(rule))
-        if not for_side_effect:
-            return result
-        else:
-            return
+        return
 
 def dqtype(item):
     # an item's type in the request
