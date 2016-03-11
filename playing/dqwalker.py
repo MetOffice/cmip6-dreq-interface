@@ -133,7 +133,7 @@ def walk_dq(dq, ruleset=None, for_side_effect=False, **kws):
                   cmp=lambda x,y: cmp(x.label, y.label))
     if not for_side_effect:
         return {table: {cmv.label: walk_thing(cmv, "CMORvar", ruleset, dq,
-                                              **kws)
+                                              for_side_effect=False, **kws)
                         for cmv in cmvs if cmv.mipTable == table}
                 for table in sorted(set(v.mipTable for v in cmvs))}
     else:
