@@ -1,7 +1,7 @@
 # Some rulesets
 #
 
-from dqwalker import mips_of_cmv
+from dqwalker import mips_of_cmv, walk_into
 
 __all__ = ['spreadsheet']
 
@@ -19,8 +19,8 @@ original = {'CMORvar': ('defaultPriority',
                               (tuple(sorted(mips_of_cmv(cmv, dq)))
                                if not for_side_effect
                                else None))),
-                        ('var', ('vid',)),
-                        ('structure', ('stid',))),
+                        ('var', (walk_into, 'vid')),
+                        ('structure', (walk_into, 'stid'))),
             'var': ('label',
                     'title',
                     'units',
@@ -29,8 +29,8 @@ original = {'CMORvar': ('defaultPriority',
             'structure': ('cell_measures',
                           'cell_methods',
                           'odims',
-                          ('spatialShape', ('spid',)),
-                          ('temporalShape', ('tmid',))),
+                          ('spatialShape', (walk_into, 'spid')),
+                          ('temporalShape', (walk_into, 'tmid'))),
             'spatialShape': ('dimensions',),
             'temporalShape': ('dimensions',)}
 
@@ -57,8 +57,8 @@ spreadsheet = {'CMORvar': ('label',
                                                           direct=False)))
                                   if not for_side_effect
                                   else None))),
-                           ('var', ('vid',)),
-                           ('structure', ('stid',))),
+                           ('var', (walk_into, 'vid')),
+                           ('structure', (walk_into, 'stid'))),
                'var': ('label',
                        'title',
                        'units',
@@ -67,7 +67,7 @@ spreadsheet = {'CMORvar': ('label',
                'structure': ('cell_measures',
                              'cell_methods',
                              'odims',
-                             ('spatialShape', ('spid',)),
-                             ('temporalShape', ('tmid',))),
+                             ('spatialShape', (walk_into, 'spid',)),
+                             ('temporalShape', (walk_into, 'tmid',))),
                'spatialShape': ('dimensions',),
                'temporalShape': ('dimensions',)}
