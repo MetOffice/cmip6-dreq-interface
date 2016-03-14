@@ -1,9 +1,10 @@
 # Map from MIP<->vars
 #
 
+from os.path import split, join
 from collections import defaultdict
 from dqwalker import walk_dq, mips_of_cmv
-from dreqPy.dreq import loadDreq
+from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
 
 __all__ = ['DQ']
 
@@ -35,9 +36,20 @@ class DQ(object):
     #
     rules = {'CMORvar': (('mips', (lambda cmv, dqt, ruleset, dq, **junk:
                                        mips_of_cmv(cmv, dq, direct=False))),)}
+
+    def __init__(self, dqroot=None):
+        self.dqroot = dqroot
+
     @lazy
     def dq(self):
-        return loadDreq()
+        return loadDreq(dreqXML=(defaultDreqPath
+                                 if self.dqroot is None
+                                 else join(self.dqroot,
+                                           split(defaultDreqPath)[1])),
+                        configdoc=(defaultConfigPath
+                                   if self.dqroot is None
+                                   else join(self.dqroot,
+                                             split(defaultConfigPath)[1])))
 
     @lazy
     def walked(self):

@@ -1,0 +1,61 @@
+#!/usr/bin/env python2.7
+#
+# var <-> MIP as JSON
+#
+
+from sys import exit, argv, stdout
+from os.path import basename
+from argparse import ArgumentParser
+from json import dump
+from dqvm import DQ
+
+class WhoAmI(Exception):
+    pass
+
+class Program(object):
+    names = ("v2m", "m2v")
+
+    def run(self):
+        me = basename(argv[0])
+        parser = ArgumentParser(description="Map between MIPS and variables")
+        parser.add_argument("-r", "--request-directory",
+                            default=None, metavar="dqroot", dest='dqroot',
+                            help="directory where the request files live")
+        parser.add_argument("-D", "--debug",
+                            action='store_true', dest='debug',
+                            help="debugging: don't suppress backtraces")
+        parser.add_argument('things', nargs='*', metavar="thing",
+                            help="something look up")
+        args = parser.parse_args()
+
+        try:
+            if me not in self.names:
+                raise WhoAmI("You can't call me {}".format(me))
+            dump(getattr(self, me)(DQ(dqroot=args.dqroot),
+                                   args.things),
+                 stdout, indent=2, sort_keys=True)
+            # Not quite compliant but less anoying
+            print >>stdout
+        except Exception as e:
+            if args.debug:
+                raise
+            else:
+                exit(e)
+
+    def v2m(self, dq, vars):
+        vmm = dq.vmm
+        return ({var: sorted(vmm[var]) if var in vmm else None
+                 for var in vars}
+                if len(vars) > 0
+                else {var: sorted(mips) 
+                      for (var, mips) in vmm.iteritems()})
+
+    def m2v(self, dq, mips):
+        mvm = dq.mvm
+        return ({mip: sorted(mvm[mip]) if mip in mvm else None
+                 for mip in mips}
+                if len(mips) > 0
+                else {mip: sorted(vars) for (mip, vars) in mvm.iteritems()})
+
+if __name__ == '__main__':
+    Program().run()
