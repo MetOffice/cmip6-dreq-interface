@@ -5,10 +5,11 @@ from os import curdir, makedirs
 from os.path import split, join, isdir
 from argparse import ArgumentParser # 2.7
 from csv import writer
-from dqwalker import walk_dq, walk_thing
-from rulesets import spreadsheet
-from pathdict import PathDict
 from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
+from dqi.walker import walk_dq, walk_thing
+from dqi.rulesets import spreadsheet
+from dqi.pathdict import PathDict
+
 
 # I think this is the order in the spreadsheet
 #

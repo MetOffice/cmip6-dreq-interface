@@ -4,10 +4,9 @@
 #
 
 from sys import stdout
-from dqwalker import walk_dq
-from rulesets import original
 from dreqPy.dreq import loadDreq
-
+from dqi.walker import walk_dq
+from dqi.rulesets import original
 
 def spaces(n, to):
     for i in range(n):

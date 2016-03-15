@@ -7,7 +7,7 @@ from sys import exit, argv, stdout
 from os.path import basename
 from argparse import ArgumentParser
 from json import dump
-from dqvm import DQ
+from dqi.dqvm import DQVM
 
 class WhoAmI(Exception):
     pass
@@ -31,7 +31,7 @@ class Program(object):
         try:
             if me not in self.names:
                 raise WhoAmI("You can't call me {}".format(me))
-            dump(getattr(self, me)(DQ(dqroot=args.dqroot),
+            dump(getattr(self, me)(DQVM(dqroot=args.dqroot),
                                    args.things),
                  stdout, indent=2, sort_keys=True)
             # Not quite compliant but less anoying

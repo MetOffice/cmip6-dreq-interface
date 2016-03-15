@@ -5,9 +5,9 @@
 
 from sys import stdout
 from json import dump
-from dqwalker import walk_dq
-from rulesets import original
 from dreqPy.dreq import loadDreq
+from dqi.walker import walk_dq
+from dqi.rulesets import original
 
 dump(walk_dq(loadDreq(), ruleset=original), stdout, indent=2, sort_keys=True)
 print ""

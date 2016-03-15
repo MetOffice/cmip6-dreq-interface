@@ -1,8 +1,11 @@
 # A walker for the dreq
 #
 
-# Nothing is private here, but just export the toplevel for simple use
-__all__ = ['walk_dq']
+__all__ = ['MissingRule', 'MutantRule', 'MissingAttribute', 'BadLink',
+           'walk_dq', 'walk_thing', 'walk_into',
+           'dqtype', 'validp', 'mips_of_cmv']
+
+from .low import Badness
 
 # Things to think about.
 #
@@ -20,9 +23,6 @@ __all__ = ['walk_dq']
 # It would be good to classify these by whether they are bugs in the
 # request, the rules or the code, but it is vague
 #
-
-class Badness(Exception):
-    pass
 
 class MissingRule(Badness):
     # problem with rules, not request

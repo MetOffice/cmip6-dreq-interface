@@ -1,7 +1,7 @@
 # Some rulesets
 #
 
-from dqwalker import mips_of_cmv, walk_into
+from .walker import mips_of_cmv, walk_into
 
 __all__ = ['spreadsheet']
 
