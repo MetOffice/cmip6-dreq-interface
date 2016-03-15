@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 #
 # Just run the walker and dump some mildly pretty-printed text
 #

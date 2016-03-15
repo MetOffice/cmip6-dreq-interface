@@ -1,4 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
+#
+# Spit out a bunch of CSV files from the data request
+#
 
 from sys import exit
 from os import curdir, makedirs
@@ -12,7 +15,7 @@ from dqi.pathdict import PathDict
 
 
 # I think this is the order in the spreadsheet
-#
+# This should not be wired in here however
 paths = ('defaultPriority',
          ('var', 'title'),
          ('var', 'units'),
@@ -78,4 +81,4 @@ if __name__ == '__main__':
             exit(e)
         else:
             raise
-    
+ 
