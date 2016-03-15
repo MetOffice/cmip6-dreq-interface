@@ -18,6 +18,8 @@
 # However I am not sure this is completely right.
 #
 
+__all__ = ['PathDict']
+
 class PathDict(dict):
     def __getitem__(self, key):
         if isinstance(key, tuple):
@@ -35,7 +37,7 @@ class PathDict(dict):
     def __setitem__(self, key, value):
         if isinstance(key, tuple):
             # The trick is to find the last dict in the tree, and
-            # update that
+            # update that.  This will not extend a path: should it?
             self[key[0:-1]][key[-1]] = value
         else:
             super(PathDict, self).__setitem__(key, value)
