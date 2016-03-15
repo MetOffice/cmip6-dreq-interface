@@ -5,6 +5,7 @@ from os.path import split, join
 from collections import defaultdict
 from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
 from .walker import walk_dq, mips_of_cmv
+from .low import Badness
 
 __all__ = ['DQVM']
 
@@ -33,8 +34,6 @@ class lazy(object):
 class DQVM(object):
     # I am not at all clear this is the right approach (all this laziness)
     #
-    rules = {'CMORvar': (('mips', (lambda cmv, dqt, ruleset, dq, **junk:
-                                       mips_of_cmv(cmv, dq, direct=False))),)}
 
     def __init__(self, dqroot=None):
         self.dqroot = dqroot
@@ -51,18 +50,19 @@ class DQVM(object):
                                              split(defaultConfigPath)[1])))
 
     @lazy
-    def walked(self):
-        return walk_dq(self.dq, self.rules)
-
-    @lazy
     def maps(self):
         v2m = defaultdict(set)
         m2v = defaultdict(set)
-        for vt in self.walked.values():
-            for (vn, vat) in vt.iteritems():
-                v2m[vn].update(vat['mips'])
-                for vmip in vat['mips']:
-                    m2v[vmip].add(vn)
+
+        def record_var(cmv, dqt, ruleset, dq, **junk):
+            vname = cmv.label
+            mips = mips_of_cmv(cmv, dq, direct=False)
+            v2m[vname].update(mips)
+            for mip in mips:
+                m2v[mip].add(vname)
+
+        walk_dq(self.dq, {'CMORvar': record_var},
+                for_side_effect=True)
         return (v2m, m2v)
 
     @lazy
