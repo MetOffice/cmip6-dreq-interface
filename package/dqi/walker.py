@@ -104,8 +104,6 @@ class BadDreq(Badness):
 # first argument.
 #
 
-fallback_ruleset = {None: ()} # just enough to run it
-
 # What the walker builds.
 #
 # walk_dq explicitly walks over each mip table, finds all the CMORvars
@@ -121,14 +119,15 @@ fallback_ruleset = {None: ()} # just enough to run it
 # actually construct anything at all.
 #
 
-def walk_dq(dq, ruleset=None, for_side_effect=False, **kws):
+def walk_dq(dq, ruleset={None: ()}, for_side_effect=False, **kws):
     # walk the dq: this constructs the top of the tree, which is a
     # dict mapping from miptable to the names of the CMORvars that
     # refer to it.  If for_side_effect is true the walk is done purely
     # for side effect: no result is returned and no data structure is
     # built.  Any extra keyword arguments are passed down.
-    if ruleset is None:
-        ruleset = fallback_ruleset
+    #
+    # The ruleset {None: ()} is what you need to minimally run the
+    # walker.
     cmvs = sorted(dq.coll['CMORvar'].items,
                   cmp=lambda x,y: cmp(x.label, y.label))
     if not for_side_effect:
