@@ -24,6 +24,12 @@ class Program(object):
         parser.add_argument("-D", "--debug",
                             action='store_true', dest='debug',
                             help="debugging: don't suppress backtraces")
+        parser.add_argument("-t", "--text",
+                            action='store_false', dest='json',
+                            help="emit output as text")
+        parser.add_argument("-j", "--json",
+                            action='store_true', dest='json', default=True,
+                            help="emit JSON (default option)")
         parser.add_argument('things', nargs='*', metavar="thing",
                             help="something look up")
         args = parser.parse_args()
@@ -31,11 +37,17 @@ class Program(object):
         try:
             if me not in self.names:
                 raise WhoAmI("You can't call me {}".format(me))
-            dump(getattr(self, me)(DQVM(dqroot=args.dqroot),
-                                   args.things),
-                 stdout, indent=2, sort_keys=True)
-            # Not quite compliant but less anoying
-            print >>stdout
+            mapping = getattr(self, me)(DQVM(dqroot=args.dqroot),
+                                        args.things)
+            if args.json:
+                dump(mapping, stdout, indent=2, sort_keys=True)
+                # Not quite compliant but less anoying
+                print
+            else:
+                for k in sorted(mapping.keys()):
+                    v = mapping[k]
+                    if v is not None:
+                        print str(k), " ".join(str(i) for i in v)
         except Exception as e:
             if args.debug:
                 raise

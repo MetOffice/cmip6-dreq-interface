@@ -24,13 +24,8 @@ def dump(thing, to, depth=0, incr=2):
             to.write("{}: ".format(k))
             dump(thing[k], to, depth + incr, incr)
     elif isinstance(thing, list) or isinstance(thing, tuple):
-        l = len(thing) - 1
-        for i in range(len(thing)):
-            to.write(str(thing[i]))
-            if i != l:
-                to.write(", ")
-            else:
-                terpri(to)
+        to.write(", ".join(str(i) for i in thing))
+        terpri(to)
     elif isinstance(thing, str) or isinstance(thing, unicode):
         to.write(thing)
         terpri(to)
