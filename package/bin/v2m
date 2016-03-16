@@ -31,6 +31,9 @@ class Program(object):
         parser.add_argument("-j", "--json",
                             action='store_true', dest='json', default=True,
                             help="emit JSON (default option)")
+        parser.add_argument("-k", "--keys-only",
+                            action='store_true', dest='keys_only',
+                            help="just produce a list of keys")
         parser.add_argument('things', nargs='*', metavar="thing",
                             help="something look up")
         args = parser.parse_args()
@@ -40,15 +43,22 @@ class Program(object):
                 raise WhoAmI("You can't call me {}".format(me))
             mapping = getattr(self, me)(DQVM(dqroot=args.dqroot),
                                         args.things)
+            keys = sorted(mapping.keys())
             if args.json:
-                dump(mapping, stdout, indent=2, sort_keys=True)
+                if not args.keys_only:
+                    dump(mapping, stdout, indent=2, sort_keys=True)
+                else:
+                    dump(keys, stdout, indent=2)
                 # Not quite compliant but less anoying
                 print
             else:
-                for k in sorted(mapping.keys()):
+                for k in keys:
                     v = mapping[k]
                     if v is not None:
-                        print str(k), " ".join(str(i) for i in v)
+                        if not args.keys_only:
+                            print str(k), " ".join(str(i) for i in v)
+                        else:
+                            print str(k)
         except Exception as e:
             if args.debug:
                 raise
