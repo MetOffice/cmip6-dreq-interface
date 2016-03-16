@@ -1,4 +1,5 @@
 #!/usr/bin/env python2.7
+# -*- mode: Python -*-
 #
 # Spit out a bunch of CSV files from the data request
 #
