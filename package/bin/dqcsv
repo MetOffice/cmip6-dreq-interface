@@ -50,7 +50,7 @@ def walk(outdir, dqroot=None):
             for row in sorted((PathDict(walked[table][var]) 
                                for var in walked[table].keys()),
                               None, lambda r: r['rowIndex']):
-                w.writerow(tuple(row[path] if path in row else "?"
+                w.writerow(tuple(sanitize(row[path]) if path in row else "?"
                                  for path in paths))
 
 def compute_dq_paths(root):
@@ -59,6 +59,15 @@ def compute_dq_paths(root):
     else:
         return (join(root, split(defaultDreqPath)[1]),
                 join(root, split(defaultConfigPath)[1]))
+
+def sanitize(thing):
+    # I miss CLOS
+    if isinstance(thing, tuple) or isinstance(thing, list):
+        # this will horribly botch nested things, but these never
+        # happen: the only case is lists of MIPs
+        return ", ".join(sanitize(e) for e in thing)
+    else:
+        return thing
 
 if __name__ == '__main__':
     parser = ArgumentParser(description="Create CSV files for each MIP table")
