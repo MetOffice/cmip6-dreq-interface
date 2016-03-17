@@ -3,6 +3,9 @@
 #
 # Spit out a bunch of CSV files from the data request
 #
+# This is not general: it's just trying to reproduce the sheets from
+# the spreadsheet Martin provides.
+#
 
 from sys import exit
 from os import curdir, makedirs
@@ -10,7 +13,7 @@ from os.path import split, join, isdir
 from argparse import ArgumentParser # 2.7
 from csv import writer
 from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
-from dqi.walker import walk_dq, walk_thing
+from dqi.walker import walk_dq
 from dqi.rulesets import spreadsheet
 from dqi.pathdict import PathDict
 
@@ -40,18 +43,31 @@ paths = ('defaultPriority',
          'direct_mips',
          'all_mips')
 
-def walk(outdir, dqroot=None):
+def walk(outdir, dqroot=None, 
+         varkey=lambda v: v['rowIndex'],
+         tuplekey=min, varcmp=cmp):
     (dqxml, dqconfig) = compute_dq_paths(dqroot)
     walked=walk_dq(loadDreq(dreqXML=dqxml, configdoc=dqconfig),
                    ruleset=spreadsheet)
     for table in walked.keys():
         with open(join(outdir, "{}.csv".format(table)), 'w') as out:
             w = writer(out)
-            for row in sorted((PathDict(walked[table][var]) 
-                               for var in walked[table].keys()),
-                              None, lambda r: r['rowIndex']):
-                w.writerow(tuple(sanitize(row[path]) if path in row else "?"
-                                 for path in paths))
+            # each name in a mip table corresponds to a tuple of vars:
+            # use varkey to find a key for each var in a tuple,
+            # tuplekey to take an iterable of keys and pick one, and
+            # varcmp as the comparison fn to sort.
+            for varset in sorted((walked[table][var]
+                                  for var in walked[table].keys()),
+                                 cmp=varcmp,
+                                 key=(lambda vs:
+                                         tuplekey(varkey(v) for v in vs))):
+                # Now make a PathDict for each element of the tuple
+                # and grovel it, sorting each tuple
+                for row in sorted((PathDict(v) for v in varset),
+                                  cmp=varcmp, key=varkey):
+                    w.writerow(tuple(sanitize(row[path])
+                                     if path in row else "?"
+                                     for path in paths))
 
 def compute_dq_paths(root):
     if root is None:

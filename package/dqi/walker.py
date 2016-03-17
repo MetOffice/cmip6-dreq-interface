@@ -5,6 +5,7 @@ __all__ = ['MissingRule', 'MutantRule', 'MissingAttribute', 'BadLink',
            'walk_dq', 'walk_thing', 'walk_into',
            'dqtype', 'validp', 'mips_of_cmv']
 
+from collections import defaultdict
 from .low import Badness
 
 # Things to think about.
@@ -106,14 +107,32 @@ class BadDreq(Badness):
 
 # What the walker builds.
 #
-# walk_dq explicitly walks over each mip table, finds all the CMORvars
-# which refer to it, and then builds a dict looking like
-#  {table-name: {var-name: walk-of-var-name, ...}, ...}
-# where walk-of-var-name is whatever walk_thing makes from the
-# variable.
+# walk_dq walks each CMORvar in the request. If not called for side
+# effect it builds a structure which looks like
+#
+#  {mt: {cmv: (walk, ...), ...}, ...}
+# 
+# In other words a dict mapping from mip table names to a dict mapping
+# from CMORvar names to a tuple of the walks of all the CMORvars
+# belonging to the mip table with that name.  We think there should
+# only be one element in each tuple (so the tuple of (mip table name,
+# CMORvar name) should uniquely identify a CMORvar, but this has not
+# always been true and may not need to be true in fact.  An earlier
+# version of this code built structures like 
+#
+#  {mt: {cmv: walk, ...}, ...}
+#
+# which simply lost any duplicate CMORvar names: this at least does
+# not do that.
+#
+# If called for side effect, walk_dq simply walks all the CMORvars.
+#
+# In both cases the order the walk happens in is undefined, but each
+# CMORvar is walked only once.  (There used to be all sorts of
+# spurious sorting, which was never needed and is now gone.)
 #
 # walk_thing normally constructs a dict mapping between
-# instruction-name and result-of-uinstruction (see above), which may
+# instruction-name and result-of-instruction (see above), which may
 # (and does in practice) happen recursively, via walk_into.  However
 # in the case where the rule for a typeis a function, then it can
 # actually construct anything at all.
@@ -128,19 +147,19 @@ def walk_dq(dq, ruleset={None: ()}, for_side_effect=False, **kws):
     #
     # The ruleset {None: ()} is what you need to minimally run the
     # walker.
-    cmvs = sorted(dq.coll['CMORvar'].items,
-                  cmp=lambda x,y: cmp(x.label, y.label))
     if not for_side_effect:
-        return {table: {cmv.label: walk_thing(cmv, "CMORvar", ruleset, dq,
-                                              for_side_effect=False, **kws)
-                        for cmv in cmvs if cmv.mipTable == table}
-                for table in sorted(set(v.mipTable for v in cmvs))}
+        results = defaultdict(lambda: defaultdict(list))
+        for cmv in dq.coll['CMORvar'].items:
+            results[cmv.mipTable][cmv.label].append(
+                walk_thing(cmv, "CMORvar", ruleset, dq,
+                           for_side_effect=False, **kws))
+        return {mt: {name: tuple(walks)
+                      for (name, walks) in mt_cmvs.iteritems()}
+                for (mt, mt_cmvs) in results.iteritems()}
     else:
-        for table in sorted(set(v.mipTable for v in cmvs)):
-            for cmv in cmvs:
-                if cmv.mipTable == table:
-                    walk_thing(cmv, "CMORvar", ruleset, dq,
-                               for_side_effect=True, **kws)
+        for cmv in dq.coll['CMORvar'].items:
+            walk_thing(cmv, "CMORvar", ruleset, dq,
+                       for_side_effect=True, **kws)
 
 def walk_thing(thing, dqt, ruleset, dq, for_side_effect=False, **kws):
     # This is just a recursive descent parser for the rules for thing
