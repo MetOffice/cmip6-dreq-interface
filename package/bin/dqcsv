@@ -9,10 +9,11 @@
 
 from sys import exit
 from os import curdir, makedirs
-from os.path import split, join, isdir
+from os.path import join, isdir
 from argparse import ArgumentParser # 2.7
 from csv import writer
 from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
+from dqi.low import reroot_paths
 from dqi.walker import walk_dq
 from dqi.rulesets import spreadsheet
 from dqi.pathdict import PathDict
@@ -46,7 +47,8 @@ paths = ('defaultPriority',
 def walk(outdir, dqroot=None, 
          varkey=lambda v: v['rowIndex'],
          tuplekey=min, varcmp=cmp):
-    (dqxml, dqconfig) = compute_dq_paths(dqroot)
+    (dqxml, dqconfig) = reroot_paths(dqroot,
+                                     (defaultDreqPath, defaultConfigPath))
     walked=walk_dq(loadDreq(dreqXML=dqxml, configdoc=dqconfig),
                    ruleset=spreadsheet)
     for table in walked.keys():
@@ -68,13 +70,6 @@ def walk(outdir, dqroot=None,
                     w.writerow(tuple(sanitize(row[path])
                                      if path in row else "?"
                                      for path in paths))
-
-def compute_dq_paths(root):
-    if root is None:
-        return (defaultDreqPath, defaultConfigPath)
-    else:
-        return (join(root, split(defaultDreqPath)[1]),
-                join(root, split(defaultConfigPath)[1]))
 
 def sanitize(thing):
     # I miss CLOS

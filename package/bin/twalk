@@ -5,7 +5,9 @@
 #
 
 from sys import stdout, exit
-from dreqPy.dreq import loadDreq
+from argparse import ArgumentParser # 2.7
+from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
+from dqi.low import reroot_paths
 from dqi.walker import walk_dq
 from dqi.rulesets import original
 
@@ -50,6 +52,20 @@ def dump(thing, to, depth=0, incr=2):
         terpri(to)
 
 try:
-    dump(walk_dq(loadDreq(), ruleset=original), stdout)
+    args = None
+    parser = ArgumentParser(description="Dump a texty walk of the dreq")
+    parser.add_argument("dqroot", nargs='?', default=None,
+                        help="where the dreq lives, if given")
+    parser.add_argument("-D", "--debug",
+                        action='store_true', dest='debug',
+                        help="don't suppress backtraces on errors")
+    args = parser.parse_args()
+    (dqxml, dqconfig) = reroot_paths(args.dqroot,
+                                     (defaultDreqPath, defaultConfigPath))
+    dump(walk_dq(loadDreq(dreqXML=dqxml, configdoc=dqconfig),
+                 ruleset=original), stdout)
 except Exception as e:
-    exit(e)
+    if args is not None and not args.debug:
+        exit(e)
+    else:
+        raise
