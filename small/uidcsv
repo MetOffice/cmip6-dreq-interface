@@ -1,0 +1,74 @@
+#!/usr/bin/env python2.7
+# -*- mode: Python -*-
+#
+# Spit out a CSV file with UID,var, miptable, dims
+#
+
+from sys import stdout, exit
+from argparse import ArgumentParser # 2.7
+from csv import writer
+from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
+from dqi import walk_dq, walk_into
+from dqi.low import reroot_paths
+from dqi.pathdict import PathDict
+
+paths = {'uid': 'uid',
+         'spatial': ('structure', 'spatialShape', 'dimensions'),
+         'temporal': ('structure', 'temporalShape', 'dimensions'),
+         'coords': ('structure', 'coords'),
+         'odims': ('structure', 'odims')}
+
+ruleset = {'CMORvar': ('uid',
+                       ('structure', (walk_into, 'stid'))),
+           'structure': ('odims',
+                         'coords',
+                         ('spatialShape', (walk_into, 'spid')),
+                         ('temporalShape', (walk_into, 'tmid'))),
+           'spatialShape': ('dimensions',),
+           'temporalShape': ('dimensions',)}
+
+
+def walk(dqroot=None, ruleset=ruleset):
+    (dqxml, dqconfig) = reroot_paths(dqroot,
+                                     (defaultDreqPath, defaultConfigPath))
+    walked = walk_dq(loadDreq(dreqXML=dqxml, configdoc=dqconfig),
+                     ruleset=ruleset)
+    return walked
+
+def stringify_dims(spatial, temporal, odims, coords):
+    # This is what makeTables.py does, I hope.  Note you get multiple
+    # spaces here if fields are blanks: they are in the spreadsheet.
+    return(" ".join(spatial.split("|") + temporal.split("|")
+                    + odims.split("|") + coords.split("|")))
+
+def walked2csv(walked, paths=paths, out=stdout):
+    w = writer(out)
+    upth = paths['uid']
+    spth = paths['spatial']
+    tpth = paths['temporal']
+    opth = paths['odims']
+    cpth = paths['coords']
+    # Spit out in sorted order, not hash order
+    for (miptable, varmap) in sorted(walked.iteritems(), key=lambda x: x[0]):
+        for (varname, instances) in sorted(varmap.iteritems(),
+                                           key=lambda x: x[0]):
+            for instance in instances:
+                ipd = PathDict(instance)
+                w.writerow((ipd[upth], varname, miptable,
+                            stringify_dims(ipd[spth], ipd[tpth],
+                                           ipd[opth], ipd[cpth])))
+
+if __name__ == '__main__':
+    parser = ArgumentParser(description="Create a CSV file with UIDs")
+    parser.add_argument("dqroot", nargs='?', default=None,
+                        help="dq root dir if given")
+    parser.add_argument("-D", action='store_true', dest='debug',
+                        help="debugging (don't suppress backtraces)")
+    args = parser.parse_args()
+    try:
+        walked2csv(walk(args.dqroot))
+    except Exception as e:
+        if not args.debug:
+            exit(e)
+        else:
+            raise
