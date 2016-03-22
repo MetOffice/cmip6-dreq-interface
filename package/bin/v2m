@@ -3,21 +3,26 @@
 #
 # var <-> MIP as JSON
 #
+# This is not particularly general or nice
+#
 
 from sys import exit, argv, stdout
 from os.path import basename
+from collections import defaultdict
 from argparse import ArgumentParser
 from json import dump
-from dqi.dqvm import DQVM
+from dqi.low import Badness, lazy
+from dqi.util import walk_from_dqroot
+from dqi.walker import mips_of_cmv
 
-class WhoAmI(Exception):
+class WhoAmI(Badness):
     pass
 
 class Program(object):
     names = ("v2m", "m2v")
+    args = None
 
-    def run(self):
-        me = basename(argv[0])
+    def __init__(self):
         parser = ArgumentParser(description="Map between MIPS and variables")
         parser.add_argument("-r", "--request-directory",
                             default=None, metavar="dqroot", dest='dqroot',
@@ -36,16 +41,17 @@ class Program(object):
                             help="just produce a list of keys")
         parser.add_argument('things', nargs='*', metavar="thing",
                             help="something look up")
-        args = parser.parse_args()
+        self.args = parser.parse_args()
 
+    def run(self, me):
         try:
             if me not in self.names:
                 raise WhoAmI("You can't call me {}".format(me))
-            mapping = getattr(self, me)(DQVM(dqroot=args.dqroot),
-                                        args.things)
+
+            mapping = getattr(self, me)(self.args.things)
             keys = sorted(mapping.keys())
-            if args.json:
-                if not args.keys_only:
+            if self.args.json:
+                if not self.args.keys_only:
                     dump(mapping, stdout, indent=2, sort_keys=True)
                 else:
                     dump(keys, stdout, indent=2)
@@ -55,30 +61,51 @@ class Program(object):
                 for k in keys:
                     v = mapping[k]
                     if v is not None:
-                        if not args.keys_only:
+                        if not self.args.keys_only:
                             print str(k), " ".join(str(i) for i in v)
                         else:
                             print str(k)
         except Exception as e:
-            if args.debug:
+            if self.args.debug:
                 raise
             else:
                 exit(e)
 
-    def v2m(self, dq, vars):
-        vmm = dq.vmm
+    def v2m(self, vars):
+        vmm = self.maps[0]
         return ({var: sorted(vmm[var]) if var in vmm else None
                  for var in vars}
                 if len(vars) > 0
-                else {var: sorted(mips) 
+                else {var: sorted(mips)
                       for (var, mips) in vmm.iteritems()})
 
-    def m2v(self, dq, mips):
-        mvm = dq.mvm
+    def m2v(self, mips):
+        mvm = self.maps[1]
         return ({mip: sorted(mvm[mip]) if mip in mvm else None
                  for mip in mips}
                 if len(mips) > 0
                 else {mip: sorted(vars) for (mip, vars) in mvm.iteritems()})
 
+    @lazy
+    def maps(self):
+        if not self.args:
+            raise Badness("too early")
+
+        v2m = defaultdict(set)
+        m2v = defaultdict(set)
+
+        def record_var(cmv, dqt, ruleset, dq, **junk):
+            vname = cmv.label
+            mips = mips_of_cmv(cmv, dq, direct=False)
+            v2m[vname].update(mips)
+            for mip in mips:
+                m2v[mip].add(vname)
+
+        walk_from_dqroot(dqroot=self.args.dqroot,
+                         ruleset={'CMORvar': record_var},
+                         for_side_effect=True)
+        return (v2m, m2v)
+
+
 if __name__ == '__main__':
-    Program().run()
+    Program().run(basename(argv[0]))
