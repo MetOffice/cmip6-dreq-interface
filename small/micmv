@@ -1,0 +1,39 @@
+#!/usr/bin/env python2.7
+# -*- mode: Python -*-
+#
+# Report on CMORvar names which occur multiple times in a mip table
+#
+
+from sys import exit
+from argparse import ArgumentParser # 2.7
+from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
+from dqi import walk_dq
+from dqi.low import reroot_paths
+
+def walk(dqroot=None):
+    (dqxml, dqconfig) = reroot_paths(dqroot,
+                                     (defaultDreqPath, defaultConfigPath))
+    return walk_dq(loadDreq(dreqXML=dqxml, configdoc=dqconfig),
+                   ruleset={None: ()})
+
+def spit(walked):
+    for (miptable, vartable) in sorted(walked.iteritems(), key=lambda i: i[0]):
+        for (var, vals) in sorted(vartable.iteritems(), key=lambda i: i[0]):
+            if len(vals) > 1:
+                print "{} {} {}".format(miptable, var, len(vals))
+
+if __name__ == '__main__':
+    parser = ArgumentParser(
+        description="Report on multiple-instance CMORvar names")
+    parser.add_argument("dqroot", nargs='?', default=None,
+                        help="dq root dir if given")
+    parser.add_argument("-D", action='store_true', dest='debug',
+                        help="debugging (don't suppress backtraces)")
+    args = parser.parse_args()
+    try:
+        spit(walk(args.dqroot))
+    except Exception as e:
+        if not args.debug:
+            exit(e)
+        else:
+            raise
