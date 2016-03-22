@@ -2,7 +2,7 @@
 #
 
 __all__ = ['MissingRule', 'MutantRule', 'MissingAttribute', 'BadLink',
-           'walk_dq', 'walk_thing', 'walk_into',
+           'walk_dq', 'walk_thing', 'walk_into', 'walk_linked',
            'dqtype', 'validp', 'mips_of_cmv']
 
 from collections import defaultdict
@@ -16,7 +16,8 @@ from .low import Badness
 # accessor functions but I'm not actually sure it is helpful to do
 # that.  It might become so if the language became richer: it might be
 # useful to be able to say 'walk everyone which links to me' for
-# instance.  However that probabably will not happen.
+# instance.  However that probabably will not happen (in fact: that
+# particular case has happened: see walk_linked below)
 #
 
 # Exceptions
@@ -111,14 +112,14 @@ class BadDreq(Badness):
 # effect it builds a structure which looks like
 #
 #  {mt: {cmv: (walk, ...), ...}, ...}
-# 
+#
 # In other words a dict mapping from mip table names to a dict mapping
 # from CMORvar names to a tuple of the walks of all the CMORvars
 # belonging to the mip table with that name.  We think there should
 # only be one element in each tuple (so the tuple of (mip table name,
 # CMORvar name) should uniquely identify a CMORvar, but this has not
 # always been true and may not need to be true in fact.  An earlier
-# version of this code built structures like 
+# version of this code built structures like
 #
 #  {mt: {cmv: walk, ...}, ...}
 #
@@ -272,6 +273,64 @@ def walk_into(args, thing, dqt, ruleset, dq, for_side_effect=False, **kws):
     else:
         # Leave a trace that the child was invalid
         return None
+
+def walk_linked(args, thing, dqt, ruleset, dq, for_side_effect=False, **kws):
+    # F convention walker to walk elements which link to this one,
+    # returning a tuple.  If no args are given walk all sections as
+    # their normal types; if one, walk single section as its own
+    # dqtype; if two, then if the first is not None walk that section
+    # with the type given by the second argument, and if the first is
+    # None walk all sections with the type given by the second
+    # argument.
+
+    def walk_all(as_type=None):
+        # walk all sections, optionally with a type (note that
+        # walk_thing defaults types given as None to be right).
+        #
+        # Martin's description implies that dq.inx.iref_by_uid returns
+        # tuples of (section, identifier): it doesn't, it returns
+        # (linking_field_name, identifier).
+        linked = (link for link in (dq.inx.uid[l[1]]
+                                    for l in dq.inx.iref_by_uid[thing.uid])
+                  if validp(link))
+        if not for_side_effect:
+            return tuple(walk_thing(link, as_type, ruleset, dq,
+                                    for_side_effect=False, **kws)
+                         for link in linked)
+        else:
+            for link in linked:
+                walk_thing(link, as_type, ruleset, dq,
+                           for_side_effect=True, **kws)
+
+    def walk_sect(sect, as_type=None):
+        # walk one section
+        sects = dq.inx.iref_by_sect[thing.uid].a
+        if sect in sects:
+            linked = (link for link in (dq.inx.uid[l] for l in sects[sect])
+                      if validp(link))
+            if not for_side_effect:
+                return (tuple(walk_thing(link, as_type, ruleset, dq,
+                                         for_side_effect=False, **kws)
+                              for link in linked))
+            else:
+                for link in linked:
+                    walk_thing(link, as_type, ruleset, dq,
+                               for_side_effect=True, **kws)
+        else:
+            return None
+
+    if len(args) == 0:
+        return walk_all(None)
+    elif len(args) == 1:
+        return walk_sect(args[0], args[0])
+    elif len(args) == 2:
+        if args[0] is None:
+            return walk_all(args[1])
+        else:
+            return walk_sect(args[0], args[1])
+    else:
+        raise MutantRule("walk_linked: need 0-2 args but got {}?"
+                         .format(args))
 
 def dqtype(item):
     # an item's type in the request
