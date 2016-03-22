@@ -13,8 +13,7 @@ from os.path import join, isdir
 from argparse import ArgumentParser # 2.7
 from csv import writer
 from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
-from dqi.low import reroot_paths
-from dqi.walker import walk_dq
+from dqi.util import walk_from_dqroot
 from dqi.rulesets import spreadsheet
 from dqi.pathdict import PathDict
 
@@ -47,10 +46,7 @@ paths = ('defaultPriority',
 def walk(outdir, dqroot=None, 
          varkey=lambda v: v['rowIndex'],
          tuplekey=min, varcmp=cmp):
-    (dqxml, dqconfig) = reroot_paths(dqroot,
-                                     (defaultDreqPath, defaultConfigPath))
-    walked=walk_dq(loadDreq(dreqXML=dqxml, configdoc=dqconfig),
-                   ruleset=spreadsheet)
+    walked=walk_from_dqroot(dqroot, ruleset=spreadsheet)
     for table in walked.keys():
         with open(join(outdir, "{}.csv".format(table)), 'w') as out:
             w = writer(out)

@@ -7,9 +7,8 @@
 from sys import stdout, exit
 from argparse import ArgumentParser # 2.7
 from csv import writer
-from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
-from dqi import walk_dq, walk_into
-from dqi.low import reroot_paths
+from dqi import walk_into
+from dqi.util import walk_from_dqroot
 from dqi.pathdict import PathDict
 
 paths = {'uid': 'uid',
@@ -27,13 +26,6 @@ ruleset = {'CMORvar': ('uid',
            'spatialShape': ('dimensions',),
            'temporalShape': ('dimensions',)}
 
-
-def walk(dqroot=None, ruleset=ruleset):
-    (dqxml, dqconfig) = reroot_paths(dqroot,
-                                     (defaultDreqPath, defaultConfigPath))
-    walked = walk_dq(loadDreq(dreqXML=dqxml, configdoc=dqconfig),
-                     ruleset=ruleset)
-    return walked
 
 def stringify_dims(spatial, temporal, odims, coords):
     # This is what makeTables.py does, I hope.  Note you get multiple
@@ -66,7 +58,7 @@ if __name__ == '__main__':
                         help="debugging (don't suppress backtraces)")
     args = parser.parse_args()
     try:
-        walked2csv(walk(args.dqroot))
+        walked2csv(walk_from_dqroot(args.dqroot, ruleset=ruleset))
     except Exception as e:
         if not args.debug:
             exit(e)

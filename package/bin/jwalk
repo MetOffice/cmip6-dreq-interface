@@ -7,9 +7,7 @@
 from sys import stdout, exit
 from json import dump
 from argparse import ArgumentParser # 2.7
-from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
-from dqi.low import reroot_paths
-from dqi.walker import walk_dq
+from dqi.util import walk_from_dqroot
 from dqi.rulesets import original
 
 try:
@@ -21,10 +19,7 @@ try:
                         action='store_true', dest='debug',
                         help="don't suppress backtraces on errors")
     args = parser.parse_args()
-    (dqxml, dqconfig) = reroot_paths(args.dqroot,
-                                     (defaultDreqPath, defaultConfigPath))
-    dump(walk_dq(loadDreq(dreqXML=dqxml, configdoc=dqconfig),
-                 ruleset=original),
+    dump(walk_from_dqroot(args.dqroot, ruleset=original),
          stdout, indent=2, sort_keys=True)
     print ""
 except Exception as e:

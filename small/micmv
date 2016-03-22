@@ -6,15 +6,7 @@
 
 from sys import exit
 from argparse import ArgumentParser # 2.7
-from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
-from dqi import walk_dq
-from dqi.low import reroot_paths
-
-def walk(dqroot=None):
-    (dqxml, dqconfig) = reroot_paths(dqroot,
-                                     (defaultDreqPath, defaultConfigPath))
-    return walk_dq(loadDreq(dreqXML=dqxml, configdoc=dqconfig),
-                   ruleset={None: ()})
+from dqi.util import walk_from_dqroot
 
 def spit(walked):
     for (miptable, vartable) in sorted(walked.iteritems(), key=lambda i: i[0]):
@@ -31,7 +23,7 @@ if __name__ == '__main__':
                         help="debugging (don't suppress backtraces)")
     args = parser.parse_args()
     try:
-        spit(walk(args.dqroot))
+        spit(walk_from_dqroot(args.dqroot))
     except Exception as e:
         if not args.debug:
             exit(e)

@@ -7,8 +7,7 @@
 from sys import stdout, exit
 from argparse import ArgumentParser # 2.7
 from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
-from dqi.low import reroot_paths
-from dqi.walker import walk_dq
+from dqi.util import walk_from_dqroot
 from dqi.rulesets import original
 
 def spaces(n, to):
@@ -60,10 +59,7 @@ try:
                         action='store_true', dest='debug',
                         help="don't suppress backtraces on errors")
     args = parser.parse_args()
-    (dqxml, dqconfig) = reroot_paths(args.dqroot,
-                                     (defaultDreqPath, defaultConfigPath))
-    dump(walk_dq(loadDreq(dreqXML=dqxml, configdoc=dqconfig),
-                 ruleset=original), stdout)
+    dump(walk_from_dqroot(args.dqroot, ruleset=original), stdout)
 except Exception as e:
     if args is not None and not args.debug:
         exit(e)
