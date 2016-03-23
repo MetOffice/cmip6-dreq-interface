@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
 setup(name="dqi",
-      version="0.0",
-      description="Interfaces to the CMIP6 data request",
+      version="0.1",
+      description="An interface to the CMIP6 data request",
       author="Tim Bradshaw",
       author_email="tim.bradshaw@metoffice.gov.uk",
       packages=find_packages(),

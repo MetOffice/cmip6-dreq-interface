@@ -1,9 +1,11 @@
-# Some rulesets
+# Some rulesets for the walker
+#
+# These are actually used by things: it's not clear if they should be
 #
 
 from .walker import mips_of_cmv, walk_into
 
-__all__ = ['spreadsheet']
+__all__ = ['spreadsheet', 'original']
 
 original = {'CMORvar': ('defaultPriority',
                         'positive',

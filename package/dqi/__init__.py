@@ -1,4 +1,4 @@
-# Interfaces to the CMIP6 data request
+# dqi: an interface to the CMIP6 data request
 #
 
 # This package is essentially a conduit for the external interfaces of

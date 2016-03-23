@@ -1,4 +1,7 @@
-# Low level
+# Low level support for dqi
+#
+# Nothing here should depend on the dreq API: see util.py for that
+#
 
 __all__ = ['Badness']
 

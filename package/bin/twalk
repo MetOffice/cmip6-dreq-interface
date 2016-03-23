@@ -6,7 +6,6 @@
 
 from sys import stdout, exit
 from argparse import ArgumentParser # 2.7
-from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
 from dqi.util import walk_from_dqroot
 from dqi.rulesets import original
 

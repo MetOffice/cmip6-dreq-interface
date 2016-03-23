@@ -1,4 +1,4 @@
-# This is just some test data for walk_into
+# This is just some test data for walk_linked
 
 from dreqPy.dreq import loadDreq
 from dqi import walk_dq, walk_linked, dqtype

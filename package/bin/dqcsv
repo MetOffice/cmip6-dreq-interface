@@ -12,7 +12,6 @@ from os import curdir, makedirs
 from os.path import join, isdir
 from argparse import ArgumentParser # 2.7
 from csv import writer
-from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
 from dqi.util import walk_from_dqroot
 from dqi.rulesets import spreadsheet
 from dqi.pathdict import PathDict
