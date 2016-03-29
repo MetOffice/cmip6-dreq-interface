@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # -*- mode: Python -*-
 #
-# Spit out a CSV file with UID,var, miptable, dims
+# Spit out a CSV file with UID, CMOR var, var, miptable, dims
 #
 
 from sys import stdout, exit
@@ -12,14 +12,19 @@ from dqi.util import walk_from_dqroot
 from dqi.pathdict import PathDict
 
 paths = {'uid': 'uid',
+         'varlabel': ('var', 'label'),
+         'cellmethods': ('structure', 'cell_methods'),
          'spatial': ('structure', 'spatialShape', 'dimensions'),
          'temporal': ('structure', 'temporalShape', 'dimensions'),
          'coords': ('structure', 'coords'),
          'odims': ('structure', 'odims')}
 
 ruleset = {'CMORvar': ('uid',
+                       ('var', (walk_into, 'vid')),
                        ('structure', (walk_into, 'stid'))),
-           'structure': ('odims',
+           'var': ('label',),
+           'structure': ('cell_methods',
+                         'odims',
                          'coords',
                          ('spatialShape', (walk_into, 'spid')),
                          ('temporalShape', (walk_into, 'tmid'))),
@@ -35,6 +40,8 @@ def stringify_dims(spatial, temporal, odims, coords):
 
 def walked2csv(walked, paths=paths, out=stdout):
     w = writer(out)
+    vnpth = paths['varlabel']
+    cmpth = paths['cellmethods']
     upth = paths['uid']
     spth = paths['spatial']
     tpth = paths['temporal']
@@ -46,9 +53,13 @@ def walked2csv(walked, paths=paths, out=stdout):
                                            key=lambda x: x[0]):
             for instance in instances:
                 ipd = PathDict(instance)
-                w.writerow((ipd[upth], varname, miptable,
+                w.writerow((ipd[upth], varname, 
+                            # Some CMORvars don't have vars
+                            ipd[vnpth] if vnpth in ipd else '-',
+                            miptable,
                             stringify_dims(ipd[spth], ipd[tpth],
-                                           ipd[opth], ipd[cpth])))
+                                           ipd[opth], ipd[cpth]),
+                            ipd[cmpth]))
 
 if __name__ == '__main__':
     parser = ArgumentParser(description="Create a CSV file with UIDs")
