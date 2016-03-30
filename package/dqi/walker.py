@@ -3,6 +3,8 @@
 
 __all__ = ['MissingRule', 'MutantRule', 'MissingAttribute', 'BadLink',
            'walk_dq', 'walk_thing', 'walk_into', 'walk_linked',
+           'return_from_thing', 'return_from_walk',
+           'thing_return', 'walk_return',
            'dqtype', 'validp', 'mips_of_cmv']
 
 from collections import defaultdict
@@ -24,8 +26,8 @@ from .low import Badness
 #
 # It would be good to classify these by whether they are bugs in the
 # request, the rules or the code, but it is vague
-#
 
+#
 class MissingRule(Badness):
     # problem with rules, not request
     pass
@@ -45,6 +47,43 @@ class BadLink(Badness):
 class BadDreq(Badness):
     # definitely the request
     pass
+
+# Control transfer protocol
+#
+# Python has almost no useful control abstractions: you can't say
+# 'return from a lexically-visible place' for instance.  Using
+# exceptions is a hack -- it's like using CL-style THROW and CATCH
+# with all their problems (and probably even more expense).  But I
+# think it is the only way of doing this.  The use of exceptions is
+# wrapped by functions which actually do the raising.
+#
+# For these exceptions and the functions which wrap them:
+# - return_partial_results will cause the walker to return what it 
+#   has built so far
+# - value is the value to return otherwise -- return_partial_results
+#   wins if both are given.
+#
+
+class Return(Exception):
+    def __init__(self, value=None, return_partial_results=False):
+        self.value = value
+        self.return_partial_results = return_partial_results
+
+class ReturnFromThing(Return):
+    pass
+
+def return_from_thing(value=None, return_partial_results=False):
+    # Return from a level.
+    raise ReturnFromThing(value=value,
+                          return_partial_results=return_partial_results)
+
+class ReturnFromWalk(Return):
+    pass
+
+def return_from_walk(value=None, return_partial_results=False):
+    # Return from the whole walk
+    raise ReturnFromWalk(value=value,
+                         return_partial_results=return_partial_results)
 
 # The rules of how to walk things.
 #
@@ -150,17 +189,25 @@ def walk_dq(dq, ruleset={None: ()}, for_side_effect=False, **kws):
     # walker.
     if not for_side_effect:
         results = defaultdict(lambda: defaultdict(list))
-        for cmv in dq.coll['CMORvar'].items:
-            results[cmv.mipTable][cmv.label].append(
-                walk_thing(cmv, "CMORvar", ruleset, dq,
-                           for_side_effect=False, **kws))
+        try:
+            for cmv in dq.coll['CMORvar'].items:
+                results[cmv.mipTable][cmv.label].append(
+                    walk_thing(cmv, "CMORvar", ruleset, dq,
+                               for_side_effect=False, **kws))
+        except ReturnFromWalk as returned:
+            if not returned.return_partial_results:
+                return returned.value
+
         return {mt: {name: tuple(walks)
                       for (name, walks) in mt_cmvs.iteritems()}
                 for (mt, mt_cmvs) in results.iteritems()}
-    else:
-        for cmv in dq.coll['CMORvar'].items:
-            walk_thing(cmv, "CMORvar", ruleset, dq,
-                       for_side_effect=True, **kws)
+    else:                       # for side effect
+        try:
+            for cmv in dq.coll['CMORvar'].items:
+                walk_thing(cmv, "CMORvar", ruleset, dq,
+                           for_side_effect=True, **kws)
+        except ReturnFromWalk:
+            pass
 
 def walk_thing(thing, dqt, ruleset, dq, for_side_effect=False, **kws):
     # This is just a recursive descent parser for the rules for thing
@@ -247,7 +294,14 @@ def walk_thing(thing, dqt, ruleset, dq, for_side_effect=False, **kws):
     # OK, go
     if dqt not in ruleset and None not in ruleset:
         raise MissingRule("no rule for {}".format(dqt))
-    eval_rule(ruleset[dqt] if dqt in ruleset else ruleset[None])
+    try:
+        eval_rule(ruleset[dqt] if dqt in ruleset else ruleset[None])
+    except ReturnFromThing as returned:
+        if not returned.return_partial_results:
+            if not for_side_effect:
+                return returned.value
+            else:
+                return
 
     if not for_side_effect:
         return result
@@ -330,6 +384,30 @@ def walk_linked(args, thing, dqt, ruleset, dq, for_side_effect=False, **kws):
             return walk_sect(args[0], args[1])
     else:
         raise MutantRule("walk_linked: need 0-2 args but got {}?"
+                         .format(args))
+
+def thing_return(args, thing, dqt, ruleset, dq, for_side_effect=False, **kws):
+    # F-convention walker which returns from this level, returning its
+    # argument if given, otherwise whatever the partial result was.
+    l = len(args)
+    if l == 0:
+        return_from_thing(value=None, return_partial_results=True)
+    elif l == 1:
+        return_from_thing(value=args[0])
+    else:
+        raise MutantRule("thing_return: need 0 or 1 args but got {}?"
+                         .format(args))
+
+def walk_return(args, thing, dqt, ruleset, dq, for_side_effect=False, **kws):
+    # F-convention walker which returns from the walk, returning its
+    # argument if given, otherwise whatever the partial result was.
+    l = len(args)
+    if l == 0:
+        return_from_walk(value=None, return_partial_results=True)
+    elif l == 1:
+        return_from_walk(value=args[0])
+    else:
+        raise MutantRule("walk_return: need 0 or 1 args but got {}?"
                          .format(args))
 
 def dqtype(item):
