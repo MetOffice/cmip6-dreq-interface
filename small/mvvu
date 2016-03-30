@@ -1,0 +1,52 @@
+#!/usr/bin/env python2.7
+# -*- mode: Python -*-
+#
+# Spit out a file with miptable, CMOR var, var, uid
+#
+
+from sys import stdout, exit
+from re import compile as re_compile
+from argparse import ArgumentParser # 2.7
+from dqi import walk_into
+from dqi.util import walk_from_dqroot
+from dqi.pathdict import PathDict
+
+ruleset = {'CMORvar': ('uid',
+                       ('var', (walk_into, 'vid'))),
+           'var': ('label',)}
+
+# Replace whitespacw with a slash, but puke if anything has a slash in
+# already
+wr = re_compile("\s")
+def fw(thing):
+    if "/" not in thing:
+        return wr.sub("/", thing)
+    else:
+        raise Exception("\"{}\" is slashy".format(thing))
+
+
+if __name__ == '__main__':
+    parser = ArgumentParser(description="Spit out miptable, CMV, V, UID")
+    parser.add_argument("dqroot", nargs='?', default=None,
+                        help="dq root dir if given")
+    parser.add_argument("-D", action='store_true', dest='debug',
+                        help="debugging (don't suppress backtraces)")
+    args = parser.parse_args()
+    try:
+        for (miptable, cmvs) in sorted(
+            walk_from_dqroot(args.dqroot, ruleset=ruleset).iteritems(),
+            key=lambda x: x[0]):
+            for (cmv, infos) in sorted(cmvs.iteritems(),
+                                      key=lambda x: x[0]):
+                for info in (PathDict(i) for i in infos):
+                    print "{} {} {} {}".format(fw(miptable),
+                                               fw(cmv),
+                                               fw(info['var', 'label']
+                                                  if ('var', 'label') in info
+                                                  else '-'),
+                                               fw(info['uid']))
+    except Exception as e:
+        if not args.debug:
+            exit(e)
+        else:
+            raise
