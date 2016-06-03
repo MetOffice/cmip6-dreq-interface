@@ -1,4 +1,8 @@
+#!/usr/bin/env python2.7
+# -*- mode: Python -*-
+#
 # See makeTables.py
+#
 
 from dreqPy.dreq import loadDreq
 
