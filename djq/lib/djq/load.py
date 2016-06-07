@@ -6,7 +6,7 @@ from os.path import expanduser, expandvars, isdir, join
 from dqi.util import load_from_dqroot as ldq
 
 __all__ = ('dqtop', 'dqtag', 'valid_dqtop', 'valid_dqtag',
-           'dqload', 'ldq')
+           'dqload')
 
 dqtop = (expandvars("$DJQ_DQTOP") if getenv("DJQ_DQTOP")
          else expanduser("~tbradsha/work/cmip6-data-request/CMIP6dreq"))
