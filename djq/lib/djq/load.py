@@ -33,7 +33,7 @@ def valid_dqtag(tag=None, top=None):
     from dqtop and tag from dqtag
     """
     if isdir(join(top if top is not None else dqtop,
-                  "tags", 
+                  "tags",
                   tag if tag is not None else dqtag,
                   "dreqPy", "docs")):
         return True
@@ -46,7 +46,7 @@ def dqload(tag=None, top=None):
     Arguments:
     - tag -- the tag, dynamically defaulted from dqtag
     - top -- the dreq top directory, dynamically defaulted from dqtop
-    
+
     This does no error checks itself : it will raise whatever
     exception the underlying dreq code does if things are bad.  If you
     want to check for this use the valid_* functions.

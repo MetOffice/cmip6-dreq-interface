@@ -55,10 +55,10 @@ def parse_request(fp):
         if 'mip' not in cs or 'experiment' not in cs:
             raise BadSyntax("both 'mip' and 'experiment' must be specified")
         # and validate all te keys
-        return {key: val 
-                for (key, val) in (validate_sr_entry(k, v) 
+        return {key: val
+                for (key, val) in (validate_sr_entry(k, v)
                                    for (k, v) in cs.iteritems())}
-    
+
     def validate_sr_entry(k, v):
         # Validate a single entry (keys are known to be stringy by
         # now):
