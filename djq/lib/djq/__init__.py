@@ -1,10 +1,12 @@
 # djq
 
-# loading
-
 # low-level is available as djq.low.*
 from . import low
 
-# public things
+# Parser
+from . import parse
+from .parse import *
+
+# Loader
 from . import load
 from .load import *
