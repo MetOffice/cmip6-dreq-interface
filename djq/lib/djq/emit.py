@@ -8,7 +8,8 @@ from json import dump
 from djq.low import InternalException
 
 __all__ = ('EmitFailed',
-           'emit_reply')
+           'emit_reply',
+           'emit_catastrophe')
 
 class EmitFailed(InternalException):
     def __init__(self, string, wrapped=None):
@@ -24,3 +25,11 @@ def emit_reply(reply, fp):
         dump(reply, fp, indent=2)
     except Exception as e:
         raise EmitFailed("badness when emitting", e)
+
+def emit_catastrophe(message, fp, **others):
+    """Emit a reply indicating a catastrophe has happened.
+
+    No useful return value.  Does not wrap any exceptions.
+    """
+    dump(dict((('catastrophe', message),), **others), fp,
+         indent=2)

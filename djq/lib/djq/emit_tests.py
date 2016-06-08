@@ -2,6 +2,7 @@
 #
 
 from StringIO import StringIO
+from json import load
 from djq.parse import *
 from djq.emit import *
 
@@ -34,3 +35,16 @@ def test_round_trips():
             assert r[i] == rt[i]
     for request in requests:
         yield (test_one_round_trip, request)
+
+def catastrophe2string(message):
+    stream = StringIO()
+    emit_catastrophe(message, stream)
+    return stream.getvalue()
+
+def string2catastrophe(s):
+    return load(StringIO(s))
+
+def test_catastrophe():
+    cd = string2catastrophe(catastrophe2string("doom"))
+    assert isinstance(cd, dict)
+    assert 'catastrophe' in cd and cd['catastrophe'] == "doom"
