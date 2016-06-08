@@ -5,34 +5,48 @@ from os import getenv
 from os.path import expanduser, expandvars, isdir, join
 from dqi.util import load_from_dqroot as ldq
 
-__all__ = ('dqtop', 'dqtag', 'valid_dqtop', 'valid_dqtag',
+__all__ = ('default_dqroot', 'default_dqtag', 'valid_dqroot', 'valid_dqtag',
            'dqload')
 
-dqtop = (expandvars("$DJQ_DQTOP") if getenv("DJQ_DQTOP")
+dqroot = (expandvars("$DJQ_DQROOT") if getenv("DJQ_DQROOT")
          else expanduser("~tbradsha/work/cmip6-data-request/CMIP6dreq"))
 
 dqtag = getenv("DJQ_DQTAG") or "latest"
 
-def valid_dqtop(top=None):
-    """Check whether top (defaulted from dqtop) smells like a dreq top dir.
+def default_dqroot(root=None):
+    global dqroot
+    if root is None:
+        return dqroot
+    else:
+        dqroot = root
 
-    The check is necessarily heuristic, not exhaustive.  Note that top
+def default_dqtag(tag=None):
+    global dqtag
+    if tag is None:
+        return dqtag
+    else:
+        dqtag = tag
+
+def valid_dqroot(root=None):
+    """Check whether root (defaulted from dqroot) smells like a dreq root dir.
+
+    The check is necessarily heuristic, not exhaustive.  Note that root
     is defaulted dynamically.
     """
-    if top is None:
-        top = dqtop
-    if isdir(top) and isdir(join(top, "tags")):
+    if root is None:
+        root = dqroot
+    if isdir(root) and isdir(join(root, "tags")):
         return True
     else:
         return False
 
-def valid_dqtag(tag=None, top=None):
-    """Is tag a valid tag for the dreq anchored at top?
+def valid_dqtag(tag=None, root=None):
+    """Is tag a valid tag for the dreq anchored at root?
 
-    This is a heuristic check.  Note that top is defaulted dynamically
-    from dqtop and tag from dqtag
+    This is a heuristic check.  Note that root is defaulted dynamically
+    from dqroot and tag from dqtag
     """
-    if isdir(join(top if top is not None else dqtop,
+    if isdir(join(root if root is not None else dqroot,
                   "tags",
                   tag if tag is not None else dqtag,
                   "dreqPy", "docs")):
@@ -40,18 +54,18 @@ def valid_dqtag(tag=None, top=None):
     else:
         return False
 
-def dqload(tag=None, top=None):
-    """Load the dreq from a tag and top, both dynamically defaulted.
+def dqload(tag=None, root=None):
+    """Load the dreq from a tag and root, both dynamically defaulted.
 
     Arguments:
     - tag -- the tag, dynamically defaulted from dqtag
-    - top -- the dreq top directory, dynamically defaulted from dqtop
+    - root -- the dreq root directory, dynamically defaulted from dqroot
 
     This does no error checks itself : it will raise whatever
     exception the underlying dreq code does if things are bad.  If you
     want to check for this use the valid_* functions.
     """
-    return ldq(join(top if top is not None else dqtop,
+    return ldq(join(root if root is not None else dqroot,
                     "tags",
                     tag if tag is not None else dqtag,
                     "dreqPy", "docs"))
