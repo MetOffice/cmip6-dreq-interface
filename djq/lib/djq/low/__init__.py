@@ -1,5 +1,5 @@
-# djq.low
+# djq.low: low-level for djq
 
-# loading
+# Exceptions
 from . import exceptions
 from .exceptions import *
