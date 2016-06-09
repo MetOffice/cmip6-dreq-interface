@@ -1,5 +1,5 @@
 from json import load
-from djq.low import ExternalException
+from low import ExternalException
 
 # A request is an array of single-requests
 # a single-request is a dictionary with keys:

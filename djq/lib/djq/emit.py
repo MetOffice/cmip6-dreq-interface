@@ -5,7 +5,7 @@
 #
 
 from json import dump
-from djq.low import InternalException
+from low import InternalException
 
 __all__ = ('EmitFailed',
            'emit_reply',
