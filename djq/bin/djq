@@ -1,0 +1,65 @@
+#!/usr/bin/env python2.7
+# -*- mode: Python -*-
+#
+# Top-level djq script
+#
+# This only handles the minimal things needed to wrap functionality
+# from djq and handle exceptions which propagate to the top-level.
+#
+
+from sys import stdin, stdout, argv
+from argparse import ArgumentParser
+from djq import default_dqroot, valid_dqroot, default_dqtag
+from djq import process
+from djq.low import ExternalException
+
+class BadRoot(ExternalException):
+    def __init__(self, root):
+        super(ExternalException, self).__init__(
+            "{} doesn't look like a DREQ root".format(root))
+
+def main():
+    parser = ArgumentParser(description="DREQ JSON Query tool")
+    parser.add_argument("-r", "--root",
+                        default=None, dest='dqroot',
+                        help="the top of a checked out CMIP6 DREQ")
+    parser.add_argument("-t", "--tag",
+                        default=None, dest='dqtag',
+                        help="the default tag for the DREQ")
+    parser.add_argument("-d", "--debug",
+                        action='store_true', dest='debug',
+                        help="debugging: don't suppress backtraces")
+    parser.add_argument('request', nargs='?', default=None,
+                        help="JSON request (stdin default)")
+    debugging = None
+
+    try:
+        args = parser.parse_args()
+        debugging = args.debug
+        if args.dqroot is not None:
+            default_dqroot(args.dqroot)
+        # root can be checked, tag can't because it can be set in requests
+        if not valid_dqroot():
+            raise BadRoot(default_dqroot())
+        if args.dqtag is not None:
+            default_dqtag(args.dqtag)
+
+        if args.request is not None:
+            with open(args.request) as input:
+                process(input, stdout, debugging=debugging)
+        else:
+            process(stdin, stdout, debugging=debugging)
+
+    except Exception as e:
+        if not debugging:
+            exit(e)
+        elif debugging is None:
+            print >>stderr, "{}: very early badness".format(argv[0])
+            raise
+        else:
+            raise
+    except KeyboardInterrupt as e:
+        exit("interrupt")
+
+if __name__ == '__main__':
+    main()

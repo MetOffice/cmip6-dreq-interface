@@ -10,6 +10,6 @@ setup(name="djq",
       author_email="tim.bradshaw@metoffice.gov.uk",
       packages=find_packages("lib"),
       package_dir={"":"lib"},
-      scripts=(),
+      scripts=("bin/djq",),
       test_suite='nose.collector',
       zip_safe=False)
