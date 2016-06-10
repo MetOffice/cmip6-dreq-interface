@@ -12,7 +12,7 @@ from low import ExternalException
 #
 
 __all__ = ('BadParse', 'BadJSON', 'BadSyntax',
-           'parse_request')
+           'read_request', 'validate_single_request')
 
 class BadParse(ExternalException):
     pass
@@ -25,39 +25,33 @@ class BadJSON(BadParse):
 class BadSyntax(BadParse):
     pass
 
-def parse_request(fp):
-    """Parse a JSON request, returning the parsed object.
+def read_request(fp):
+    """Read a JSON request from a stream and do some validation.
+
+    Return the request read, or raise an exception.
 
     fp is the file-like object to read the request from.
 
-    This does syntactic, but no semantic validation on the request.
+    This does top-level syntactic validation on the request only: it
+    checks that it it a list of single-requests and that they are
+    objects.
     """
-    def parse_request(r):
-        # Parse requests
-        if not (isinstance(r, list) or isinstance(r, tuple)):
-            raise BadSyntax("JSON request should be a list of single-requests")
-        return tuple(parse_single_request(s) for s in r)
+    try:
+        request = load(fp)
+    except Exception as e:
+        raise BadJSON("bad JSON request", e)
 
-    def parse_single_request(s):
-        # Parse a single request:
-        #
-        # it should be a dict;
-        if not isinstance(s, dict):
-            raise BadSyntax("single JSON request should be a dict")
-        # all the keys should be stringy (I think this is always true
-        # for JSON);
-        if not all(lambda k: isinstance(k, str) or isinstance(k, unicode)
-                   for k in s.keys()):
-            raise BadSyntax("non-stringy keys in single JSON request?")
-        # now canonicalize keys to lowercase;
-        cs = {k.lower(): v for (k, v) in s.iteritems()}
-        # it needs to have mip and experiment keys;
-        if 'mip' not in cs or 'experiment' not in cs:
-            raise BadSyntax("both 'mip' and 'experiment' must be specified")
-        # and validate all te keys
-        return {key: val
-                for (key, val) in (validate_sr_entry(k, v)
-                                   for (k, v) in cs.iteritems())}
+    if not ((isinstance(request, list) or isinstance(request, tuple)) and
+            all(isinstance(s, dict) for s in request)):
+        raise BadSyntax("JSON request should be a list of objects")
+    return request
+
+def validate_single_request(s):
+    """Validate a single-request.
+
+    Either return a canonicalised (lower-case keys) version, or raise
+    an exception if it is invalid.
+    """
 
     def validate_sr_entry(k, v):
         # Validate a single entry (keys are known to be stringy by
@@ -75,8 +69,19 @@ def parse_request(fp):
         else:
             raise BadSyntax("bad key {}".format(k))
 
-    try:
-        request = load(fp)
-    except Exception as e:
-        raise BadJSON("bad JSON request", e)
-    return parse_request(request)
+    if not isinstance(s, dict):
+        raise BadSyntax("single JSON request should be a dict")
+    # all the keys should be stringy (I think this is always true
+    # for JSON);
+    if not all(lambda k: isinstance(k, str) or isinstance(k, unicode)
+               for k in s.keys()):
+        raise BadSyntax("non-stringy keys in single JSON request?")
+    # now canonicalize keys to lowercase;
+    cs = {k.lower(): v for (k, v) in s.iteritems()}
+    # it needs to have mip and experiment keys;
+    if 'mip' not in cs or 'experiment' not in cs:
+        raise BadSyntax("both 'mip' and 'experiment' must be specified")
+    # and validate all the keys
+    return {key: val
+            for (key, val) in (validate_sr_entry(k, v)
+                               for (k, v) in cs.iteritems())}

@@ -17,7 +17,7 @@ requests = (({"mip": "test",
 def string2request(s):
     # I assume that StringIO streams don't need to be closed (because
     # they don't suport with properly)
-    return parse_request(StringIO(s))
+    return read_request(StringIO(s))
 
 def request2string(r):
     stream = StringIO()
@@ -26,7 +26,7 @@ def request2string(r):
 
 def test_round_trips():
     def test_one_round_trip(r):
-        # Test oen round-trip.  This is trying to not care whether
+        # Test one round-trip.  This is trying to not care whether
         # things come back as tuples or lists (because it doesn't
         # matter: they come back as tuples in fact).
         rt = string2request(request2string(r))

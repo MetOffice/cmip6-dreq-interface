@@ -5,68 +5,80 @@ from StringIO import StringIO
 from nose.tools import raises
 from djq.parse import *
 
-def parse_stringy_request(s):
+# Tests of the top-level reader
+#
+def read_stringy_request(s):
     # I assume that StringIO streams don't need to be closed (because
     # they don't suport with properly)
-    return parse_request(StringIO(s))
+    return read_request(StringIO(s))
 
-# Both lexically and syntactically fine
-#
-good_jsons = (
+good_toplevels = (
     "[]",
+    "[{}]",
     """
-[
- {"mip": "FOO",
-  "experiment": "BAR"}]""",
-    """
-[
- {"mip": "FOO",
-  "experiment": "BAR",
-  "dreq": "BINE"}]""",
-    """
-[
- {"MIP": "FOO",
-  "experiment": "BAR",
-  "Dreq": "BINE"}]""")
+[{"mip": "one",
+  "experiment": "two"}]""",
+    """[{"one": 2}]""")
 
-def test_good_jsons():
-    for j in good_jsons:
-        yield (parse_stringy_request, j)
+def test_good_toplevels():
+    for j in good_toplevels:
+        yield (read_stringy_request, j)
 
-# Lexically OK, syntactically bad
-#
-bad_jsons = (
-    "{}",
-    """
-[
- [1, 2]]""",
-    """
-[
- {"MIP": "FOO",
-  "UNKNOWN": "KEY"}]""")
+bad_toplevels = (
+    "1",
+    "[1]",
+    "[[]]")
 
-def test_bad_jsons():
+def test_bad_toplevels():
     @raises(BadSyntax)
-    def parse_bad(json):
-        parse_stringy_request(json)
-    for j in bad_jsons:
-        yield (parse_bad, j)
+    def read_bad(json):
+        return read_stringy_request(json)
+    for j in bad_toplevels:
+        yield (read_bad, j)
 
-# Not even lexically OK
-#
-# (note that the Python JSON module accepts repeated keys, so there's
-# nothing we can do about that (they are legal by the standard,
-# although implementations are allowed to reject them as an
-# extension).
-#
-malformed_jsons = (
-    "[",
+hopeless_toplevels = (
     "",
-    "just completely bogus rubbish here")
+    "["
+    "{1:}",
+    "not even trying")
 
-def test_malformed_jsons():
+def test_hopless_toplevels():
     @raises(BadJSON)
-    def parse_malformed(json):
-        parse_stringy_request(json)
-    for j in malformed_jsons:
-        yield (parse_malformed, j)
+    def read_hopeless(json):
+        return read_stringy_request(json)
+    for j in hopeless_toplevels:
+        yield (read_hopeless, j)
+
+# tests of single requests
+#
+
+good_single_requests = (
+    {'mip': "a",
+     'experiment': "b"},
+    {'mip': "c",
+     'experiment': "d",
+     'dreq': "e"},
+    {'MIP': "a",
+     'ExpeRiMENT': "b"},
+    {'mip': "a",
+     'experiment': "b",
+     'request-optional': "c"})
+
+def test_good_single_requests():
+    for s in good_single_requests:
+        yield (validate_single_request, s)
+
+bad_single_requests = (
+    {'mip': 1,
+     'experiment': "ok"},
+    {'unknown': "key"},
+    1,
+    [1, 2],
+    {})
+
+def test_bad_single_requests():
+    @raises(BadSyntax)
+    def validate_bad(s):
+        return validate_single_request(s)
+    for s in bad_single_requests:
+        yield(validate_bad, s)
