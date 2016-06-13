@@ -14,3 +14,11 @@ from .emit import *
 # Loader
 from . import load
 from .load import *
+
+# Toplevel
+from . import toplevel
+from .toplevel import *
+
+# Variable mapping
+from . import variables
+from .variables import *
