@@ -18,8 +18,8 @@ class BadParse(ExternalException):
     pass
 
 class BadJSON(BadParse):
-    def __init__(self, string, wrapped=None):
-        super(BadJSON, self).__init__(string)
+    def __init__(self, message, wrapped=None):
+        super(BadJSON, self).__init__(message)
         self.wrapped = wrapped
 
 class BadSyntax(BadParse):
