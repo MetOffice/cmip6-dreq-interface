@@ -57,12 +57,15 @@ def test_bad_request():
     for r in loads(out.getvalue()):
         yield (check_bad_reply, r)
 
-# This request should elicit an error response (this is slightly
-# relying on an 'obviously absurd' tag name
+# This request should elicit error responses (this is slightly relying
+# on an 'obviously absurd' tag name
 #
 error_request = ({'mip': "ok",
                   'experiment': "ok",
-                  'dreq': "premadness-hegelian-Eu-top-dog-Spartacan"},)
+                  'dreq': "premadness-hegelian-Eu-top-dog-Spartacan"},
+                 {'mip': "ok",
+                  'experiment': None,
+                  'dreq': "premadness-hegelian-Eu-top-dog-Spartacan"})
 
 def test_error_request():
     def check_error_reply(reply):

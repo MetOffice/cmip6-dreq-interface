@@ -57,13 +57,22 @@ def validate_single_request(s):
         # Validate a single entry (keys are known to be stringy by
         # now):
         #
-        # known keys need to have stringy values;
-        if k == 'mip' or k == 'experiment' or k == 'dreq':
+        # Check known keys
+        if k == 'mip' or k == 'dreq':
+            # 'mip' and 'dreq' must be stringy
             if isinstance(v, str) or isinstance(v, unicode):
                 return (k, v)
             else:
                 raise BadSyntax("not a string in {}: {}".format(k, v))
-        # and unknown keys need to start with the right prefix.
+        elif k == 'experiment':
+            # 'experiment' must be stringy, None, or a boolean
+            if (isinstance(v, str) or isinstance(v, unicode)
+                or v is None or isinstance(v, bool)):
+                return (k, v)
+            else:
+                raise BadSyntax(
+                    "experiment isn't string, boolean or null: {}".format(k, v))
+        # Check unknown keys start with the right prefix.
         elif k.startswith("request-"):
             return (k, v)
         else:

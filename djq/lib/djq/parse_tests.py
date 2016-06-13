@@ -18,6 +18,9 @@ good_toplevels = (
     """
 [{"mip": "one",
   "experiment": "two"}]""",
+    """
+[{"mip": "one",
+  "experiment": null}]""",
     """[{"one": 2}]""")
 
 def test_good_toplevels():
@@ -60,6 +63,8 @@ good_single_requests = (
      'dreq': "e"},
     {'MIP': "a",
      'ExpeRiMENT': "b"},
+    {'mip': "a",
+     'experiment': None},
     {'mip': "a",
      'experiment': "b",
      'request-optional': "c"})
