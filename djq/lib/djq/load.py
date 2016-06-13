@@ -2,8 +2,8 @@
 """
 
 from os import getenv
-from os.path import expanduser, expandvars, isdir, join
-from dqi.util import load_from_dqroot as ldq
+from os.path import expanduser, expandvars, isdir, join, split
+from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
 
 __all__ = ('default_dqroot', 'default_dqtag', 'valid_dqroot', 'valid_dqtag',
            'dqload')
@@ -65,7 +65,11 @@ def dqload(tag=None, root=None):
     exception the underlying dreq code does if things are bad.  If you
     want to check for this use the valid_* functions.
     """
-    return ldq(join(root if root is not None else dqroot,
-                    "tags",
-                    tag if tag is not None else dqtag,
-                    "dreqPy", "docs"))
+    # This replicates some code in dqi.util and dqi.low, to avoid a
+    # dependency on dqi as this is the only place djq relied on it.
+    top = join(root if root is not None else dqroot,
+                  "tags",
+                  tag if tag is not None else dqtag,
+                  "dreqPy", "docs")
+    return loadDreq(dreqXML=join(top, split(defaultDreqPath)[1]),
+                    configdoc=join(top, split(defaultConfigPath)[1]))
