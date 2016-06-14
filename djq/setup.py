@@ -12,4 +12,5 @@ setup(name="djq",
       package_dir={"":"lib"},
       scripts=("bin/djq",),
       test_suite='nose.collector',
+      install_requires=("dreqpy",),
       zip_safe=False)

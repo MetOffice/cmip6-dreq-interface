@@ -10,4 +10,5 @@ setup(name="dqi",
       scripts=("bin/jwalk", "bin/twalk",
                "bin/m2v", "bin/v2m",
                "bin/dqcsv"),
+      install_requires=("dreqpy",),
       zip_safe=False)
