@@ -12,7 +12,7 @@ from argparse import ArgumentParser
 from djq import default_dqroot, valid_dqroot, default_dqtag
 from djq import process
 from djq.low import verbosity_level, debug_level
-from djq.low import ExternalException
+from djq.low import ExternalException, Scram
 
 class BadRoot(ExternalException):
     def __init__(self, root):
@@ -59,6 +59,8 @@ def main():
         else:
             process(stdin, stdout, backtrace=backtrace)
 
+    except Scram as e:
+        raise
     except Exception as e:
         if not backtrace:
             exit(e)

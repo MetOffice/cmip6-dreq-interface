@@ -1,6 +1,6 @@
 # Exceptions
 
-__all__ = ('InternalException', 'ExternalException')
+__all__ = ('InternalException', 'ExternalException', 'Scram')
 
 class InternalException(Exception):
     """An exception which is our fault"""
@@ -9,3 +9,6 @@ class InternalException(Exception):
 class ExternalException(Exception):
     """An exception which is not out fault"""
     pass
+
+class Scram(Exception):
+    """An exception which should not be handled anywhere"""

@@ -1,8 +1,8 @@
 """top-level functionality
 """
 
+from low import InternalException, ExternalException, Scram
 from emit import emit_reply, emit_catastrophe
-from low import InternalException, ExternalException
 from parse import read_request, validate_single_request
 from load import (default_dqroot, default_dqtag, valid_dqroot, valid_dqtag,
                   dqload)
@@ -33,6 +33,8 @@ def process(input, output, backtrace=False):
         emit_reply(tuple(process_single_request(r)
                          for r in read_request(input)),
                    output)
+    except Scram as e:
+        raise
     except ExternalException as e:
         emit_catastrophe("{}".format(e), output,
                          note="external error")
