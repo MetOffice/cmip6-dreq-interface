@@ -10,7 +10,7 @@ from variables import compute_variables
 
 __all__ = ('process',)
 
-def process(input, output, debugging=False):
+def process(input, output, backtrace=False):
     """Process a request stream, emitting results on a reply stream.
 
     This reads a request from input, and from this generates a reply
@@ -20,7 +20,7 @@ def process(input, output, debugging=False):
 
     This function is the custodian of exceptions: it has handlers for
     anything which should happen and emits suitable replies in that
-    case.  If debugging is true it also reraises the exception so a
+    case.  If backtrace is true it also reraises the exception so a
     stack trace can be created.
 
     Anything below this should normally handle its own exceptions and
@@ -36,17 +36,17 @@ def process(input, output, debugging=False):
     except ExternalException as e:
         emit_catastrophe("{}".format(e), output,
                          note="external error")
-        if debugging:
+        if backtrace:
             raise
     except InternalException as e:
         emit_catastrophe("{}".format(e), output,
                          note="internal error")
-        if debugging:
+        if backtrace:
             raise
     except Exception as e:
         emit_catastrophe("{}".format(e), output,
                          note="unexpected internal error")
-        if debugging:
+        if backtrace:
             raise
 
 class DREQLoadFailure(Exception):
