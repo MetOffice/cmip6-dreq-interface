@@ -11,6 +11,7 @@ from sys import stdin, stdout, argv
 from argparse import ArgumentParser
 from djq import default_dqroot, valid_dqroot, default_dqtag
 from djq import process
+from djq.low import verbosity_level, debug_level
 from djq.low import ExternalException
 
 class BadRoot(ExternalException):
@@ -26,6 +27,9 @@ def main():
     parser.add_argument("-t", "--tag",
                         default=None, dest='dqtag',
                         help="the default tag for the DREQ")
+    parser.add_argument("-v", "--verbose",
+                        action='count', dest='verbosity',
+                        help="increase verbosity")
     parser.add_argument("-d", "--debug",
                         action='store_true', dest='debug',
                         help="debugging: don't suppress backtraces")
@@ -36,6 +40,9 @@ def main():
     try:
         args = parser.parse_args()
         debugging = args.debug
+        if debugging:
+            debug_level(1)
+        verbosity_level(args.verbosity)
         if args.dqroot is not None:
             default_dqroot(args.dqroot)
         # root can be checked, tag can't because it can be set in requests
