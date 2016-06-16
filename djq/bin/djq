@@ -9,15 +9,22 @@
 
 from sys import stdin, stdout, argv
 from argparse import ArgumentParser
-from djq import default_dqroot, valid_dqroot, default_dqtag
+from djq import default_dqroot, valid_dqroot, default_dqtag, valid_dqtag
 from djq import process
-from djq.low import verbosity_level, debug_level
+from djq.low import verbosity_level, debug_level, mutter
 from djq.low import ExternalException, Scram
 
 class BadRoot(ExternalException):
     def __init__(self, root):
-        super(ExternalException, self).__init__(
-            "{} doesn't look like a DREQ root".format(root))
+        self.root = root
+    def __str__(self):
+        return "bad root {}".format(self.root)
+
+class BadTag(ExternalException):
+    def __init__(self, tag):
+        self.tag = tag
+    def __str__(self):
+        return "bad tag {} for root {}".format(self.tag, default_dqroot())
 
 def main():
     parser = ArgumentParser(description="DREQ JSON Query tool")
@@ -39,7 +46,6 @@ def main():
     parser.add_argument('request', nargs='?', default=None,
                         help="JSON request (stdin default)")
     backtrace = None
-
     try:
         args = parser.parse_args()
         debugging = args.backtrace
@@ -47,18 +53,23 @@ def main():
         verbosity_level(args.verbosity)
         if args.dqroot is not None:
             default_dqroot(args.dqroot)
-        # root can be checked, tag can't because it can be set in requests
+        # root can be checked, tag can't in general because it can be
+        # set in requests
         if not valid_dqroot():
             raise BadRoot(default_dqroot())
         if args.dqtag is not None:
+            # but we can check it here
+            if not valid_dqtag(tag=args.dqtag):
+                raise BadTag(args.dqtag)
             default_dqtag(args.dqtag)
-
+        mutter("root {} tag {}", default_dqroot(), default_dqtag())
         if args.request is not None:
+            mutter("from {}", args.request)
             with open(args.request) as input:
                 process(input, stdout, backtrace=backtrace)
         else:
+            mutter("from -")
             process(stdin, stdout, backtrace=backtrace)
-
     except Scram as e:
         raise
     except Exception as e:
