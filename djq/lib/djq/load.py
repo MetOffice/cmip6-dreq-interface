@@ -2,14 +2,25 @@
 """
 
 from os import getenv
+from sys import argv
 from os.path import expanduser, expandvars, isdir, join, split
 from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
 
 __all__ = ('default_dqroot', 'default_dqtag', 'valid_dqroot', 'valid_dqtag',
            'dqload')
 
+# Guessing a root and a tag.
+#
+# Either listen to environment variables, or fall back to a directory
+# based on the location of the script, which is essentially
+# ../data/CMIP6dreq.  This will almost always be wrong, but we have to
+# try something.
+#
+# Python's pathname tools are annoyingly rudimentary compared to
+# File::Spec, hence this arcana.
+#
 dqroot = (expandvars("$DJQ_DQROOT") if getenv("DJQ_DQROOT")
-         else expanduser("~tbradsha/work/cmip6-data-request/CMIP6dreq"))
+          else join(split(split(argv[0])[0])[0], "data", "CMIP6dreq"))
 
 dqtag = getenv("DJQ_DQTAG") or "latest"
 
