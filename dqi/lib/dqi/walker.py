@@ -214,18 +214,19 @@ def walk_thing(thing, dqt, ruleset, dq, for_side_effect=False, **kws):
     if dqt is None:
         dqt = dqtype(thing)
 
-    result = {} if not for_side_effect else None
+    # Box result to overcome Python scope braindeath
+    result = [{}] if not for_side_effect else None
 
     def record(name, value):
         # record a value for a name
         if not for_side_effect:
-            result[name] = value
+            result[0][name] = value
 
     def eval_rule(rule):
         if callable(rule):
             # function: just return its result
-            result = rule(thing, dqt, ruleset, dq,
-                          for_side_effect=for_side_effect, **kws)
+            result[0] = rule(thing, dqt, ruleset, dq,
+                             for_side_effect=for_side_effect, **kws)
         elif isinstance(rule, list):
             # cond
             eval_cond(rule, eval_rule)
@@ -304,7 +305,7 @@ def walk_thing(thing, dqt, ruleset, dq, for_side_effect=False, **kws):
                 return
 
     if not for_side_effect:
-        return result
+        return result[0]
     else:
         return
 
