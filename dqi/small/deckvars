@@ -9,15 +9,15 @@ from dqi.walker import walk_dq, mips_of_cmv
 from dqi.tools import ldq
 
 def walkit(dq):
-    ruleset = {'CMORvar': (lambda cmv, dqt, rules, dq,
-                           for_side_effect=False, **junk:
-                               (True if "DECK" in mips_of_cmv(cmv, dq)
-                                else False))}
-    return walk_dq(dq, ruleset)
+    return walk_dq(dq, {'CMORvar': (lambda cmv, dqt, rules, dq,
+                                    for_side_effect=False, **junk:
+                                        mips_of_cmv(cmv, dq))})
 
 if __name__ == '__main__':
     for (mtn, varmap) in walkit(ldq()).iteritems():
-        for (varname, decktuple) in varmap.iteritems():
-            for foundp in decktuple:
-                if foundp:
-                    print "{}:{}".format(mtn, varname)
+        for (varname, mts) in varmap.iteritems():
+            for mips in mts:
+                if 'DECK' in mips:
+                    print "{} {} {}".format(mtn, varname, ":"
+                                            .join(mip for mip in mips
+                                                  if mip != 'DECK'))
