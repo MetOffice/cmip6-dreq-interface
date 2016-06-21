@@ -2,11 +2,13 @@
 """
 
 from low import InternalException, ExternalException, Scram
+from low import debug
 from emit import emit_reply, emit_catastrophe
 from parse import read_request, validate_single_request
 from load import (default_dqroot, default_dqtag, valid_dqroot, valid_dqtag,
                   dqload)
-from variables import compute_variables
+from variables import (compute_variables, NoMIP, NoExperiment,
+                       WrongExperiment, NotImplemented)
 
 __all__ = ('process',)
 
@@ -72,9 +74,8 @@ def ensure_dq(tag):
     Multiple requests for the same tag will return the same instance
     of the dreq.
     """
-    if tag in dqs:
-        return dqs[tag]
-    else:
+    if tag not in dqs:
+        debug("missed {}, loading dreq", tag)
         if tag is not None:
             if valid_dqtag(tag):
                 try:
@@ -88,6 +89,7 @@ def ensure_dq(tag):
                 dqs[None] = dqload()
             except Exception as e:
                 raise DREQLoadFailure(wrapped=e)
+    return dqs[tag]
 
 def process_single_request(r):
     """Process a single request, returning a suitable result for JSONisation.
@@ -96,22 +98,41 @@ def process_single_request(r):
     if the request was bogus, or an error response if the dreq could
     not be loaded.
     """
+    # Outer try/except block catches obviously bad requests and dreq
+    # load failures
+    #
     try:
+
         rc = validate_single_request(r)
         dq = ensure_dq(rc['dreq'] if 'dreq' in rc else None)
         reply = dict(rc)
-        reply.update({'status': "ok",
-                      'variables': compute_variables(dq,
-                                                     rc['mip'],
-                                                     rc['experiment'])})
+        # inner block handles semantic errors with the request and has
+        # a fallback for other errors
+        try:
+            reply.update({'reply-status': "ok",
+                          'reply-variables':
+                              compute_variables(dq, rc['mip'],
+                                                rc['experiment'])})
+        except NoMIP as e:
+            reply.update({'reply-variables': None,
+                          'reply-status': "not-found",
+                          'reply-status-detail': "no MIP {}".format(e.mip)})
+        except NoExperiment as e:
+            reply.update({'reply-variables': None,
+                          'reply-status': "not-found",
+                          'reply-status-detail':
+                          "no experiment {}".format(e.experiment)})
+        except WrongExperiment as e:
+            reply.update({'reply-variables': None,
+                          'reply-status': "not-found",
+                          'reply-status-detail':
+                          "experiment {} not in MIP {}" .format(e.experiment,
+                                                                e.mip)})
+        except (ExternalException, InternalException) as e:
+            reply.update({'reply-variables': None,
+                          'reply-status': "error",
+                          'reply-status-detail': "{}".format(e)})
         return reply
-    except ExternalException as e:
-        # if this happens then rc is not valid
-        return {'mip': r['mip'] if 'mip' in r else "?",
-                'experiment': r['experiment'] if 'experiment' in r else "?",
-                'reply-variables': None,
-                'reply-status': 'bad-request',
-                'reply-status-detail': "{}".format(e)}
     except DREQLoadFailure as e:
         # rc is valid here
         reply = dict(rc)
@@ -124,3 +145,10 @@ def process_single_request(r):
                           if e.message is not None
                           else ""))})
         return reply
+    except ExternalException as e:
+        # if this happens then rc is not valid
+        return {'mip': r['mip'] if 'mip' in r else "?",
+                'experiment': r['experiment'] if 'experiment' in r else "?",
+                'reply-variables': None,
+                'reply-status': 'bad-request',
+                'reply-status-detail': "{}".format(e)}
