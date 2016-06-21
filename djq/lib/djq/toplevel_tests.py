@@ -31,7 +31,7 @@ def test_catastrophic_inputs_raising():
     @raises(ExternalException)
     def check_catastrophe(s):
         out = StringIO()
-        process(StringIO(s), out, debugging=True)
+        process(StringIO(s), out, backtrace=True)
     for i in catastrophic_inputs:
         yield (check_catastrophe, i)
 
