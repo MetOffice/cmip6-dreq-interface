@@ -4,7 +4,7 @@
 # This is where we actually compute the variables.  There is no
 # abstraction from the dreq interface at all here.
 
-from low import ExternalException, InternalException, Scram
+from low import ExternalException, InternalException, Disaster
 from low import mutter
 
 __all__ = ('compute_variables', 'NoMIP', 'NoExperiment')
@@ -25,36 +25,72 @@ class WrongExperiment(ExternalException):
 class NotImplemented(InternalException):
     pass
 
+
 def compute_variables(dq, mip, experiment):
-    """Compute the for a MIP and experiment name.
-
-    This first checks the experiment is valid and belongs to the MIP,
-    finds the experiment UID, then computes a set of CMV UIDs
-    corresponding to the MIP and the experiment, turns them into
-    something suitable for JSON, and returns them.
+    """Compute the variables for a MIP and generalised experiment name.
     """
+    validate_mip_experiment(dq, mip, experiment)
 
-    if not (isinstance(experiment, str)
-            or isinstance(experiment, unicode)):
-        raise  NotImplemented("can't do experiment special cases yet")
+    if (isinstance(experiment, str) or isinstance(experiment, unicode)
+        or experiment is None or isinstance(experiment, bool)):
+        return jsonify_cmvids(dq,
+                              compute_cmvids(dq,
+                                             mip,
+                                             exids_of_mip(dq,
+                                                          mip,
+                                                          experiment)))
+    else:
+        raise Disaster("this can't happen")
+
+def validate_mip_experiment(dq, mip, experiment):
+    """Validate a MIP and an experiment if it is stringy.
+
+    Raise suitable exceptions on failure.
+    """
     if mip not in dq.inx.uid or dq.inx.uid[mip]._h.label != 'mip':
         raise NoMIP(mip)
-    if experiment not in dq.inx.experiment.label:
-        raise NoExperiment(experiment)
-    exid = None
-    for ei in dq.inx.experiment.label[experiment]:
-        if mip == dq.inx.uid[ei].mip:
-            exid = ei
-    if exid is None:
+    if isinstance(experiment, str) or isinstance(experiment, unicode):
+        for ei in dq.inx.experiment.label[experiment]:
+            if mip == dq.inx.uid[ei].mip:
+                return
         raise WrongExperiment(experiment, mip)
-    return jsonify_cmvids(dq, (cmvids_of_mip(dq, mip)
-                               | cmvids_of_exid(dq, exid)))
+
+def compute_cmvids(dq, mip, exids):
+    """Compute the cmvids for a MIP and a set of experiment ids."""
+    cmvids = set(cmvids_of_mip(dq, mip))
+    for exid in exids:
+        cmvids.update(cmvids_of_exid(dq, exid))
+    return cmvids
+
+def exids_of_mip(dq, mip, match):
+    """Find all the names of the experiments of mip matched by match.
+
+    match may be a string, a list of strings, a set or frozenset of
+    strings, or something truthy or falsy.
+
+    This is more general than the system needs (you never get lists or
+    sets of experiments).
+    """
+
+    def expt_matches(expt):
+        # there must be a more idiomatic way of doing type dispatch
+        if isinstance(match, str) or isinstance(match, unicode):
+            return expt.label == match
+        elif (isinstance(match, list) or isinstance(match, tuple)
+              or isinstance(match, set) or isinstance(match, frozenset)):
+            return True if expt.label in match else False
+        else:
+            return True if match else False
+
+    return set(expt.uid for expt in dq.coll['experiment'].items
+               if expt.mip == mip and expt_matches(expt))
 
 # Finding the cmvids for MIPS
 # This is not insanely hard
 #
 
 def cmvids_of_mip(dq, mipname):
+
     """Ids of CMORvars which link to mipname.
 
     This is taken from the examples in the dreq
