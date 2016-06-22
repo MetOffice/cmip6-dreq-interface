@@ -1,5 +1,9 @@
+"""Parsing JSON requests
+"""
+
 from json import load
 from low import ExternalException
+from low import stringlike, arraylike
 
 # A request is an array of single-requests
 # a single-request is a dictionary with keys:
@@ -41,8 +45,7 @@ def read_request(fp):
     except Exception as e:
         raise BadJSON("bad JSON request", e)
 
-    if not ((isinstance(request, list) or isinstance(request, tuple)) and
-            all(isinstance(s, dict) for s in request)):
+    if not (arraylike(request) and all(isinstance(s, dict) for s in request)):
         raise BadSyntax("JSON request should be a list of objects")
     return request
 
@@ -60,14 +63,13 @@ def validate_single_request(s):
         # Check known keys
         if k == 'mip' or k == 'dreq':
             # 'mip' and 'dreq' must be stringy
-            if isinstance(v, str) or isinstance(v, unicode):
+            if stringlike(v):
                 return (k, v)
             else:
                 raise BadSyntax("not a string in {}: {}".format(k, v))
         elif k == 'experiment':
             # 'experiment' must be stringy, None, or a boolean
-            if (isinstance(v, str) or isinstance(v, unicode)
-                or v is None or isinstance(v, bool)):
+            if stringlike(v) or v is None or isinstance(v, bool):
                 return (k, v)
             else:
                 raise BadSyntax(
@@ -82,8 +84,7 @@ def validate_single_request(s):
         raise BadSyntax("single JSON request should be a dict")
     # all the keys should be stringy (I think this is always true
     # for JSON);
-    if not all(lambda k: isinstance(k, str) or isinstance(k, unicode)
-               for k in s.keys()):
+    if not all(stringlike for k in s.keys()):
         raise BadSyntax("non-stringy keys in single JSON request?")
     # now canonicalize keys to lowercase;
     cs = {k.lower(): v for (k, v) in s.iteritems()}

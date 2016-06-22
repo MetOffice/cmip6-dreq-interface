@@ -14,6 +14,7 @@
 
 from djq.low import ExternalException, InternalException, Disaster
 from djq.low import mutter, mumble, make_checktree, check, run_checks
+from djq.low import stringlike, arraylike, setlike
 from jsonify import jsonify_cmvids
 
 __all__ = ('compute_variables', 'NoMIP', 'WrongExperiment', 'NoExperiment')
@@ -41,8 +42,8 @@ def compute_variables(dq, mip, experiment):
     mutter("  mip {} experiment {}", mip, experiment)
     validate_mip_experiment(dq, mip, experiment)
 
-    if (isinstance(experiment, str) or isinstance(experiment, unicode)
-        or experiment is None or isinstance(experiment, bool)):
+    if (stringlike(experiment) or experiment is None
+        or isinstance(experiment, bool)):
         cmvids = compute_cmvids(dq, mip, exids_of_mip(dq, mip, experiment))
         mutter("  -> {} variables", len(cmvids))
         return jsonify_cmvids(dq, cmvids)
@@ -56,7 +57,7 @@ def validate_mip_experiment(dq, mip, experiment):
     """
     if mip not in dq.inx.uid or dq.inx.uid[mip]._h.label != 'mip':
         raise NoMIP(mip)
-    if isinstance(experiment, str) or isinstance(experiment, unicode):
+    if stringlike(experiment):
         if experiment not in dq.inx.experiment.label:
             raise NoExperiment(experiment)
         for ei in dq.inx.experiment.label[experiment]:
@@ -86,10 +87,9 @@ def exids_of_mip(dq, mip, match):
 
     def expt_matches(expt):
         # there must be a more idiomatic way of doing type dispatch
-        if isinstance(match, str) or isinstance(match, unicode):
+        if stringlike(match):
             return expt.label == match
-        elif (isinstance(match, list) or isinstance(match, tuple)
-              or isinstance(match, set) or isinstance(match, frozenset)):
+        elif arraylike(match) or setlike(match):
             return True if expt.label in match else False
         else:
             return True if match else False

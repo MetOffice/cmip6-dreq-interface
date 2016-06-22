@@ -13,6 +13,7 @@ __all__ = ('make_checktree', 'register_check', 'check', 'run_checks',
 
 from collections import defaultdict
 from noise import chatter, mumble, debug
+from types import stringlike
 
 class CheckNode(object):
     def __init__(self):
@@ -20,7 +21,7 @@ class CheckNode(object):
         self.checks = defaultdict(list)
 
     def add(self, branch, priority, name, check):
-        if isinstance(branch, str) or isinstance(branch, unicode):
+        if stringlike(branch):
             self.add(branch.split("."), priority, name, check)
         elif len(branch) == 0:
             self.checks[priority].append((name, check))
@@ -28,7 +29,7 @@ class CheckNode(object):
             self.subnodes[branch[0]].add(branch[1:], priority, name, check)
 
     def find(self, branch):
-        if isinstance(branch, str) or isinstance(branch, unicode):
+        if stringlike(branch):
             return self.find(branch.split("."))
         elif len(branch) == 0:
             return self
@@ -38,7 +39,7 @@ class CheckNode(object):
             return None
 
     def run(self, path, minpri, args, kwargs):
-        if isinstance(path, str) or isinstance(path, unicode):
+        if stringlike(path):
             return self.run(path.split("."), minpri, args, kwargs)
         else:
             ok = None

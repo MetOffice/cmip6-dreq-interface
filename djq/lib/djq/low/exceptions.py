@@ -1,4 +1,5 @@
-# Exceptions
+"""Exceptions for djq
+"""
 
 __all__ = ('InternalException', 'ExternalException', 'Disaster',
            'Scram')
@@ -16,3 +17,4 @@ class Disaster(InternalException):
 
 class Scram(Exception):
     """An exception which should not be handled anywhere"""
+    pass
