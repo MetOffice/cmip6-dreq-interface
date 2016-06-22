@@ -176,8 +176,9 @@ def cmvids_of_exid(dq, exid):
 
 def jsonify_cmvids(dq, cmvids):
     """Return a suitable dict for a bunch of cmv uids.:"""
-    return tuple(jsonify_cmvid(dq, cmvid)
-                 for cmvid in cmvids)
+    return sorted((jsonify_cmvid(dq, cmvid)
+                   for cmvid in cmvids),
+                  key=lambda j: j['label'])
 
 def jsonify_cmvid(dq, cmvid):
     cmv = dq.inx.uid[cmvid]

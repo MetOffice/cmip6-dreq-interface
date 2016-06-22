@@ -1,0 +1,6 @@
+[{"dreq": "01.beta.29",
+ "mip": "AerChemMIP",
+  "experiment": "HISTghg"},
+ {"dreq": "latest",
+  "mip": "AerChemMIP",
+  "experiment": "HISTghg"}]
