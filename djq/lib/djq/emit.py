@@ -23,6 +23,7 @@ def emit_reply(reply, fp):
     """
     try:
         dump(reply, fp, indent=2)
+        fp.write("\n")          # prettier: I think it is safe JSON
     except Exception as e:
         raise EmitFailed("badness when emitting", e)
 
@@ -33,3 +34,4 @@ def emit_catastrophe(message, fp, **others):
     """
     dump(dict((('catastrophe', message),), **others), fp,
          indent=2)
+    fp.write("\n")              # see above
