@@ -1,8 +1,12 @@
 """Runtime check framework
 """
 
-# A check is a function, called with no arguments, which should return
-# true or false.  Checks live in a tree and have priorities and names.
+# A check is a function, which may have any arguments, which should
+# return true or false.  Checks live in a tree and have priorities and
+# names.  You can pass arguments and keyword arguments to functions
+# when running them but the default is not to.  All functions in a
+# given tree get the same arguments.
+#
 
 __all__ = ('make_checktree', 'register_check', 'check', 'run_checks',
            'enable_checks')
@@ -33,9 +37,9 @@ class CheckNode(object):
         else:
             return None
 
-    def run(self, path, minpri):
+    def run(self, path, minpri, args, kwargs):
         if isinstance(path, str) or isinstance(path, unicode):
-            return self.run(path.split("."), minpri)
+            return self.run(path.split("."), minpri, args, kwargs)
         else:
             ok = None
             # checks further up the tree run first, and higher
@@ -45,7 +49,7 @@ class CheckNode(object):
                                if pri >= minpri),
                               reverse=True):
                 for (name, check) in self.checks[pri]:
-                    if check():
+                    if check(*args, **kwargs):
                         mumble("passed {}/{}/{}", ".".join(path), pri, name)
                         ok = True
                     else:
@@ -53,7 +57,8 @@ class CheckNode(object):
                         ok = False
             for (pathelt, subnode) in sorted(self.subnodes.iteritems(),
                                              key=lambda i: i[0]):
-                snok = subnode.run(tuple(path) + (pathelt,), minpri)
+                snok = subnode.run(tuple(path) + (pathelt,), minpri,
+                                   args, kwargs)
                 if ok is not False and snok is not None:
                     ok = snok
             return ok
@@ -101,7 +106,7 @@ def enable_checks(enabled=None, minpri=None):
     checks_minpri = minpri if minpri is not None else checks_minpri
     debug("enabled {} minpri {}", checks_enabled, checks_minpri)
 
-def run_checks(tree, path=None, minpri=None, enabled=None):
+def run_checks(tree, path=None, minpri=None, enabled=None, args=(), kwargs={}):
 
     """Run some or all checks for tree
 
@@ -109,6 +114,8 @@ def run_checks(tree, path=None, minpri=None, enabled=None):
     (fallback is 0 but this can be contolled with enable_checks) run
     only checks with priority greater than or equal to it. enabled can
     be used to override what enable_checks would say.
+
+    args and kwargs are passed to the check functions if given.
 
     If you give a path where there are no checks, or no checks have a
     high enough priority, then no checks will run and the function
@@ -128,7 +135,7 @@ def run_checks(tree, path=None, minpri=None, enabled=None):
         # isn't, with "" there would be).
         if node:
             return node.run(() if path is None else path,
-                            minpri)
+                            minpri, args, kwargs)
         else:
             return None
     else:

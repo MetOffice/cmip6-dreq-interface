@@ -33,3 +33,12 @@ def test_no_checks():
 def test_high_priority_checks():
     assert run_checks(tree, minpri=1) is True
     assert run_checks(tree, minpri=2) is None
+
+argtree = make_checktree()
+
+@check(argtree, "nine/six")
+def ninesix(a, b=2):
+    return a == b
+
+def test_arg_checks():
+    assert run_checks(argtree, args=(1,), kwargs={'b': 1}) is True
