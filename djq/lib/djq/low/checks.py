@@ -51,10 +51,10 @@ class CheckNode(object):
                               reverse=True):
                 for (name, check) in self.checks[pri]:
                     if check(*args, **kwargs):
-                        mumble("passed {}/{}/{}", ".".join(path), pri, name)
+                        mumble("[passed {}/{}/{}]", ".".join(path), pri, name)
                         ok = True
                     else:
-                        chatter("failed {}/{}/{}", ".".join(path), pri, name)
+                        chatter("[failed {}/{}/{}]", ".".join(path), pri, name)
                         ok = False
             for (pathelt, subnode) in sorted(self.subnodes.iteritems(),
                                              key=lambda i: i[0]):

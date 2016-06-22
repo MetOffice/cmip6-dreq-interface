@@ -44,7 +44,10 @@ def compute_variables(dq, mip, experiment):
 
     if (stringlike(experiment) or experiment is None
         or isinstance(experiment, bool)):
-        cmvids = compute_cmvids(dq, mip, exids_of_mip(dq, mip, experiment))
+        exids = exids_of_mip(dq, mip, experiment)
+        for label in sorted(dq.inx.uid[exid].label for exid in exids):
+            mumble("      {}", label)
+        cmvids = compute_cmvids(dq, mip, exids)
         mutter("  -> {} variables", len(cmvids))
         return jsonify_cmvids(dq, cmvids)
     else:
@@ -96,8 +99,6 @@ def exids_of_mip(dq, mip, match):
 
     expts = set(expt for expt in dq.coll['experiment'].items
                 if expt.mip == mip and expt_matches(expt))
-    for label in sorted(expt.label for expt in expts):
-        mumble("      {}", label)
     return set(expt.uid for expt in expts)
 
 # Finding the cmvids for MIPS
@@ -111,12 +112,12 @@ def cmvids_of_mip(dq, mipname):
     """
     # request groups that link to the MIP
     rgs = set(dq.inx.uid[l.refid]
-              for l in (dl for dl in dq.coll['requestLink'].items
-                        if dl.mip == mipname))
+              for l in (rl for rl in dq.coll['requestLink'].items
+                        if rl.mip == mipname))
     # and the variable names of those groups
     return set(dq.inx.uid[rv].vid
-               for rvs in (dq.inx.iref_by_sect[vg.uid].a['requestVar']
-                           for vg in rgs)
+               for rvs in (dq.inx.iref_by_sect[rg.uid].a['requestVar']
+                           for rg in rgs)
                for rv in rvs)
 
 
