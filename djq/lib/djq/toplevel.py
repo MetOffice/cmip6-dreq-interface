@@ -7,8 +7,7 @@ from emit import emit_reply, emit_catastrophe
 from parse import read_request, validate_single_request
 from load import (default_dqroot, default_dqtag, valid_dqroot, valid_dqtag,
                   dqload)
-from variables import (compute_variables, NoMIP, NoExperiment,
-                       WrongExperiment, NotImplemented)
+from variables import compute_variables, NoMIP, NoExperiment, WrongExperiment
 
 __all__ = ('process',)
 

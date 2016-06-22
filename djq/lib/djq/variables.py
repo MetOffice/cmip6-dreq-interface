@@ -2,7 +2,15 @@
 """
 
 # This is where we actually compute the variables.  There is no
-# abstraction from the dreq interface at all here.
+# abstraction from the dreq interface at all here, and you need to be
+# reasonably familiar with it to make any sense of this.  Pretty much
+# everything works in terms of UIDs since they uniquely define obects
+# (the UIDs of MIPs are the same as their names, but this isn't true
+# for anything else, and things like experiment names don't need to be
+# unique).  All the functions that do work get a first argument which
+# is the dreq object, called dq, and do a lot of grovelling around in
+# dq.inx.* as you'd expect.
+#
 
 from low import ExternalException, InternalException, Disaster
 from low import mutter
@@ -22,12 +30,10 @@ class WrongExperiment(ExternalException):
         self.experiment = experiment
         self.mip = mip
 
-class NotImplemented(InternalException):
-    pass
-
-
 def compute_variables(dq, mip, experiment):
     """Compute the variables for a MIP and generalised experiment name.
+
+    This is the only public function in this module.
     """
     validate_mip_experiment(dq, mip, experiment)
 
@@ -45,11 +51,13 @@ def compute_variables(dq, mip, experiment):
 def validate_mip_experiment(dq, mip, experiment):
     """Validate a MIP and an experiment if it is stringy.
 
-    Raise suitable exceptions on failure.
+    Raise suitable exceptions on failure, return value undefined.
     """
     if mip not in dq.inx.uid or dq.inx.uid[mip]._h.label != 'mip':
         raise NoMIP(mip)
     if isinstance(experiment, str) or isinstance(experiment, unicode):
+        if experiment not in dq.inx.experiment.label:
+            raise NoExperiment(experiment)
         for ei in dq.inx.experiment.label[experiment]:
             if mip == dq.inx.uid[ei].mip:
                 return
@@ -69,7 +77,8 @@ def exids_of_mip(dq, mip, match):
     strings, or something truthy or falsy.
 
     This is more general than the system needs (you never get lists or
-    sets of experiments).
+    sets of experiments, currently).
+
     """
 
     def expt_matches(expt):
@@ -85,12 +94,12 @@ def exids_of_mip(dq, mip, match):
     return set(expt.uid for expt in dq.coll['experiment'].items
                if expt.mip == mip and expt_matches(expt))
 
+
 # Finding the cmvids for MIPS
 # This is not insanely hard
 #
 
 def cmvids_of_mip(dq, mipname):
-
     """Ids of CMORvars which link to mipname.
 
     This is taken from the examples in the dreq
@@ -104,6 +113,7 @@ def cmvids_of_mip(dq, mipname):
                for rvs in (dq.inx.iref_by_sect[vg.uid].a['requestVar']
                            for vg in rgs)
                for rv in rvs)
+
 
 # Finding the CMVids for exids
 # This is much more hairy
@@ -158,6 +168,7 @@ def cmvids_of_rgids(dq, rgids):
 def cmvids_of_exid(dq, exid):
     """Return the CMORvar uids for an exid."""
     return cmvids_of_rgids(dq, rgids_of_rqlids(dq, rqlids_of_exid(dq, exid)))
+
 
 # Converting things to something JSONable
 # This is extremely incomplete
