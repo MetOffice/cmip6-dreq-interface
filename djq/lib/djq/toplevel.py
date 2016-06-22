@@ -2,7 +2,7 @@
 """
 
 from low import InternalException, ExternalException, Scram
-from low import debug
+from low import mutter, debug
 from emit import emit_reply, emit_catastrophe
 from parse import read_request, validate_single_request
 from load import (default_dqroot, default_dqtag, valid_dqroot, valid_dqtag,
@@ -101,9 +101,13 @@ def process_single_request(r):
     # load failures
     #
     try:
-
         rc = validate_single_request(r)
-        dq = ensure_dq(rc['dreq'] if 'dreq' in rc else None)
+        if 'dreq' in rc:
+            mutter("* single-request tag {}", rc['dreq'])
+            dq = ensure_dq(rc['dreq'])
+        else:
+            mutter("* single-request")
+            dq = ensure_dq(None)
         reply = dict(rc)
         # inner block handles semantic errors with the request and has
         # a fallback for other errors

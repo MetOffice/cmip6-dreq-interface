@@ -38,7 +38,7 @@ def compute_variables(dq, mip, experiment):
 
     This is the only public function in this module.
     """
-    mutter("* mip {} experiment {}", mip, experiment)
+    mutter("  mip {} experiment {}", mip, experiment)
     validate_mip_experiment(dq, mip, experiment)
 
     if (isinstance(experiment, str) or isinstance(experiment, unicode)
