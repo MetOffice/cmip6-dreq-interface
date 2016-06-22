@@ -1,9 +1,0 @@
-djq is the DREQ JSON Query tool, which you should be able to install
-from its setup.py.  It requires the dreqpy package from the DREQ (but
-is not fussy about version) and will also need access to the DREQ
-itself: you can specify location and it has a bad but currently
-working default.
-
-dqi is the DREQ Query Interface.  You do not need this to use djq.
-
-See README(.md)s in the respective directories for more information.
