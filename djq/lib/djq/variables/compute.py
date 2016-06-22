@@ -13,7 +13,7 @@
 #
 
 from djq.low import ExternalException, InternalException, Disaster
-from djq.low import mutter, make_checktree, check, run_checks
+from djq.low import mutter, mumble, make_checktree, check, run_checks
 from jsonify import jsonify_cmvids
 
 __all__ = ('compute_variables', 'NoMIP', 'WrongExperiment', 'NoExperiment')
@@ -94,9 +94,11 @@ def exids_of_mip(dq, mip, match):
         else:
             return True if match else False
 
-    return set(expt.uid for expt in dq.coll['experiment'].items
-               if expt.mip == mip and expt_matches(expt))
-
+    expts = set(expt for expt in dq.coll['experiment'].items
+                if expt.mip == mip and expt_matches(expt))
+    for label in sorted(expt.label for expt in expts):
+        mumble("      {}", label)
+    return set(expt.uid for expt in expts)
 
 # Finding the cmvids for MIPS
 # This is not insanely hard
