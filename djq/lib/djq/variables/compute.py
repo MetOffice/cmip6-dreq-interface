@@ -12,10 +12,11 @@
 # dq.inx.* as you'd expect.
 #
 
-from low import ExternalException, InternalException, Disaster
-from low import mutter
+from djq.low import ExternalException, InternalException, Disaster
+from djq.low import mutter
+from jsonify import jsonify_cmvids
 
-__all__ = ('compute_variables', 'NoMIP', 'NoExperiment')
+__all__ = ('compute_variables', 'NoMIP', 'WrongExperiment', 'NoExperiment')
 
 class NoMIP(ExternalException):
     def __init__(self, mip):
@@ -168,19 +169,3 @@ def cmvids_of_rgids(dq, rgids):
 def cmvids_of_exid(dq, exid):
     """Return the CMORvar uids for an exid."""
     return cmvids_of_rgids(dq, rgids_of_rqlids(dq, rqlids_of_exid(dq, exid)))
-
-
-# Converting things to something JSONable
-# This is extremely incomplete
-#
-
-def jsonify_cmvids(dq, cmvids):
-    """Return a suitable dict for a bunch of cmv uids.:"""
-    return sorted((jsonify_cmvid(dq, cmvid)
-                   for cmvid in cmvids),
-                  key=lambda j: j['label'])
-
-def jsonify_cmvid(dq, cmvid):
-    cmv = dq.inx.uid[cmvid]
-    return {'uid': cmvid,
-            'label': cmv.label}
