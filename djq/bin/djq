@@ -13,6 +13,7 @@ from djq import default_dqroot, valid_dqroot, default_dqtag, valid_dqtag
 from djq import process
 from djq.low import verbosity_level, debug_level, mutter
 from djq.low import ExternalException, Scram
+from djq.low import enable_checks
 
 class BadRoot(ExternalException):
     def __init__(self, root):
@@ -43,6 +44,10 @@ def main():
     parser.add_argument("-b", "--backtrace",
                         action='store_true', dest='backtrace',
                         help="don't suppress backtraces")
+    parser.add_argument("-c", "--check-priority",
+                        action='store', type=int,
+                        dest='check_priority', default=0,
+                        help="set the lowest check priority that will run")
     parser.add_argument('request', nargs='?', default=None,
                         help="JSON request (stdin default)")
     backtrace = None
@@ -51,6 +56,7 @@ def main():
         backtrace = args.backtrace
         debug_level(args.debug)
         verbosity_level(args.verbosity)
+        enable_checks(minpri=args.check_priority)
         if args.dqroot is not None:
             default_dqroot(args.dqroot)
         # root can be checked, tag can't in general because it can be
