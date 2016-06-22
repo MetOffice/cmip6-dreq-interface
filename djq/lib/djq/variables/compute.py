@@ -13,7 +13,7 @@
 #
 
 from djq.low import ExternalException, InternalException, Disaster
-from djq.low import mutter
+from djq.low import mutter, make_checktree, check, run_checks
 from jsonify import jsonify_cmvids
 
 __all__ = ('compute_variables', 'NoMIP', 'WrongExperiment', 'NoExperiment')
@@ -30,6 +30,8 @@ class WrongExperiment(ExternalException):
     def __init__(self, experiment, mip):
         self.experiment = experiment
         self.mip = mip
+
+checks = make_checktree()
 
 def compute_variables(dq, mip, experiment):
     """Compute the variables for a MIP and generalised experiment name.
@@ -61,6 +63,8 @@ def validate_mip_experiment(dq, mip, experiment):
             raise NoExperiment(experiment)
         for ei in dq.inx.experiment.label[experiment]:
             if mip == dq.inx.uid[ei].mip:
+                if run_checks(checks, args=(dq, mip, experiment)) is False:
+                    raise Catastrophe("failed sanity checks")
                 return
         raise WrongExperiment(experiment, mip)
 
@@ -125,8 +129,10 @@ def rqlids_of_exid(dq, exid, pmax=2):
 
     This is approximately from rqlByExpt in scope.py.
 
-    I am not sure what pmax is for (but it is not used in calls).
+    I am not sure what pmax is for although nothing uses it.  There is
+    a check that nothing is excluded by it below.
     """
+    assert pmax > 0
     ex = dq.inx.experiment.uid[exid]   # the experiment object
     assert ex._h.label == 'experiment' # it must be an experiment
     exset = set((exid, ex.egid, ex.mip)) # set of ids of things to look for
@@ -140,6 +146,20 @@ def rqlids_of_exid(dq, exid, pmax=2):
                   if dq.inx.uid[xri.rlid]._h.label != 'remarks')
     # And this is the answer we are looking for
     return xrqlids
+
+@check(checks, "variables.compute/preset-safety")
+def preset_safety_check(dq, mip, experiment):
+    # The aim of this is to check that the preset value of all the
+    # requestitem objects are less than or equal to zero, which means
+    # nothing will be filtered by the pmax setting which is inherited
+    # from the scope.py code.
+    for ex in (dq.inx.experiment.uid[exid]
+               for exid in exids_of_mip(dq, mip, experiment)):
+        for ri in (dq.inx.uid[riid]
+                   for riid in riids_of_mip(dq, ex.mip)):
+            if ri.preset > 0:
+                return False
+    return True
 
 def riids_of_mip(dq, mip):
     """Request item ids that link to the mip."""
