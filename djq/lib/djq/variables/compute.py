@@ -4,7 +4,7 @@
 # This is where we actually compute the variables.  There is no
 # abstraction from the dreq interface at all here, and you need to be
 # reasonably familiar with it to make any sense of this.  Pretty much
-# everything works in terms of UIDs since they uniquely define obects
+# everything works in terms of UIDs since they uniquely define objects
 # (the UIDs of MIPs are the same as their names, but this isn't true
 # for anything else, and things like experiment names don't need to be
 # unique).  All the functions that do work get a first argument which
@@ -64,7 +64,7 @@ def validate_mip_experiment(dq, mip, experiment):
         for ei in dq.inx.experiment.label[experiment]:
             if mip == dq.inx.uid[ei].mip:
                 if run_checks(checks, args=(dq, mip, experiment)) is False:
-                    raise Catastrophe("failed sanity checks")
+                    raise Disaster("failed sanity checks")
                 return
         raise WrongExperiment(experiment, mip)
 
