@@ -38,16 +38,14 @@ def compute_variables(dq, mip, experiment):
 
     This is the only public function in this module.
     """
+    mutter("* mip {} experiment {}", mip, experiment)
     validate_mip_experiment(dq, mip, experiment)
 
     if (isinstance(experiment, str) or isinstance(experiment, unicode)
         or experiment is None or isinstance(experiment, bool)):
-        return jsonify_cmvids(dq,
-                              compute_cmvids(dq,
-                                             mip,
-                                             exids_of_mip(dq,
-                                                          mip,
-                                                          experiment)))
+        cmvids = compute_cmvids(dq, mip, exids_of_mip(dq, mip, experiment))
+        mutter("  -> {} variables", len(cmvids))
+        return jsonify_cmvids(dq, cmvids)
     else:
         raise Disaster("this can't happen")
 

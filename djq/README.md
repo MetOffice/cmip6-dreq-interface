@@ -3,6 +3,8 @@
 
 This documentaton only currently deals with the requirements to install `djq`: the specifications of the JSON queries and the behaviour of the program itself is missing so far, as are any examples.
 
+This is all extremely incomplete and preliminary.
+
 ## Installation
 ### Requirements
 `djq` requires:
@@ -60,3 +62,5 @@ The most basic possible test of `djq` is then to feed it an empty query and chec
 	[]
 
 If this works then it is basically working.
+
+If you are in the toplevel directory of the `djq` distribution you can also point it at sample files in the `samples` directory which represent various queries.  See the `README.md` in that directory.
