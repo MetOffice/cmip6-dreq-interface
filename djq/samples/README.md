@@ -3,34 +3,46 @@ The samples in this directory are things I used during the development of `djq`.
 
 A good way to run `djq` on one of these files is to turn on all the debugging and verbosity you can, and don't suppress backtraces if it falls over horribly.  You do this with an incantation like
 
-	djq -b -v -v -d <input-file.json >output-file.json
+```
+djq -b -v -v -d <input-file.json >output-file.json
+```
 
 Some of the samples produce a *lot* of output as you'd expect.
 
 Here's what it should look like with everything turned on:
 
-	$ djq -b -v -v -d <acm-compare-tags.json >/dev/null
-	enabled True minpri 0
-	root /local/tfb/packages/CMIP6dreq tag latest
-	from -
-	missed 01.beta.29, loading dreq
-	* mip AerChemMIP experiment HISTghg
-	passed variables.compute/0/preset-safety
-	  -> 786 variables
-	missed latest, loading dreq
-	* mip AerChemMIP experiment HISTghg
-	passed variables.compute/0/preset-safety
-	  -> 786 variables
+```
+$ djq -b -v -v -d <acm-compare-tags.json >/dev/null
+enabled True minpri 0
+root /local/tfb/packages/CMIP6dreq tag latest
+from -
+* single-request tag 01.beta.29
+missed 01.beta.29, loading dreq
+  mip AerChemMIP experiment HISTghg
+[passed variables.compute/0/preset-safety]
+      HISTghg
+  -> 786 variables
+* single-request tag latest
+missed latest, loading dreq
+  mip AerChemMIP experiment HISTghg
+[passed variables.compute/0/preset-safety]
+      HISTghg
+  -> 786 variables
+```
 
-It is generally more useful with just one `-v`:
+It is generally more useful with just one `-v` and certainly without `-d`:
 
-	$ djq -v <acm-compare-tags.json>/dev/null
-	root /local/tfb/packages/CMIP6dreq tag latest
-	from -
-	* mip AerChemMIP experiment HISTghg
-	  -> 786 variables
-	* mip AerChemMIP experiment HISTghg
-	  -> 786 variables
+```
+$ djq -v  <acm-compare-tags.json >/dev/null
+root /local/tfb/packages/CMIP6dreq tag latest
+from -
+* single-request tag 01.beta.29
+  mip AerChemMIP experiment HISTghg
+  -> 786 variables
+* single-request tag latest
+  mip AerChemMIP experiment HISTghg
+  -> 786 variables
+```
 
 ## The current samples
 The `acm-*.json` files look experiments from `AerChemMIP` (because it is at the start of the alphabet):

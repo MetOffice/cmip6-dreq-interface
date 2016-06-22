@@ -21,7 +21,9 @@ First of all fetch a copy of [Miniconda](http://conda.pydata.org/miniconda.html)
 
 You can now arrange to use this environment by running a command such as:
 
-	PATH=/path/to/miniconda/dir/bin:$PATH $SHELL
+```
+PATH=/path/to/miniconda/dir/bin:$PATH $SHELL
+```
 
 assuming you are using a Bourne-shell family shell.  Everything below assumes you are in this environment.
 
@@ -31,7 +33,9 @@ Install nose in the environment: `conda install nose`.
 
 Now checkout the top level of the dreq to a known directory:
 
-	svn co http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq
+```
+svn co http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq
+```
 
 It is important you fetch the top level, *not* a tag or a branch, as `djq` wants to be able to specify a tag to use in the request, so you can select which version of the dreq to load.  I'll refer to this directory as `<dqroot>` below.
 
@@ -44,8 +48,10 @@ Finally check and install `djq` itself.
 
 After doing this, you should be able to find `djq`:
 
-	$ type -p djq
-	/local/tfb/packages/cmip6-dreq/envs/djq-development/bin/djq
+```
+$ type -p djq
+/local/tfb/packages/cmip6-dreq/envs/djq-development/bin/djq
+```
 
 (Output will differ, but it should be there).
 
@@ -54,12 +60,14 @@ After doing this, you should be able to find `djq`:
 
 The most basic possible test of `djq` is then to feed it an empty query and check it returns an empty result:
 
-	$ echo '[]' | djq -r <dqroot>
-	[]
-	$ echo '[]' | djq -r <dqroot> -v -v
-	root <dqroot> tag latest
-	from -
-	[]
+```
+$ echo '[]' | djq -r <dqroot>
+[]
+$ echo '[]' | djq -r <dqroot> -v -v
+root <dqroot> tag latest
+from -
+[]
+```
 
 If this works then it is basically working.
 
