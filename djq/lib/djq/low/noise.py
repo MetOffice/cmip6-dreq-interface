@@ -2,7 +2,7 @@
 """
 
 __all__ = ('verbosity_level', 'debug_level',
-           'mutter', 'mumble', 'whisper', 'think',
+           'chatter', 'mutter', 'mumble', 'whisper', 'think',
            'debug')
 
 from sys import stderr
@@ -31,6 +31,10 @@ def debug_level(l=None):
 def maybe_talk(level, message, *arguments):
     if level > 0:
         print >>stderr, message.format(*arguments)
+
+def chatter(message, *arguments):
+    """Talk"""
+    maybe_talk(1, message, *arguments)
 
 def mutter(message, *arguments):
     """Talk if verbose"""

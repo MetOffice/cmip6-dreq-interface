@@ -7,3 +7,7 @@ from .exceptions import *
 # Talking
 from . import noise
 from .noise import *
+
+# Runtime checks
+from . import checks
+from .checks import *
