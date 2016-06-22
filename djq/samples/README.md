@@ -16,12 +16,12 @@ $ djq -b -v -v -d <acm-compare-tags.json >/dev/null
 enabled True minpri 0
 root /local/tfb/packages/CMIP6dreq tag latest
 from -
-* single-request tag 01.beta.29
-missed 01.beta.29, loading dreq
+* single-request tag 01.beta.24
+missed 01.beta.24, loading dreq
   mip AerChemMIP experiment HISTghg
 [passed variables.compute/0/preset-safety]
       HISTghg
-  -> 786 variables
+  -> 590 variables
 * single-request tag latest
 missed latest, loading dreq
   mip AerChemMIP experiment HISTghg
@@ -36,9 +36,9 @@ It is generally more useful with just one `-v` and certainly without `-d`:
 $ djq -v  <acm-compare-tags.json >/dev/null
 root /local/tfb/packages/CMIP6dreq tag latest
 from -
-* single-request tag 01.beta.29
+* single-request tag 01.beta.24
   mip AerChemMIP experiment HISTghg
-  -> 786 variables
+  -> 590 variables
 * single-request tag latest
   mip AerChemMIP experiment HISTghg
   -> 786 variables
@@ -55,3 +55,6 @@ The `acm-*.json` files look experiments from `AerChemMIP` (because it is at the 
 * `acm-compare-tags.json` asks for the same MIP and experiment from two DREQ tags and will make a lot of output.
 
 The `bogus-*.json` files are all syntactically bogus (the unit tests should catch this, but you can point at them as well).  Apart from the last one -- `bogus-almost-ok.json` -- these should all cause catastrophes (and if you use `-b` backtraces): the last should elicit a `bad-request` reply.
+
+## Some other samples
+* `deck-all.json` is an example that give what I am sure is the wrong answer.
