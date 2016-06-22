@@ -48,7 +48,7 @@ def main():
     backtrace = None
     try:
         args = parser.parse_args()
-        debugging = args.backtrace
+        backtrace = args.backtrace
         debug_level(args.debug)
         verbosity_level(args.verbosity)
         if args.dqroot is not None:
