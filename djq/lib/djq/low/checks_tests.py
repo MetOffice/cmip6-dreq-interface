@@ -9,36 +9,36 @@ verbosity_level(1000)
 
 tree = make_checktree()
 
-@check(tree, "one/check-one", 1)
+@checker(tree, "one/check-one", 1)
 def check_one():
     return True
 
-@check(tree, "two/check-two")
+@checker(tree, "two/check-two")
 def check_two():
     return False
 
-@check(tree, "one.two/check-three", 1)
+@checker(tree, "one.two/check-three", 1)
 def check_three():
     return True
 
 def test_all_checks():
-    assert run_checks(tree) is False
+    assert tree() is False
 
 def test_one_checks():
-    assert run_checks(tree, "one") is True
+    assert tree("one") is True
 
 def test_no_checks():
-    assert run_checks(tree, "none") is None
+    assert tree("none") is None
 
 def test_high_priority_checks():
-    assert run_checks(tree, minpri=1) is True
-    assert run_checks(tree, minpri=2) is None
+    assert tree(minpri=1) is True
+    assert tree(minpri=2) is None
 
 argtree = make_checktree()
 
-@check(argtree, "nine/six")
+@checker(argtree, "nine/six")
 def ninesix(a, b=2):
     return a == b
 
 def test_arg_checks():
-    assert run_checks(argtree, args=(1,), kwargs={'b': 1}) is True
+    assert argtree(args=(1,), kwargs={'b': 1}) is True

@@ -13,7 +13,7 @@
 #
 
 from djq.low import ExternalException, InternalException, Disaster
-from djq.low import mutter, mumble, make_checktree, check, run_checks
+from djq.low import mutter, mumble, make_checktree, checker
 from djq.low import stringlike, arraylike, setlike
 from jsonify import jsonify_cmvids
 
@@ -65,7 +65,7 @@ def validate_mip_experiment(dq, mip, experiment):
             raise NoExperiment(experiment)
         for ei in dq.inx.experiment.label[experiment]:
             if mip == dq.inx.uid[ei].mip:
-                if run_checks(checks, args=(dq, mip, experiment)) is False:
+                if checks(args=(dq, mip, experiment)) is False:
                     raise Disaster("failed sanity checks")
                 return
         raise WrongExperiment(experiment, mip)
@@ -148,7 +148,7 @@ def rqlids_of_exid(dq, exid, pmax=2):
     # And this is the answer we are looking for
     return xrqlids
 
-@check(checks, "variables.compute/preset-safety")
+@checker(checks, "variables.compute/preset-safety")
 def preset_safety_check(dq, mip, experiment):
     # The aim of this is to check that the preset value of all the
     # requestitem objects are less than or equal to zero, which means
