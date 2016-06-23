@@ -7,7 +7,8 @@ from emit import emit_reply, emit_catastrophe
 from parse import read_request, validate_single_request
 from load import (default_dqroot, default_dqtag, valid_dqroot, valid_dqtag,
                   dqload)
-from variables import compute_variables, NoMIP, NoExperiment, WrongExperiment
+from variables import (compute_variables, jsonify_variables,
+                       NoMIP, NoExperiment, WrongExperiment)
 
 __all__ = ('process',)
 
@@ -112,10 +113,11 @@ def process_single_request(r):
         # inner block handles semantic errors with the request and has
         # a fallback for other errors
         try:
+            variables = jsonify_variables(dq,
+                                          compute_variables(dq, rc['mip'],
+                                                            rc['experiment']))
             reply.update({'reply-status': "ok",
-                          'reply-variables':
-                              compute_variables(dq, rc['mip'],
-                                                rc['experiment'])})
+                          'reply-variables': variables})
         except NoMIP as e:
             reply.update({'reply-variables': None,
                           'reply-status': "not-found",

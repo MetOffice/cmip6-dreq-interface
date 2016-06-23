@@ -15,7 +15,6 @@
 from djq.low import ExternalException, InternalException, Disaster
 from djq.low import mutter, mumble, make_checktree, checker
 from djq.low import stringlike, arraylike, setlike
-from jsonify import jsonify_cmvids
 
 __all__ = ('compute_variables', 'NoMIP', 'WrongExperiment', 'NoExperiment')
 
@@ -38,6 +37,8 @@ def compute_variables(dq, mip, experiment):
     """Compute the variables for a MIP and generalised experiment name.
 
     This is the only public function in this module.
+
+    returns a set of cmvids suitable for JSONification.
     """
     mutter("  mip {} experiment {}", mip, experiment)
     validate_mip_experiment(dq, mip, experiment)
@@ -49,7 +50,7 @@ def compute_variables(dq, mip, experiment):
             mumble("      {}", label)
         cmvids = compute_cmvids(dq, mip, exids)
         mutter("  -> {} variables", len(cmvids))
-        return jsonify_cmvids(dq, cmvids)
+        return cmvids
     else:
         raise Disaster("this can't happen")
 
