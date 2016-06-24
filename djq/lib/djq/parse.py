@@ -1,6 +1,9 @@
 """Parsing JSON requests
 """
 
+__all__ = ('BadParse', 'BadJSON', 'BadSyntax',
+           'read_request', 'validate_single_request')
+
 from json import load
 from low import ExternalException
 from low import stringlike, arraylike
@@ -14,9 +17,6 @@ from low import stringlike, arraylike
 #
 # This reads the JSON and does syntactic, but no semantic, validation.
 #
-
-__all__ = ('BadParse', 'BadJSON', 'BadSyntax',
-           'read_request', 'validate_single_request')
 
 class BadParse(ExternalException):
     pass

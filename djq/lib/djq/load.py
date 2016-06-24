@@ -1,13 +1,13 @@
 """Loading versions of the CMIP6 data request
 """
 
+__all__ = ('default_dqroot', 'default_dqtag', 'valid_dqroot', 'valid_dqtag',
+           'dqload')
+
 from os import getenv
 from sys import argv
 from os.path import expanduser, expandvars, isdir, join, split
 from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
-
-__all__ = ('default_dqroot', 'default_dqtag', 'valid_dqroot', 'valid_dqtag',
-           'dqload')
 
 # Guessing a root and a tag.
 #

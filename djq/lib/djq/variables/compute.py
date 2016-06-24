@@ -12,11 +12,11 @@
 # dq.inx.* as you'd expect.
 #
 
+__all__ = ('compute_variables', 'NoMIP', 'WrongExperiment', 'NoExperiment')
+
 from djq.low import ExternalException, InternalException, Disaster
 from djq.low import mutter, mumble, make_checktree, checker
 from djq.low import stringlike, arraylike, setlike
-
-__all__ = ('compute_variables', 'NoMIP', 'WrongExperiment', 'NoExperiment')
 
 class NoMIP(ExternalException):
     def __init__(self, mip):

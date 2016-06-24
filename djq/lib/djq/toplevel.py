@@ -1,6 +1,8 @@
 """top-level functionality
 """
 
+__all__ = ('process',)
+
 from low import InternalException, ExternalException, Scram
 from low import mutter, debug
 from emit import emit_reply, emit_catastrophe
@@ -9,8 +11,6 @@ from load import (default_dqroot, default_dqtag, valid_dqroot, valid_dqtag,
                   dqload)
 from variables import (compute_variables, jsonify_variables,
                        NoMIP, NoExperiment, WrongExperiment)
-
-__all__ = ('process',)
 
 def process(input, output, backtrace=False):
     """Process a request stream, emitting results on a reply stream.

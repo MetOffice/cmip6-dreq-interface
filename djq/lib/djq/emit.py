@@ -4,12 +4,12 @@
 # Currently this does no checking at all
 #
 
-from json import dump
-from low import InternalException
-
 __all__ = ('EmitFailed',
            'emit_reply',
            'emit_catastrophe')
+
+from json import dump
+from low import InternalException
 
 class EmitFailed(InternalException):
     def __init__(self, string, wrapped=None):
