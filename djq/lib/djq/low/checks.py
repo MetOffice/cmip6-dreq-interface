@@ -39,9 +39,16 @@ class CheckNode(object):
     run them by calling the object.
     """
 
-    def __init__(self):
-        self.subnodes = defaultdict(CheckNode)
+    def __init__(self, sprint=mumble, fprint=chatter,
+                 wrap=(lambda path, pri, name, f, *args, **kwargs:
+                           f(*args, **kwargs))):
+        self.subnodes = defaultdict(lambda: CheckNode(sprint=sprint,
+                                                      fprint=fprint,
+                                                      wrap=wrap))
         self.checks = defaultdict(list)
+        self.sprint = sprint
+        self.fprint = fprint
+        self.wrap = wrap
 
     def add(self, branch, priority, name, check):
         """Add a check.
@@ -128,11 +135,13 @@ class CheckNode(object):
                                if pri >= minpri),
                               reverse=True):
                 for (name, check) in self.checks[pri]:
-                    if check(*args, **kwargs):
-                        mumble("[passed {}/{}/{}]", ".".join(path), pri, name)
+                    if self.wrap(path, pri, name, check, *args, **kwargs):
+                        self.sprint("[passed {}/{}/{}]",
+                                    ".".join(path), pri, name)
                         ok = True
                     else:
-                        chatter("[failed {}/{}/{}]", ".".join(path), pri, name)
+                        self.fprint("[failed {}/{}/{}]",
+                                    ".".join(path), pri, name)
                         ok = False
             for (pathelt, subnode) in sorted(self.subnodes.iteritems(),
                                              key=lambda i: i[0]):
@@ -142,9 +151,9 @@ class CheckNode(object):
                     ok = snok
             return ok
 
-def make_checktree():
+def make_checktree(*args, **kwargs):
     """Make a check tree"""
-    return CheckNode()
+    return CheckNode(*args, **kwargs)
 
 def checker(tree, spec, priority=0):
     """A decorator to install a check function:
