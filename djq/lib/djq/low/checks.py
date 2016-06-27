@@ -37,6 +37,27 @@ class CheckNode(object):
 
     After creating an instance, add checks with the add method, and
     run them by calling the object.
+
+    When creating an instance, keyword arguments can be provided which
+    control the behaviour of the tree.
+
+    - sprint is a function which may note that a check has succeeded.
+      it gets three four arguments: a format string, and the path,
+      name and priority of the check.  Typically it should end up
+      calling the format string's format method on the other
+      arguments.  The default is dqj.low.mumble.
+
+    - fprint is the same as spring but is called when checks fail.
+      The default is dqj.low.chatter (so the system is much more
+      verbose about failure than success).
+
+    - wrap is a function which is responsible for calling the
+      registered checks.  Its arguments are path, priority, name,
+      check and any arguments & keyword arguments passed to the check
+      function.  The default function just calls the check with its
+      arguments & keyword arguments, but it would be possible to
+      provide a function which, for instance, decided to call only
+      checks with certain names.
     """
 
     def __init__(self, sprint=mumble, fprint=chatter,
@@ -152,7 +173,10 @@ class CheckNode(object):
             return ok
 
 def make_checktree(*args, **kwargs):
-    """Make a check tree"""
+    """Make a check tree.
+
+    See CheckNode for details of possible arguments.
+    """
     return CheckNode(*args, **kwargs)
 
 def checker(tree, spec, priority=0):
