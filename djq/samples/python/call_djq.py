@@ -15,12 +15,15 @@ def djq_from_structure(json, cmd="djq", options=()):
     p = Popen(argv, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     (result, noise) = p.communicate(dumps(json))
     if p.returncode != 0:
-        raise Exception("Badness: {} (exit {})".format(noise, p.returncode))
+        raise Exception(noise)
     return loads(result)
 
 if __name__ == '__main__':
-    sample = [{'dreq': 'latest',
-               'mip': 'DECK',
-               'experiment': 'control'}]
-    result = djq_from_structure(sample)
-    pprint(result)
+    try:
+        sample = [{'dreq': 'latest',
+                   'mip': 'DECK',
+                   'experiment': 'control'}]
+        result = djq_from_structure(sample)
+        pprint(result)
+    except Exception as e:
+        exit(e)
