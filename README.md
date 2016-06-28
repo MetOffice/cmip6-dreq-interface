@@ -9,4 +9,4 @@ certainly need to teach it where this is.
 `dqi` is the DREQ Query Interface.  You do not need this to use `djq`.
 
 See the `README` / `README.md` files in the respective directories for
-more information.
+more information, as well as [some general documentation](doc/).
