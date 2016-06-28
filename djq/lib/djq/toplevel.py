@@ -3,6 +3,7 @@
 
 __all__ = ('process',)
 
+from collections import defaultdict
 from low import InternalException, ExternalException, Scram
 from low import mutter, debug
 from emit import emit_reply, emit_catastrophe
@@ -62,20 +63,34 @@ class DREQLoadFailure(Exception):
         self.tag = tag if tag is not None else default_dqtag()
         self.wrapped = wrapped
 
-# This caches loaded DREQs.  There's a potential problem if a huge
-# number of requests come in for different tagsL: I don't think this
-# is likely in practice.]
+# Caching loaded DREQs.  The cache has teo levels, indexed on root and
+# then tag: since roots are thread-local this means there won't be
+# false positives: identical tags for different roots will not be
+# treated as the same.  This depends on dicts being low-level
+# thread-safe: x[y] = z should never yield junk in x.  The FAQ
+# (https://docs.python.org/2/faq/library.html#what-kinds-of-global-value-mutation-are-thread-safe)
+# says that this is true.  Given that, this might end up overwriting
+# the same cache entry due to an obvious race, but assuming the DREQ
+# files don't change this is just extra work, and won't result in
+# anything bad.
 #
-dqs = {}
+# There's a potential problem if a huge number of requests come in for
+# different tags: I don't think this is likely in practice.
+#
 
-def ensure_dq(tag):
+dqrs = defaultdict(dict)
+
+def ensure_dq(tag, root=None):
     """Ensure the dreq corresponding to a tag is loaded, returning it.
 
     Multiple requests for the same tag will return the same instance
     of the dreq.
     """
+    if root is None:
+        root = default_dqroot()
+    dqs = dqrs[root]
     if tag not in dqs:
-        debug("missed {}, loading dreq", tag)
+        debug("missed {} for {}, loading dreq", tag, root)
         if tag is not None:
             if valid_dqtag(tag):
                 try:

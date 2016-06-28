@@ -6,27 +6,30 @@ __all__ = ('verbosity_level', 'debug_level',
            'debug')
 
 from sys import stderr
+from threading import local
 from traceback import format_stack
 
-verbosity = 0
+# Thread-local state
+#
+state = local()
+
+state.verbosity = 0
 
 def verbosity_level(l=None):
     """Get or set the verbosity level"""
-    global verbosity
     if l is None:
-        return verbosity
+        return state.verbosity
     else:
-        verbosity = l
+        state.verbosity = l
 
-debugity = 0
+state.debugity = 0
 
 def debug_level(l=None):
     """Get or set the debug level """
-    global debugity
     if l is None:
-        return debugity
+        return state.debugity
     else:
-        debugity = l
+        state.debugity = l
 
 def maybe_talk(level, message, *arguments):
     if level > 0:
@@ -38,24 +41,24 @@ def chatter(message, *arguments):
 
 def mutter(message, *arguments):
     """Talk if verbose"""
-    maybe_talk(verbosity, message, *arguments)
+    maybe_talk(state.verbosity, message, *arguments)
 
 def mumble(message, *arguments):
     """Talk if very verbose"""
-    maybe_talk(verbosity - 1, message, *arguments)
+    maybe_talk(state.verbosity - 1, message, *arguments)
 
 def whisper(message, *arguments):
     """Talk if extremely verbose"""
-    maybe_talk(verbosity - 2, message, *arguments)
+    maybe_talk(state.verbosity - 2, message, *arguments)
 
 def think(message, *arguments):
     """Talk if ludicrously verbose"""
-    maybe_talk(verbosity - 3, message, *arguments)
+    maybe_talk(state.verbosity - 3, message, *arguments)
 
 def debug(message, *arguments):
     """Talk if debugging"""
     try:
-        maybe_talk(debugity, message, *arguments)
+        maybe_talk(state.debugity, message, *arguments)
     except Exception as e:
         print >>stderr, "mutant bug horror: {}\n{}".format(e,
                                                            format_stack()[-2]),
