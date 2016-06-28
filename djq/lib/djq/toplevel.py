@@ -14,7 +14,8 @@ from load import (default_dqroot, default_dqtag, valid_dqroot, valid_dqtag,
 from variables import (compute_variables, jsonify_variables,
                        NoMIP, NoExperiment, WrongExperiment)
 
-def process_stream(input, output, backtrace=False):
+def process_stream(input, output, backtrace=False,
+                   dqroot=None, dqtag=None, dbg=None, verbosity=None):
     """Process a request stream, emitting results on a reply stream.
 
     This reads a request from input, and from this generates a reply
@@ -27,13 +28,32 @@ def process_stream(input, output, backtrace=False):
     case.  If backtrace is true it also reraises the exception so a
     stack trace can be created.
 
+    dqroot, dqtag, dbg and verbosity, if given, will set the dqroot,
+    default tag, debug and verbose printing settings for this call,
+    only: the ambient values are restored on exit.
+
+    There's no useful return value.
+
     Anything below this should normally handle its own exceptions and
     generate a suitable per-single-request error response: anything
     which reaches this function is treated as a catastrophe (ie the
     whole process has failed).
     """
 
+    # Implementing special variables by hand.
+    saved_dbg = debug_level()
+    saved_verbosity = verbosity_level()
+    saved_dqroot = default_dqroot()
+    saved_dqtag = default_dqtag()
     try:
+        if dbg is not None:
+            debug_level(dbg)
+        if verbosity is not None:
+            verbosity_level(verbosity)
+        if dqroot is not None:
+            default_dqroot(dqroot)
+        if dqtag is not None:
+            default_dqtag(dqtag)
         emit_reply(tuple(process_single_request(s)
                          for s in read_request(input)),
                    output)
@@ -54,6 +74,11 @@ def process_stream(input, output, backtrace=False):
                          note="unexpected internal error")
         if backtrace:
             raise
+    finally:
+        default_dqtag(saved_dqtag)
+        default_dqroot(saved_dqroot)
+        verbosity_level(saved_verbosity)
+        debug_level(saved_dbg)
 
 def process_request(request, dqroot=None, dqtag=None,
                     dbg=None, verbosity=None):
