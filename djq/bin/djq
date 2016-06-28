@@ -10,7 +10,7 @@
 from sys import stdin, stdout, argv
 from argparse import ArgumentParser
 from djq import default_dqroot, valid_dqroot, default_dqtag, valid_dqtag
-from djq import process
+from djq import process_stream
 from djq.low import verbosity_level, debug_level, mutter
 from djq.low import ExternalException, Scram
 from djq.low import enable_checks
@@ -72,10 +72,10 @@ def main():
         if args.request is not None:
             mutter("from {}", args.request)
             with open(args.request) as input:
-                process(input, stdout, backtrace=backtrace)
+                process_stream(input, stdout, backtrace=backtrace)
         else:
             mutter("from -")
-            process(stdin, stdout, backtrace=backtrace)
+            process_stream(stdin, stdout, backtrace=backtrace)
     except Scram as e:
         raise
     except Exception as e:

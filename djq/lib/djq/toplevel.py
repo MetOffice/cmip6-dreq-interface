@@ -1,19 +1,20 @@
 """top-level functionality
 """
 
-__all__ = ('process',)
+__all__ = ('process_stream', 'process_request')
 
 from collections import defaultdict
 from low import InternalException, ExternalException, Scram
-from low import mutter, debug
+from low import mutter, debug, verbosity_level, debug_level
 from emit import emit_reply, emit_catastrophe
-from parse import read_request, validate_single_request
+from parse import (read_request, validate_toplevel_request,
+                   validate_single_request)
 from load import (default_dqroot, default_dqtag, valid_dqroot, valid_dqtag,
                   dqload)
 from variables import (compute_variables, jsonify_variables,
                        NoMIP, NoExperiment, WrongExperiment)
 
-def process(input, output, backtrace=False):
+def process_stream(input, output, backtrace=False):
     """Process a request stream, emitting results on a reply stream.
 
     This reads a request from input, and from this generates a reply
@@ -33,8 +34,8 @@ def process(input, output, backtrace=False):
     """
 
     try:
-        emit_reply(tuple(process_single_request(r)
-                         for r in read_request(input)),
+        emit_reply(tuple(process_single_request(s)
+                         for s in read_request(input)),
                    output)
     except Scram as e:
         raise
@@ -53,6 +54,51 @@ def process(input, output, backtrace=False):
                          note="unexpected internal error")
         if backtrace:
             raise
+
+def process_request(request, dqroot=None, dqtag=None,
+                    dbg=None, verbosity=None):
+    """Process a request, as a Python object, and return the results.
+
+    Arguments:
+
+    - request is a toplevel request, so a list or tuple of
+      single-request objects.  Each single-request is a dict with
+      appropriate keys.
+
+    - dqroot, dqtag, dbg and verbosity, if given, will set the dqroot,
+      default tag, debug and verbose printing settings for this call,
+      only: the ambient values are restored on exit.
+
+    This returns a tuple of the results for each single-request in the
+    request argument.
+
+    If anything goes seriously wrong this (or in fact things it calls)
+    raises a suitable exception.  Note that it *doesn't* return a
+    catastrophe response, since that's not likely to be useful in this
+    context.
+    """
+
+    # Implementing special variables by hand.
+    saved_dbg = debug_level()
+    saved_verbosity = verbosity_level()
+    saved_dqroot = default_dqroot()
+    saved_dqtag = default_dqtag()
+    try:
+        if dbg is not None:
+            debug_level(dbg)
+        if verbosity is not None:
+            verbosity_level(verbosity)
+        if dqroot is not None:
+            default_dqroot(dqroot)
+        if dqtag is not None:
+            default_dqtag(dqtag)
+        return tuple(process_single_request(s)
+                     for s in validate_toplevel_request(request))
+    finally:
+        default_dqtag(saved_dqtag)
+        default_dqroot(saved_dqroot)
+        verbosity_level(saved_verbosity)
+        debug_level(saved_dbg)
 
 class DREQLoadFailure(Exception):
     """Failure to load the DREQ: it is indeterminate whose fault this is."""
