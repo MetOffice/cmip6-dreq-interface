@@ -2,7 +2,8 @@
 """
 
 __all__ = ('BadParse', 'BadJSON', 'BadSyntax',
-           'read_request', 'validate_single_request')
+           'read_request', 'validate_toplevel_request',
+           'validate_single_request')
 
 from json import load
 from low import ExternalException
@@ -36,18 +37,28 @@ def read_request(fp):
 
     fp is the file-like object to read the request from.
 
-    This does top-level syntactic validation on the request only: it
-    checks that it it a list of single-requests and that they are
-    objects.
+    See validate_toplevel_request for the validation this does.
     """
     try:
         request = load(fp)
     except Exception as e:
         raise BadJSON("bad JSON request", e)
+    return validate_toplevel_request(request)
 
-    if not (arraylike(request) and all(isinstance(s, dict) for s in request)):
+def validate_toplevel_request(r):
+    """Check an object is valid as a request at toplevel.
+
+    Return the request if it is valid, otherwise raise a BadSyntax
+    exception.
+
+    Note that this only checks the toplevel of the request: use
+    validate_single_request to check each single-request.  This is
+    done so that callers can process a list of single-requests, only
+    some of which are valid, without just giving up altogether.
+    """
+    if not (arraylike(r) and all(isinstance(s, dict) for s in r)):
         raise BadSyntax("JSON request should be a list of objects")
-    return request
+    return r
 
 def validate_single_request(s):
     """Validate a single-request.

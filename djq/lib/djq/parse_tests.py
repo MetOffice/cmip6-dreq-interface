@@ -52,6 +52,31 @@ def test_hopless_toplevels():
     for j in hopeless_toplevels:
         yield (read_hopeless, j)
 
+# Tests of request at toplevel
+#
+
+good_toplevel_requests = (
+    [],
+    (),
+    [{}],
+    ({}, {}),
+    [{'not': "tested"}])
+
+def test_good_toplevel_requests():
+    for r in good_toplevel_requests:
+        yield (validate_toplevel_request, r)
+
+bad_toplevel_requests = (
+    1,
+    [1, {}])
+
+def test_bad_toplevel_requests():
+    @raises(BadSyntax)
+    def validate_bad(r):
+        return validate_toplevel_request(r)
+    for r in bad_toplevel_requests:
+        yield(validate_bad, r)
+
 # tests of single requests
 #
 
