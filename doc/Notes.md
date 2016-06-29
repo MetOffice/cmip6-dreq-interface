@@ -54,6 +54,33 @@ This trick comes from NumPy, although other people must use it.  This
 is the only place where `from x import *` is OK other than in test
 modules.
 
+In fact, things are more complicated than this: I wanted to
+distinguish between the interface exposed by a module to other modules
+in its package, and the parts of that interface which are exposed to
+*users* of the package.  So, for instance, `djq.parse` wants to
+provide the `read_request` function to other modules in its package,
+as well as the `BadParse` exception, but only `BadParse` should be
+visible to the world.
+
+The way this is done is by a horrible hack: modules define two lists:
+`__all__` is the usual list of names that anyone explicitly importing
+the module should be able to rely on, and `__published__` is a smaller
+list of names that anyone importing the module's *package* should be
+able to rely on.  If `__published__` is not present it is assumed to
+be the same as `__all__`, so that the behaviour is the same as that
+described above.  Then `__init__.py` has code like this:
+
+```
+def _publish(mod):
+    g = globals()
+    for var in getattr(mod, '__published__',
+                       getattr(mod, '__all__', ())):
+        g[var] = getattr(mod, var)
+
+from . import parse
+_publish(parse)
+```
+
 ### Single and double quotes
 I use both `'single quotes'` and `"double quotes"` for strings (as
 well as `"""triple double quotes"""` for docstrings).

@@ -1,9 +1,10 @@
 """Parsing JSON requests
 """
 
-__all__ = ('BadParse', 'BadJSON', 'BadSyntax',
-           'read_request', 'validate_toplevel_request',
-           'validate_single_request')
+__published__ = ('BadParse', 'BadJSON', 'BadSyntax')
+
+__all__ = __published__ + ('read_request', 'validate_toplevel_request',
+                            'validate_single_request')
 
 from json import load
 from low import ExternalException

@@ -1,24 +1,30 @@
 # djq
 
+def _publish(mod):
+    g = globals()
+    for var in getattr(mod, '__published__',
+                       getattr(mod, '__all__', ())):
+        g[var] = getattr(mod, var)
+
 # low-level is available as djq.low.*
 from . import low
 
 # Parser
 from . import parse
-from .parse import *
+_publish(parse)
 
 # Emitter
 from . import emit
-from .emit import *
+_publish(emit)
 
 # Loader
 from . import load
-from .load import *
+_publish(load)
 
 # Toplevel
 from . import toplevel
-from .toplevel import *
+_publish(toplevel)
 
 # Variable mapping
 from . import variables
-from .variables import *
+_publish(variables)

@@ -8,6 +8,8 @@ __all__ = ('EmitFailed',
            'emit_reply',
            'emit_catastrophe')
 
+__published__ = ()
+
 from json import dump
 from low import InternalException
 
