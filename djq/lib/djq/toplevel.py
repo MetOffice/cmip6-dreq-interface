@@ -4,7 +4,7 @@
 __all__ = ('process_stream', 'process_request')
 
 from collections import defaultdict
-from low import InternalException, ExternalException, Scram
+from low import DJQException, InternalException, ExternalException, Scram
 from low import mutter, debug, verbosity_level, debug_level
 from emit import emit_reply, emit_catastrophe
 from parse import (read_request, validate_toplevel_request,
@@ -69,9 +69,14 @@ def process_stream(input, output, backtrace=False,
                          note="internal error")
         if backtrace:
             raise
+    except DJQException as e:
+        emit_catastrophe("{}".format(e), output,
+                         note="unexpected error")
+        if backtrace:
+            raise
     except Exception as e:
         emit_catastrophe("{}".format(e), output,
-                         note="unexpected internal error")
+                         note="completely unexpected error")
         if backtrace:
             raise
     finally:
@@ -125,7 +130,7 @@ def process_request(request, dqroot=None, dqtag=None,
         verbosity_level(saved_verbosity)
         debug_level(saved_dbg)
 
-class DREQLoadFailure(Exception):
+class DREQLoadFailure(DJQException):
     """Failure to load the DREQ: it is indeterminate whose fault this is."""
     def __init__(self, message=None, root=None, tag=None, wrapped=None):
         # I assume you don't need to call the superclass method here
