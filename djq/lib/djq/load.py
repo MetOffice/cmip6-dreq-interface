@@ -1,8 +1,10 @@
 """Loading versions of the CMIP6 data request
 """
 
-__all__ = ('default_dqroot', 'default_dqtag', 'valid_dqroot', 'valid_dqtag',
-           'dqload')
+__published__ = ('default_dqroot', 'default_dqtag',
+                 'valid_dqroot', 'valid_dqtag')
+
+__all__ = __published__ + ('dqload',)
 
 from os import getenv
 from sys import argv
@@ -29,51 +31,51 @@ state.dqroot = (expandvars("$DJQ_DQROOT") if getenv("DJQ_DQROOT")
 
 state.dqtag = getenv("DJQ_DQTAG") or "latest"
 
-def default_dqroot(root=None):
-    if root is None:
+def default_dqroot(dqroot=None):
+    if dqroot is None:
         return state.dqroot
     else:
-        state.dqroot = root
+        state.dqroot = dqroot
 
-def default_dqtag(tag=None):
-    if tag is None:
+def default_dqtag(dqtag=None):
+    if dqtag is None:
         return state.dqtag
     else:
-        state.dqtag = tag
+        state.dqtag = dqtag
 
-def valid_dqroot(root=None):
-    """Check whether root (defaulted from dqroot) smells like a dreq root dir.
+def valid_dqroot(dqroot=None):
+    """Check whether dqroot smells like a dreq dqroot dir.
 
-    The check is necessarily heuristic, not exhaustive.  Note that root
-    is defaulted dynamically.
+    The check is necessarily heuristic, not exhaustive.  Note that dqroot
+    is defaulted dynamically from state.dqroot.
     """
-    if root is None:
-        root = state.dqroot
-    if isdir(root) and isdir(join(root, "tags")):
+    if dqroot is None:
+        dqroot = state.dqroot
+    if isdir(dqroot) and isdir(join(dqroot, "tags")):
         return True
     else:
         return False
 
-def valid_dqtag(tag=None, root=None):
-    """Is tag a valid tag for the dreq anchored at root?
+def valid_dqtag(dqtag=None, dqroot=None):
+    """Is dqtag a valid tag for the dreq anchored at dqroot?
 
-    This is a heuristic check.  Note that root is defaulted dynamically
-    from state.dqroot and tag from state.dqtag
+    This is a heuristic check.  Note that dqroot is defaulted dynamically
+    from state.dqroot and dqtag from state.dqtag
     """
-    if isdir(join(root if root is not None else state.dqroot,
+    if isdir(join(dqroot if dqroot is not None else state.dqroot,
                   "tags",
-                  tag if tag is not None else state.dqtag,
+                  dqtag if dqtag is not None else state.dqtag,
                   "dreqPy", "docs")):
         return True
     else:
         return False
 
-def dqload(tag=None, root=None):
-    """Load the dreq from a tag and root, both dynamically defaulted.
+def dqload(dqtag=None, dqroot=None):
+    """Load the dreq from a dqtag and dqroot, both dynamically defaulted.
 
     Arguments:
     - tag -- the tag, dynamically defaulted from state.dqtag
-    - root -- the dreq root directory, dynamically defaulted from
+    - dqroot -- the dreq root directory, dynamically defaulted from
       state.dqroot
 
     This does no error checks itself : it will raise whatever
@@ -82,9 +84,9 @@ def dqload(tag=None, root=None):
     """
     # This replicates some code in dqi.util and dqi.low, to avoid a
     # dependency on dqi as this is the only place djq relied on it.
-    top = join(root if root is not None else state.dqroot,
+    top = join(dqroot if dqroot is not None else state.dqroot,
                   "tags",
-                  tag if tag is not None else state.dqtag,
+                  dqtag if dqtag is not None else state.dqtag,
                   "dreqPy", "docs")
     return loadDreq(dreqXML=join(top, split(defaultDreqPath)[1]),
                     configdoc=join(top, split(defaultConfigPath)[1]))

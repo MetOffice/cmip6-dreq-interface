@@ -16,16 +16,16 @@ from djq.low import ExternalException, Scram
 from djq.low import enable_checks
 
 class BadRoot(ExternalException):
-    def __init__(self, root):
-        self.root = root
+    def __init__(self, dqroot):
+        self.dqroot = dqroot
     def __str__(self):
-        return "bad root {}".format(self.root)
+        return "bad root {}".format(self.dqroot)
 
 class BadTag(ExternalException):
-    def __init__(self, tag):
-        self.tag = tag
+    def __init__(self, dqtag):
+        self.dqtag = dqtag
     def __str__(self):
-        return "bad tag {} for root {}".format(self.tag, default_dqroot())
+        return "bad tag {} for root {}".format(self.dqtag, default_dqroot())
 
 def main():
     parser = ArgumentParser(description="DREQ JSON Query tool")

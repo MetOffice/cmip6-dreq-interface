@@ -132,11 +132,11 @@ def process_request(request, dqroot=None, dqtag=None,
 
 class DREQLoadFailure(DJQException):
     """Failure to load the DREQ: it is indeterminate whose fault this is."""
-    def __init__(self, message=None, root=None, tag=None, wrapped=None):
+    def __init__(self, message=None, dqroot=None, dqtag=None, wrapped=None):
         # I assume you don't need to call the superclass method here
         self.message = message
-        self.root = root if root is not None else default_dqroot()
-        self.tag = tag if tag is not None else default_dqtag()
+        self.dqroot = dqroot if dqroot is not None else default_dqroot()
+        self.dqtag = dqtag if dqtag is not None else default_dqtag()
         self.wrapped = wrapped
 
 # Caching loaded DREQs.  The cache has teo levels, indexed on root and
@@ -156,31 +156,31 @@ class DREQLoadFailure(DJQException):
 
 dqrs = defaultdict(dict)
 
-def ensure_dq(tag, root=None):
-    """Ensure the dreq corresponding to a tag is loaded, returning it.
+def ensure_dq(dqtag, dqroot=None):
+    """Ensure the dreq corresponding to a dqtag is loaded, returning it.
 
-    Multiple requests for the same tag will return the same instance
+    Multiple requests for the same dqtag will return the same instance
     of the dreq.
     """
-    if root is None:
-        root = default_dqroot()
-    dqs = dqrs[root]
-    if tag not in dqs:
-        debug("missed {} for {}, loading dreq", tag, root)
-        if tag is not None:
-            if valid_dqtag(tag):
+    if dqroot is None:
+        dqroot = default_dqroot()
+    dqs = dqrs[dqroot]
+    if dqtag not in dqs:
+        debug("missed {} for {}, loading dreq", dqtag, dqroot)
+        if dqtag is not None:
+            if valid_dqtag(dqtag):
                 try:
-                    dqs[tag] =  dqload(tag=tag)
+                    dqs[dqtag] =  dqload(dqtag=dqtag)
                 except Exception as e:
-                    raise DREQLoadFailure(tag=tag, wrapped=e)
+                    raise DREQLoadFailure(dqtag=dqtag, wrapped=e)
             else:
-                raise DREQLoadFailure(message="invalid tag", tag=tag)
+                raise DREQLoadFailure(message="invalid tag", dqtag=dqtag)
         else:
             try:
                 dqs[None] = dqload()
             except Exception as e:
                 raise DREQLoadFailure(wrapped=e)
-    return dqs[tag]
+    return dqs[dqtag]
 
 def process_single_request(r):
     """Process a single request, returning a suitable result for JSONisation.
@@ -235,8 +235,8 @@ def process_single_request(r):
         reply.update({'reply-variables': None,
                       'reply-status': "error",
                       'reply-status=detail':
-                      ("failed to load dreq, root={} tag={}".format(e.root,
-                                                                    e.tag)
+                      ("failed to load dreq, root={} tag={}".format(e.dqroot,
+                                                                    e.dqtag)
                        + (": {}".format(e.message)
                           if e.message is not None
                           else ""))})
