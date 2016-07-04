@@ -1,7 +1,9 @@
 """top-level functionality
 """
 
-__all__ = ('process_stream', 'process_request')
+__published__ = ('invalidate_dq_cache',)
+
+__all__ = __published__ + ('process_stream', 'process_request')
 
 from collections import defaultdict
 from low import DJQException, InternalException, ExternalException, Scram
@@ -139,7 +141,7 @@ class DREQLoadFailure(DJQException):
         self.dqtag = dqtag if dqtag is not None else default_dqtag()
         self.wrapped = wrapped
 
-# Caching loaded DREQs.  The cache has teo levels, indexed on root and
+# Caching loaded DREQs.  The cache has two levels, indexed on root and
 # then tag: since roots are thread-local this means there won't be
 # false positives: identical tags for different roots will not be
 # treated as the same.  This depends on dicts being low-level
@@ -155,6 +157,11 @@ class DREQLoadFailure(DJQException):
 #
 
 dqrs = defaultdict(dict)
+
+def invalidate_dq_cache():
+    """Invalidate the cache of loaded DREQs."""
+    global dqrs
+    dqrs = defaultdict(dict)
 
 def ensure_dq(dqtag, dqroot=None):
     """Ensure the dreq corresponding to a dqtag is loaded, returning it.

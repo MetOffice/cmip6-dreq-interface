@@ -125,6 +125,7 @@ failed.
 
 ## Functions in the interface
 All of these functions are exported from `djq` except where otherwise stated.
+
 ### Querying the DREQ
 There is a single function which does this.
 
@@ -178,3 +179,9 @@ There are some functions for noise control, exported from `djq.low`.
 
 These functions set and get the default values used by
 `process_request`.  All the default values are thread-local.
+
+Finally, `invalidate_dq_cache()` will obliterate any cached DREQs that
+have been loaded.  This will save some memory, and might be useful if
+for some reason you think that the wrong version of the DREQ has been
+loaded for some reason.  The first subsequent calls to
+`process_request` will reload the DREQ.
