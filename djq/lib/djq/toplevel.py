@@ -1,9 +1,9 @@
 """top-level functionality
 """
 
-__published__ = ('invalidate_dq_cache',)
+__published__ = ('invalidate_dq_cache', 'process_stream', 'process_request')
 
-__all__ = __published__ + ('process_stream', 'process_request')
+__all__ = __published__
 
 from collections import defaultdict
 from low import DJQException, InternalException, ExternalException, Scram
