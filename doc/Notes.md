@@ -66,20 +66,26 @@ The way this is done is by a horrible hack: modules define two lists:
 `__all__` is the usual list of names that anyone explicitly importing
 the module should be able to rely on, and `__published__` is a smaller
 list of names that anyone importing the module's *package* should be
-able to rely on.  If `__published__` is not present it is assumed to
-be the same as `__all__`, so that the behaviour is the same as that
-described above.  Then `__init__.py` has code like this:
+able to rely on (you are not meant to define your own names with
+double leading and trailing underscores, but I did anyway).  If
+`__published__` is not present it is assumed to be the same as
+`__all__`, so that the behaviour is the same as that described above.
+
+There is then a function, `publish` in `djq.low.namespace` (and itself
+published into `djq.low`) which will propagate the values of variables
+in the `__published__` list (or, if it not there, `__all__`) of a
+module into variables with the same name in a target module (which you
+have to name).  So, for instance, an `__init__.py` might say:
 
 ```
-def _publish(mod):
-    g = globals()
-    for var in getattr(mod, '__published__',
-                       getattr(mod, '__all__', ())):
-        g[var] = getattr(mod, var)
+import djq.low as low
 
 from . import parse
-_publish(parse)
+low.publish(__name__, parse)
 ```
+
+This is all reasonably horrid (and clearly needs to be extracted from
+`djq` so `dqi` can use it).
 
 ### Single and double quotes
 I use both `'single quotes'` and `"double quotes"` for strings (as

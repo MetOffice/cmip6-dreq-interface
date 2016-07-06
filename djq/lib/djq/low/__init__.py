@@ -1,24 +1,22 @@
 """djq.low: low-level for djq
 """
 
-def _publish(mod):
-    g = globals()
-    for var in getattr(mod, '__published__',
-                       getattr(mod, '__all__', ())):
-        g[var] = getattr(mod, var)
+# Namespace support
+from . import namespace
+namespace.publish(__name__, namespace)
 
 # Exceptions
 from . import exceptions
-_publish(exceptions)
+publish(__name__, exceptions)
 
 # Types
-from . import types
-_publish(types)
+from . import dtype
+publish(__name__, dtype)
 
 # Talking
 from . import noise
-_publish(noise)
+publish(__name__, noise)
 
 # Runtime checks
 from . import checks
-_publish(checks)
+publish(__name__, checks)

@@ -12,7 +12,7 @@ __all__ = ('make_checktree', 'checker', 'enable_checks')
 
 from collections import defaultdict
 from noise import chatter, mumble, debug
-from types import stringlike
+from dtype import stringlike
 
 checks_enabled = True
 checks_minpri = 0

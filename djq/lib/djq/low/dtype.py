@@ -1,4 +1,4 @@
-"""Some type predicates
+"""Some (duck) type predicates
 """
 
 # All of these are meant to tell if something behaves in a given way
