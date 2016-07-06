@@ -6,7 +6,7 @@ __published__ = ('validate_package_interface', 'publish')
 __all__ = __published__
 
 from sys import modules
-from types import ModuleType, FunctionType
+from types import ModuleType
 
 # Publishing names
 #
@@ -64,9 +64,7 @@ def filter_names(pkg, categories):
     names = set(dir(pkg))
     missing = set()
     for (category, cmap) in categories.iteritems():
-        print "before {}: {}".format(category, names)
         (names, missing) = tuple(filters[category](pkg, names, missing, cmap))
-    print "before ignorable: {}".format(names)
     return filter_ignoreable(pkg, names, missing)
 
 def filter(category):
