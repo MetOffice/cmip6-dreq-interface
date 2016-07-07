@@ -50,13 +50,16 @@ def publish(into, *mods):
 # and this means that one and two should exist and be functions
 #
 
-def validate_package_interface(pkg, categories):
+def validate_package_interface(pkg, categories, details=False):
     """Validate a package interface.
 
     This needs documentation.
     """
     (filtered, missing) = filter_names(pkg, categories)
-    return len(filtered) == 0 and len(missing) == 0
+    if details:
+        return (filtered, missing)
+    else:
+        return len(filtered) == 0 and len(missing) == 0
 
 filters = {}
 
