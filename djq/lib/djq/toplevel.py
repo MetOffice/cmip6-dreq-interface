@@ -161,7 +161,7 @@ def invalidate_dq_cache():
     global dqrs
     dqrs = defaultdict(dict)
 
-def ensure_dq(dqtag, dqroot=None):
+def ensure_dq(dqtag=None, dqroot=None):
     """Ensure the dreq corresponding to a dqtag is loaded, returning it.
 
     Multiple requests for the same dqtag will return the same instance
