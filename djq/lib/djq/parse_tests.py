@@ -3,7 +3,9 @@
 
 from StringIO import StringIO
 from nose.tools import raises
-from djq.parse import *
+from djq.parse import BadParse, BadJSON, BadSyntax
+from djq.parse import (read_request, validate_toplevel_request,
+                       validate_single_request)
 
 # Tests of the top-level reader
 #

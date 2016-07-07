@@ -1,11 +1,9 @@
 # djq.variables: finding and jsonifying CMOR variables
 
-import djq.low as low
-
 # computing variables
 from . import compute
-low.publish(__name__, compute)
+from .compute import *
 
 # jsonifying variable
 from . import jsonify
-low.publish(__name__, jsonify)
+from .jsonify import *

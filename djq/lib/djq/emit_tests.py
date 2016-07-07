@@ -3,8 +3,8 @@
 
 from StringIO import StringIO
 from json import load
-from djq.parse import *
-from djq.emit import *
+from djq.parse import read_request
+from djq.emit import emit_reply, emit_catastrophe
 
 # This just tests that we can round-trip it: it doesn't check
 # exceptions or anything yet.

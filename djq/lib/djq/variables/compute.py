@@ -12,7 +12,8 @@
 # dq.inx.* as you'd expect.
 #
 
-__all__ = ('compute_variables', 'NoMIP', 'WrongExperiment', 'NoExperiment')
+__all__ = ('cv_implementation', 'compute_variables',
+           'NoMIP', 'WrongExperiment', 'NoExperiment')
 
 from djq.low import ExternalException, InternalException, Disaster
 from djq.low import mutter, mumble, make_checktree, checker

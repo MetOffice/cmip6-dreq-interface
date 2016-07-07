@@ -1,10 +1,12 @@
 """Loading versions of the CMIP6 data request
 """
 
-__published__ = ('default_dqroot', 'default_dqtag',
-                 'valid_dqroot', 'valid_dqtag')
+# Package interface
+__all__ = ('default_dqroot', 'default_dqtag',
+           'valid_dqroot', 'valid_dqtag')
 
-__all__ = __published__ + ('dqload',)
+# Interface
+# - dqload
 
 from os import getenv
 from sys import argv

@@ -3,20 +3,20 @@
 
 # Namespace support
 from . import namespace
-namespace.publish(__name__, namespace)
+from .namespace import *
 
 # Exceptions
 from . import exceptions
-publish(__name__, exceptions)
+from .exceptions import *
 
 # Types
 from . import dtype
-publish(__name__, dtype)
+from .dtype import *
 
 # Talking
 from . import noise
-publish(__name__, noise)
+from .noise import *
 
 # Runtime checks
 from . import checks
-publish(__name__, checks)
+from .checks import *

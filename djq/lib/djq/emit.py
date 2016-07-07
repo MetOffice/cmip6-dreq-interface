@@ -4,11 +4,13 @@
 # Currently this does no checking at all
 #
 
-__all__ = ('EmitFailed',
-           'emit_reply',
-           'emit_catastrophe')
+# Package interface
+__all__ = ()
 
-__published__ = ()
+# Interface
+# - EmitFailed
+# - emit_reply
+# - emit_catastrophe
 
 from json import dump
 from low import InternalException

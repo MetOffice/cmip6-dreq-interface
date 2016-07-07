@@ -1,38 +1,11 @@
 """Package namespace control
 """
 
-__published__ = ('validate_package_interface', 'publish')
-
-__all__ = __published__
+# Package interface
+__all__ = ('validate_package_interface',)
 
 from sys import modules
 from types import ModuleType
-
-# Publishing names
-#
-
-def publish(into, *mods):
-    """Publish names into a module from some modules.
-
-    - into is the *name* of a module to publish into (because it is
-      ludicrously hard to find the current module, so this function
-      does it.
-    - mods is modules to publish.
-
-    Typically invoke this as publish(__name__, mod, ...)
-
-    What should be published is any name mentioned in
-    mod.__published__: these names are imported into whatever module
-    is named by __name__'s dictionary.
-
-    This is a horrible hack.
-    """
-    ivars = vars(modules[into])
-    for mod in mods:
-        for var in getattr(mod, '__published__',
-                           getattr(mod, '__all__', ())):
-            ivars[var] = getattr(mod, var)
-
 
 # Checking namespaces for packages
 #

@@ -1,24 +1,23 @@
 # djq
 
-# low-level is available as djq.low.*
+# low-level (package)
 from . import low
 
 # Parser
 from . import parse
-low.publish(__name__, parse)
+from .parse import *
 
 # Emitter
 from . import emit
-low.publish(__name__, emit)
+from .emit import *
 
 # Loader
 from . import load
-low.publish(__name__, load)
+from .load import *
 
 # Toplevel
 from . import toplevel
-low.publish(__name__, toplevel)
+from .toplevel import *
 
-# Variable mapping
+# Variable mapping (package)
 from . import variables
-low.publish(__name__, variables)

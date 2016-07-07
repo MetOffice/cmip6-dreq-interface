@@ -1,10 +1,14 @@
 """Parsing JSON requests
 """
 
-__published__ = ('BadParse', 'BadJSON', 'BadSyntax')
+# Package interface
 
-__all__ = __published__ + ('read_request', 'validate_toplevel_request',
-                            'validate_single_request')
+__all__ = ('BadParse', 'BadJSON', 'BadSyntax')
+
+# Interface
+# - read_request
+# - validate_toplevel_request
+# - validate_single_request
 
 from json import load
 from low import ExternalException
