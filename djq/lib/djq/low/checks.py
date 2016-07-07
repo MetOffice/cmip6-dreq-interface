@@ -11,26 +11,30 @@
 __all__ = ('make_checktree', 'checker', 'enable_checks')
 
 from collections import defaultdict
+from threading import local
 from noise import chatter, mumble, debug
 from dtype import stringlike
 
-checks_enabled = True
-checks_minpri = 0
+state = local()
+
+state.checks_enabled = True
+state.checks_minpri = 0
 
 def enable_checks(enabled=None, minpri=None):
-    """Globally control which checks run.
+    """Control which checks run.
 
     If enabled is False, then checks are disabled, if minpri is a
     number then it is used to set the minimum priority.
-    """
-    global checks_enabled
-    global checks_minpri
 
+    This state is per-thread.
+    """
     if enabled is None:
-        enabled = checks_enabled
-    checks_enabled = enabled if enabled is not None else checks_enabled
-    checks_minpri = minpri if minpri is not None else checks_minpri
-    debug("enabled {} minpri {}", checks_enabled, checks_minpri)
+        enabled = state.checks_enabled
+    state.checks_enabled = (enabled if enabled is not None
+                            else state.checks_enabled)
+    state.checks_minpri = (minpri if minpri is not None
+                           else state.checks_minpri)
+    debug("enabled {} minpri {}", state.checks_enabled, state.checks_minpri)
 
 class CheckNode(object):
     """An object which can run a tree of checks.
@@ -114,9 +118,9 @@ class CheckNode(object):
         the checks pass and False otherwise.
         """
         if minpri is None:
-            minpri = checks_minpri
+            minpri = state.checks_minpri
         if enabled is None:
-            enabled = checks_enabled
+            enabled = state.checks_enabled
 
         if enabled:
             node = self if path is None else self.find(path)
