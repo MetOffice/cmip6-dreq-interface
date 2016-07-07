@@ -2,9 +2,9 @@
 """
 
 # Package interface
-__all__ = ('validate_package_interface',)
+__all__ = ('validate_package_interface', 'report_package_interface')
 
-from sys import modules
+from sys import modules, stdout
 from types import ModuleType
 
 # Checking namespaces for packages
@@ -33,6 +33,18 @@ def validate_package_interface(pkg, categories, details=False):
         return (filtered, missing)
     else:
         return len(filtered) == 0 and len(missing) == 0
+
+def report_package_interface(package, categories, stream=stdout):
+    (filtered, missing) = validate_package_interface(package, categories,
+                                                     details=True)
+    if len(filtered) > 0:
+        print "* extras"
+        for f in sorted(filtered, key=lambda x: getattr(package, x).__module__):
+            print "  {} from {}".format(f, getattr(package, f).__module__)
+    if len(missing) > 0:
+        print "* missing"
+        for m in sorted(missing):
+            print "  {}".format(m)
 
 filters = {}
 
