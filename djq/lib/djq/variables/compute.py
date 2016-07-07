@@ -1,22 +1,35 @@
-"""Finding variables
+"""Finding variables, top level
 """
 
-# This is where we actually compute the variables.  There is no
-# abstraction from the dreq interface at all here, and you need to be
-# reasonably familiar with it to make any sense of this.  Pretty much
-# everything works in terms of UIDs since they uniquely define objects
-# (the UIDs of MIPs are the same as their names, but this isn't true
-# for anything else, and things like experiment names don't need to be
-# unique).  All the functions that do work get a first argument which
-# is the dreq object, called dq, and do a lot of grovelling around in
-# dq.inx.* as you'd expect.
+# This is the top level part of finding variables.  It deals with
+# sanity checking everything, finding the experiment IDs (exids)
+# corresponding to an experiment, and then dispatching to a back end.
+# The back end can be selected, using cv_implementation.  A back end
+# is either itself function, or a module with a function named
+# compute_cmvids_for_exids (in which case the actual back end
+# implementation is set to that function).
 #
-
+# The back end function is called with:
+#  - the dreq
+#  - the MIP name
+#  - a set of experiment ids belonging to that MIP
+# and should return an iterable of cmvids
+#
+# There is no abstraction from the dreq interface at all here
+#
+# There is a check tree, called checks: checkers in it are called with
+#  - the dreq
+#  - the mip
+#  - an exid
+#
 __all__ = ('cv_implementation', 'compute_variables',
-           'NoMIP', 'WrongExperiment', 'NoExperiment')
 
+           'NoMIP', 'WrongExperiment', 'NoExperiment',
+           'BadCVImplementation')
+
+from threading import local
 from djq.low import ExternalException, InternalException, Disaster
-from djq.low import mutter, mumble, make_checktree, checker
+from djq.low import mutter, mumble, make_checktree
 from djq.low import stringlike, arraylike, setlike
 
 class NoMIP(ExternalException):
@@ -32,7 +45,38 @@ class WrongExperiment(ExternalException):
         self.experiment = experiment
         self.mip = mip
 
+class BadCVImplementation(ExternalException):
+    pass
+
+# Implementations import this to add checkers.
 checks = make_checktree()
+
+# Thread-local state
+#
+state = local()
+state.implementation = None
+
+def cv_implementation(impl=None):
+    """Get or set a back end for computing variables.
+    """
+    if impl is None:
+        # read
+        impl = state.implementation
+        if callable(impl):
+            return impl
+        elif impl is None:
+            return None
+        else:
+            raise Disaster("mutant cv implementation")
+    else:
+        # set
+        if callable(impl):
+            state.implementation = impl
+        elif (hasattr(impl, "compute_cmvids_for_exids")
+              and callable(impl.compute_cmvids_for_exids)):
+            state.implementation = impl.compute_cmvids_for_exids
+        else:
+            raise BadCVImplementation("{} is no good".format(impl))
 
 def compute_variables(dq, mip, experiment):
     """Compute the variables for a MIP and generalised experiment name.
@@ -40,6 +84,8 @@ def compute_variables(dq, mip, experiment):
     This is the only public function in this module.
 
     returns a set of cmvids suitable for JSONification.
+
+    See cv_implementation for selecting a back end.
     """
     mutter("  mip {} experiment {}", mip, experiment)
     validate_mip_experiment(dq, mip, experiment)
@@ -49,7 +95,7 @@ def compute_variables(dq, mip, experiment):
         exids = exids_of_mip(dq, mip, experiment)
         for label in sorted(dq.inx.uid[exid].label for exid in exids):
             mumble("      {}", label)
-        cmvids = compute_cmvids(dq, mip, exids)
+        cmvids = cv_implementation()(dq, mip, exids)
         mutter("  -> {} variables", len(cmvids))
         return cmvids
     else:
@@ -63,21 +109,17 @@ def validate_mip_experiment(dq, mip, experiment):
     if mip not in dq.inx.uid or dq.inx.uid[mip]._h.label != 'mip':
         raise NoMIP(mip)
     if stringlike(experiment):
+        # a literal experiment
         if experiment not in dq.inx.experiment.label:
+            # No experiment at all with that name
             raise NoExperiment(experiment)
-        for ei in dq.inx.experiment.label[experiment]:
-            if mip == dq.inx.uid[ei].mip:
-                if checks(args=(dq, mip, experiment)) is False:
-                    raise Disaster("failed sanity checks")
-                return
+    exids = exids_of_mip(dq, mip, experiment)
+    if len(exids) == 0:
+        # Nothing matched
         raise WrongExperiment(experiment, mip)
-
-def compute_cmvids(dq, mip, exids):
-    """Compute the cmvids for a MIP and a set of experiment ids."""
-    cmvids = set(cmvids_of_mip(dq, mip))
     for exid in exids:
-        cmvids.update(cmvids_of_exid(dq, exid))
-    return cmvids
+        if checks(args=(dq, mip, exid)) is False:
+            raise Disaster("failed sanity checks")
 
 def exids_of_mip(dq, mip, match):
     """Find all the names of the experiments of mip matched by match.
@@ -89,7 +131,6 @@ def exids_of_mip(dq, mip, match):
     sets of experiments, currently).
 
     """
-
     def expt_matches(expt):
         # there must be a more idiomatic way of doing type dispatch
         if stringlike(match):
@@ -99,96 +140,5 @@ def exids_of_mip(dq, mip, match):
         else:
             return True if match else False
 
-    expts = set(expt for expt in dq.coll['experiment'].items
-                if expt.mip == mip and expt_matches(expt))
-    return set(expt.uid for expt in expts)
-
-# Finding the cmvids for MIPS
-# This is not insanely hard
-#
-
-def cmvids_of_mip(dq, mipname):
-    """Ids of CMORvars which link to mipname.
-
-    This is taken from the examples in the dreq
-    """
-    # request groups that link to the MIP
-    rgs = set(dq.inx.uid[l.refid]
-              for l in (rl for rl in dq.coll['requestLink'].items
-                        if rl.mip == mipname))
-    # and the variable names of those groups
-    return set(dq.inx.uid[rv].vid
-               for rvs in (dq.inx.iref_by_sect[rg.uid].a['requestVar']
-                           for rg in rgs)
-               for rv in rvs)
-
-
-# Finding the CMVids for exids
-# This is much more hairy
-#
-
-def rqlids_of_exid(dq, exid, pmax=2):
-    """Find a the request link UIDs for an experiment UID.
-
-    This is approximately from rqlByExpt in scope.py.
-
-    I am not sure what pmax is for although nothing uses it.  There is
-    a check that nothing is excluded by it below.
-    """
-    assert pmax > 0
-    ex = dq.inx.experiment.uid[exid]   # the experiment object
-    assert ex._h.label == 'experiment' # it must be an experiment
-    exset = set((exid, ex.egid, ex.mip)) # set of ids of things to look for
-    riids = riids_of_mip(dq, ex.mip) # set of request item UIDs for the mip
-
-    # xris is a set of request items which we like
-    xris = set(i for i in (dq.inx.uid[ri] for ri in riids)
-               if i.preset <= pmax and i.esid in exset)
-    # xrqlids is the ids of rqls we like (remove the remarks without noise)
-    xrqlids = set(xri.rlid for xri in xris
-                  if dq.inx.uid[xri.rlid]._h.label != 'remarks')
-    # And this is the answer we are looking for
-    return xrqlids
-
-@checker(checks, "variables.compute/preset-safety")
-def preset_safety_check(dq, mip, experiment):
-    # The aim of this is to check that the preset value of all the
-    # requestitem objects are less than or equal to zero, which means
-    # nothing will be filtered by the pmax setting which is inherited
-    # from the scope.py code.
-    for ex in (dq.inx.experiment.uid[exid]
-               for exid in exids_of_mip(dq, mip, experiment)):
-        for ri in (dq.inx.uid[riid]
-                   for riid in riids_of_mip(dq, ex.mip)):
-            if ri.preset > 0:
-                return False
-    return True
-
-def riids_of_mip(dq, mip):
-    """Request item ids that link to the mip."""
-    return set(ri
-               for rlid in (rl.uid
-                            for rl in dq.coll['requestLink'].items
-                            if rl.mip == mip)
-               for ri in dq.inx.iref_by_sect[rlid].a['requestItem'])
-
-def rgids_of_rqlids(dq, rqlids):
-    """Return the request group Ids for a bunch of request link ids.
-
-    This is close to part of mipcmvids above and should be made the
-    same thing.
-    """
-    return set(dq.inx.uid[l.refid]
-               for l in (dq.inx.uid[rqlid]
-                         for rqlid in rqlids))
-
-def cmvids_of_rgids(dq, rgids):
-    """Return the CMORvar ids (note not labels) for a bunch of rgids."""
-    return set(dq.inx.uid[rv].vid
-               for rvs in (dq.inx.iref_by_sect[vg.uid].a['requestVar']
-                           for vg in rgids)
-               for rv in rvs)
-
-def cmvids_of_exid(dq, exid):
-    """Return the CMORvar uids for an exid."""
-    return cmvids_of_rgids(dq, rgids_of_rqlids(dq, rqlids_of_exid(dq, exid)))
+    return set(expt.uid for expt in dq.coll['experiment'].items
+               if expt.mip == mip and expt_matches(expt))
