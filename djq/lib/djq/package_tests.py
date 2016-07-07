@@ -9,7 +9,7 @@ categories = {'instances': {FunctionType: ('process_stream', 'process_request',
                                            'default_dqroot', 'default_dqtag',
                                            'valid_dqroot', 'valid_dqtag',
                                            'invalidate_dq_cache'),
-                            ModuleType: ('low',)},
+                            ModuleType: ('low', 'variables')},
               'types': {Exception: ('BadJSON', 'BadParse', 'BadSyntax')}}
 
 def test_interface():
