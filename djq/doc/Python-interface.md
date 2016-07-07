@@ -73,7 +73,7 @@ if __name__ == '__main__':
 ```
 
 ## Packages
-There are two packages you may need to use.
+There are three packages you may need to use.
 
 * `djq.low` is the low-level interface: it defines things like the
   top-level exception classes and provides ways of printing verbose
@@ -83,6 +83,9 @@ There are two packages you may need to use.
   query the DREQ itself, some tools to set and check the location of
   the DREQ and the default tag, and some more specific types of
   exception.
+* `djq.variables` contains the implementation of computing variables,
+  and supports switching the back end for this, possibly to a
+  user-provided one.
 
 In almost all cases you probably want to just import some basic
 exceptions from `djq.low` and the actual interface from `djq`.  You
@@ -185,3 +188,36 @@ have been loaded.  This will save some memory, and might be useful if
 for some reason you think that the wrong version of the DREQ has been
 loaded for some reason.  The first subsequent calls to
 `process_request` will reload the DREQ.
+
+### Switching back ends
+(This section is preliminary.)
+
+`djq.variables` contains a single function which allows you to select
+a different back end for computing variables.
+
+```
+cv_implemementation(impl)
+```
+
+will select `impl` as the implementation.  `impl` can be either:
+
+* a function, which is the implementation;
+* an object with an attribute named `compute_cmvids_for_exids`, which
+  names a function, which will be the implementation.
+
+This allows you, for instance, to pass it a module, in which is
+defined a suitable function.
+
+The implementation function takes three arguments:
+
+1. an instance of the DREQ;
+2. the name of the MIP;
+3. a set of experiment Ids.
+
+These will have been checked: the experiment Ids will name real
+experiments and those experiments will belong to the MIP.
+
+Its return value should be a set of experiment Ids.
+
+You can also call `cv_implemerntation` with no arguments to return the
+current back end.
