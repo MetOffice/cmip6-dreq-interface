@@ -97,6 +97,12 @@ def compute_variables(dq, mip, experiment):
             mumble("      {}", label)
         cmvids = cv_implementation()(dq, mip, exids)
         mutter("  -> {} variables", len(cmvids))
+        for v in cmvids:
+            if v not in dq.inx.uid:
+                raise Disaster("uid {} unfound".format(v))
+            elif dq.inx.uid[v]._h.label != 'CMORvar':
+                raise Disaster("{} ({}) is {} not CMORvar".format(
+                        dq.inx.uid[v].label, v, dq.inx.uid[v]._h.label))
         return cmvids
     else:
         raise Disaster("this can't happen")
