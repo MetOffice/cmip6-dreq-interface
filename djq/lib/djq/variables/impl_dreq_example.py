@@ -16,7 +16,10 @@
 __all__ = ()
 
 from djq.low import checker
-from djq.variables.compute import checks
+from djq.variables.compute import pre_checks, post_checks
+
+pre_checktree = pre_checks[__name__]
+post_checktree = post_checks[__name__]
 
 def compute_cmvids_for_exids(dq, mip, exids):
     """Compute the cmvids for a MIP and a set of experiment ids.
@@ -75,17 +78,18 @@ def rqlids_of_exid(dq, exid, pmax=2):
     # And this is the answer we are looking for
     return xrqlids
 
-@checker(checks, "variables.compute/preset-safety")
-def preset_safety_check(dq, mip, exid):
+@checker(pre_checktree, "variables.compute/preset-safety")
+def preset_safety_check(dq, mip, exids):
     # The aim of this is to check that the preset value of all the
     # requestitem objects are less than or equal to zero, which means
     # nothing will be filtered by the pmax setting which is inherited
     # from the scope.py code.
-    ex = dq.inx.experiment.uid[exid]
-    for ri in (dq.inx.uid[riid]
-               for riid in riids_of_mip(dq, ex.mip)):
-        if ri.preset > 0:
-            return False
+    for exid in exids:
+        ex = dq.inx.experiment.uid[exid]
+        for ri in (dq.inx.uid[riid]
+                   for riid in riids_of_mip(dq, ex.mip)):
+            if ri.preset > 0:
+                return False
     return True
 
 def riids_of_mip(dq, mip):
