@@ -9,11 +9,13 @@
 
 from sys import stdin, stdout, argv
 from argparse import ArgumentParser
+from importlib import import_module
 from djq import default_dqroot, valid_dqroot, default_dqtag, valid_dqtag
 from djq import process_stream
 from djq.low import verbosity_level, debug_level, mutter
 from djq.low import ExternalException, Scram
 from djq.low import enable_checks
+from djq.variables import cv_implementation
 
 class BadRoot(ExternalException):
     def __init__(self, dqroot):
@@ -35,6 +37,9 @@ def main():
     parser.add_argument("-t", "--tag",
                         default=None, dest='dqtag',
                         help="the default tag for the DREQ")
+    parser.add_argument("-i", "--implementation",
+                        default=None, dest='implementation',
+                        help="the name of an implementation to load")
     parser.add_argument("-v", "--verbose",
                         action='count', dest='verbosity',
                         help="increase verbosity (repeat for more noise)")
@@ -57,6 +62,8 @@ def main():
         debug_level(args.debug)
         verbosity_level(args.verbosity)
         enable_checks(minpri=args.check_priority)
+        if args.implementation is not None:
+            cv_implementation(import_module(args.implementation))
         if args.dqroot is not None:
             default_dqroot(args.dqroot)
         # root can be checked, tag can't in general because it can be
@@ -69,6 +76,8 @@ def main():
                 raise BadTag(args.dqtag)
             default_dqtag(args.dqtag)
         mutter("root {} tag {}", default_dqroot(), default_dqtag())
+        if args.implementation is not None:
+            mutter("implementation {}", args.implementation)
         if args.request is not None:
             mutter("from {}", args.request)
             with open(args.request) as input:
