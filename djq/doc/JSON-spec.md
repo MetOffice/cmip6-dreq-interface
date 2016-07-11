@@ -4,9 +4,9 @@ This document describes the [JSON](http://json.org/) syntax that `djq` understan
 ## Notes
 Everything should be case-insensitive unless that is not possible.  Case should be preserved unless that is hard.  All the syntactical details are [JSON](http://json.org/): if this conflicts with that, then this is wrong.
 
-`djq` uses the standard Python [JSON](https://docs.python.org/2/library/json.html) interface with no special options set so, while this document describes the JSON syntax, the Python-level data structures used by the Python interface correspond to the structures described here in a fairly straightforward way as defined by that interface.
+While this document describes the JSON syntax, `djq` uses the standard Python [JSON](https://docs.python.org/2/library/json.html) interface with no special options set, so the Python-level data structures used by the Python interface correspond to the structures described here in a fairly straightforward way as defined by that interface.
 
-In the syntax below nonterminals are in *italics*, optional things are in (parenthesis).  The formatting leaves much do be desired, but it's all I could manage given the contstraints of Markdown.
+In the syntax below nonterminals are in *italics*, optional things are in (parentheses).  The formatting leaves much to be desired, but it's all I could manage given the contstraints of Markdown.
 
 ## Request
 |||
