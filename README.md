@@ -6,7 +6,8 @@ from its `setup.py`.  It requires the `dreqPy` package from the DREQ
 need access to the a SVN checkut of the DREQ itself: you will almost
 certainly need to teach it where this is.
 
-`dqi` is the DREQ Query Interface.  You do not need this to use `djq`.
+`dqi` is the DREQ Query Interface.  You do not need this to use `djq`,
+although some `djq` back ends may need it.
 
 See the `README` / `README.md` files in the respective directories for
 more information, as well as [some general documentation](doc/).

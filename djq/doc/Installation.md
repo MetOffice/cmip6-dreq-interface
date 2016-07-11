@@ -12,6 +12,7 @@ This currently only describes how to install `djq` using Conda.
 * a checkout of the [Subversion
   dreq](http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq/) from the root
   (so tags are available);
+* possibly an installed version of `dqi`, for some back ends.
 
 ## Installation using Conda
 The way I install `djq` is using [Conda](http://conda.pydata.org/),
@@ -65,6 +66,10 @@ of it you install, but it's possible that the API has changed over
 time.  Currently, the version from `01.beta.29` is known to work, so
 `(cd <dqroot>/tags/01.beta.29 && python setup.py install)` to install
 it.
+
+If you are planning to use a back end which needs it, install `dqi`:
+this lives in `../../dqi` from this file, and `python setup.py
+install` will unstall it in the usual way.
 
 Finally check and install `djq` itself.
 
