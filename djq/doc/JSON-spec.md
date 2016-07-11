@@ -6,9 +6,10 @@ Everything should be case-insensitive unless that is not possible.  Case should 
 
 `djq` uses the standard Python [JSON](https://docs.python.org/2/library/json.html) interface with no special options set so, while this document describes the JSON syntax, the Python-level data structures used by the Python interface correspond to the structures described here in a fairly straightforward way as defined by that interface.
 
-In the syntax below nonterminals are in *italics*, optional things are in (parenthesis).
+In the syntax below nonterminals are in *italics*, optional things are in (parenthesis).  The formatting leaves much do be desired, but it's all I could manage given the contstraints of Markdown.
 
 ## Request
+|||
 |---:|:---|
 | *request*|array of *single-requests* |
 | *single-request*|object, with keys as follows |
@@ -42,6 +43,7 @@ The reason that *requests* are arrays of *single-requests* is to allow multiple 
 ## Reply
 A reply is either an array of *single-reply*s, or a single *catastrophic-reply* object, if something horrible went wrong.  These two cases are immediately distinguishable: if you get an array then all is basically well, if you don't then a catastrophe has happened.
 
+|||
 |---:|:---|
 | *reply*|**either** array of *single-reply*s, **or** a *catastrophic-reply* |
 | *single-reply*|object with keys as follows |
