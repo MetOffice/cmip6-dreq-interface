@@ -15,11 +15,13 @@
 
 __all__ = ()
 
+from sys import modules
 from djq.low import checker
 from djq.variables.compute import pre_checks, post_checks
 
-pre_checktree = pre_checks[__name__]
-post_checktree = post_checks[__name__]
+impl = modules[__name__]
+pre_checktree = pre_checks[impl]
+post_checktree = post_checks[impl]
 
 def compute_cmvids_for_exids(dq, mip, exids):
     """Compute the cmvids for a MIP and a set of experiment ids.

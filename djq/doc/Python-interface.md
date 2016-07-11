@@ -193,7 +193,7 @@ loaded for some reason.  The first subsequent calls to
 (This section is preliminary.)
 
 `djq.variables` contains a single function which allows you to select
-a different back end for computing variables.
+a different back end for computing variables:
 
 ```
 cv_implemementation(impl)
@@ -203,10 +203,10 @@ will select `impl` as the implementation.  `impl` can be either:
 
 * a function, which is the implementation;
 * an object with an attribute named `compute_cmvids_for_exids`, which
-  names a function, which will be the implementation.
+  names a function which will do the work.
 
 This allows you, for instance, to pass it a module, in which is
-defined a suitable function.
+defined a suitable function -- this is the common case in fact.
 
 The implementation function takes three arguments:
 
@@ -214,10 +214,13 @@ The implementation function takes three arguments:
 2. the name of the MIP;
 3. a set of experiment Ids.
 
-These will have been checked: the experiment Ids will name real
+These will have been checked: the experiment IDs will name real
 experiments and those experiments will belong to the MIP.
 
-Its return value should be a set of experiment Ids.
+Its return value should be a set of `CMORvar` IDs.
 
-You can also call `cv_implemerntation` with no arguments to return the
-current back end.
+You can also call `cv_implementation` with no arguments to return the
+current back end: in the attribute case, this is the thing with the
+attribute, not the function (so
+`cv_implementation(cv_implementation())` does nothing if an
+implementation is set, for instance).

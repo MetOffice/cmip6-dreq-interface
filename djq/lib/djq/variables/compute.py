@@ -49,8 +49,8 @@ class BadCVImplementation(ExternalException):
     pass
 
 # Pre and post checks: back ends can know about these.  These are
-# indexed by the name of the back end, and only the checks for the
-# current back end run (see below).
+# indexed by the back end, and only the checks for the current back
+# end run (see below).
 #
 # pre checkers are responsible for checking that things going in are
 # sane, and get called with dq, mip, exids.
@@ -65,34 +65,38 @@ post_checks = defaultdict(make_checktree)
 #
 state = local()
 state.implementation = None
-state.implementation_name = None
 
-def cv_implementation(impl=None, name=None):
+def effective_cv_implementation():
+    # return a tuple of (function, impl), where function is the
+    # callable thing, and impl is the thing to key checks from. Scram
+    # if there is no sane implementation
+    impl = state.implementation
+    if callable(impl):
+        return (impl, impl)
+    elif (hasattr(impl, 'compute_cmvids_for_exids')
+          and callable(impl.compute_cmvids_for_exids)):
+        return (impl.compute_cmvids_for_exids, impl)
+    else:
+        raise Scram("no implementation")
+
+def cv_implementation(impl=None):
     """Get or set a back end for computing variables.
     """
     if impl is None:
         # read
         impl = state.implementation
-        name = state.implementation_name
-        if callable(impl):
-            return (impl, name)
+        if (callable(impl) or (hasattr(impl, 'compute_cmvids_for_exids')
+                               and callable(impl.compute_cmvids_for_exids))):
+            return impl
         elif impl is None:
-            return (None, None)
+            return None
         else:
             raise Disaster("mutant cv implementation")
     else:
         # set
-        if callable(impl):
+        if (callable(impl) or (hasattr(impl, 'compute_cmvids_for_exids')
+                               and callable(impl.compute_cmvids_for_exids))):
             state.implementation = impl
-            state.implementation_name = (name
-                                         if name is not None
-                                         else impl.__name__)
-        elif (hasattr(impl, "compute_cmvids_for_exids")
-              and callable(impl.compute_cmvids_for_exids)):
-            state.implementation = impl.compute_cmvids_for_exids
-            state.implementation_name = (name
-                                         if name is not None
-                                         else impl.__name__)
         else:
             raise BadCVImplementation("{} is no good".format(impl))
 
@@ -105,12 +109,10 @@ def compute_variables(dq, mip, experiment):
 
     See cv_implementation for selecting a back end.
     """
-    (impl, impl_name) = cv_implementation()
-    if impl is None:
-        raise Scram("no back end")
+    (impl, impl_name) = effective_cv_implementation()
     mutter("  mip {} experiment {} implementation {}",
            mip, experiment, impl_name)
-    validate_mip_experiment(dq, mip, experiment)
+    validate_mip_experiment(dq, mip, experiment, impl_name)
 
     if (stringlike(experiment) or experiment is None
         or isinstance(experiment, bool)):
@@ -125,14 +127,14 @@ def compute_variables(dq, mip, experiment):
             elif dq.inx.uid[v]._h.label != 'CMORvar':
                 raise Disaster("{} ({}) is {} not CMORvar".format(
                         dq.inx.uid[v].label, v, dq.inx.uid[v]._h.label))
-        if (post_checks[state.implementation_name](args=(dq, mip, cmvids))
+        if (post_checks[impl_name](args=(dq, mip, cmvids))
             is False):
             raise Disaster("failed post checks")
         return cmvids
     else:
         raise Disaster("this can't happen")
 
-def validate_mip_experiment(dq, mip, experiment):
+def validate_mip_experiment(dq, mip, experiment, impl_name):
     """Validate a MIP and an experiment if it is stringy.
 
     Raise suitable exceptions on failure, return value undefined.
@@ -148,7 +150,7 @@ def validate_mip_experiment(dq, mip, experiment):
     if len(exids) == 0:
         # Nothing matched
         raise WrongExperiment(experiment, mip)
-    if pre_checks[state.implementation_name](args=(dq, mip, exids)) is False:
+    if pre_checks[impl_name](args=(dq, mip, exids)) is False:
         raise Disaster("failed pre checks")
 
 def exids_of_mip(dq, mip, match):
