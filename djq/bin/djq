@@ -77,7 +77,10 @@ def main():
             default_dqtag(args.dqtag)
         mutter("root {} tag {}", default_dqroot(), default_dqtag())
         if args.implementation is not None:
-            mutter("implementation {}", args.implementation)
+            mutter("implementation {}",
+                   (args.implementation.__name__
+                    if hasattr(args.implementation, '__name__')
+                    else args.implementation))
         if args.request is not None:
             mutter("from {}", args.request)
             with open(args.request) as input:

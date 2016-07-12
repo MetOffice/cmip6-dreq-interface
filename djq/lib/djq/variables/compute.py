@@ -109,17 +109,19 @@ def compute_variables(dq, mip, experiment):
 
     See cv_implementation for selecting a back end.
     """
-    (impl, impl_name) = effective_cv_implementation()
+    (cv, impl) = effective_cv_implementation()
     mutter("  mip {} experiment {} implementation {}",
-           mip, experiment, impl_name)
-    validate_mip_experiment(dq, mip, experiment, impl_name)
+           mip, experiment, (impl.__name__
+                             if hasattr(impl, '__name__')
+                             else impl))
+    validate_mip_experiment(dq, mip, experiment, impl)
 
     if (stringlike(experiment) or experiment is None
         or isinstance(experiment, bool)):
         exids = exids_of_mip(dq, mip, experiment)
         for label in sorted(dq.inx.uid[exid].label for exid in exids):
             mumble("      {}", label)
-        cmvids = impl(dq, mip, exids)
+        cmvids = cv(dq, mip, exids)
         mutter("  -> {} variables", len(cmvids))
         for v in cmvids:
             if v not in dq.inx.uid:
@@ -127,14 +129,14 @@ def compute_variables(dq, mip, experiment):
             elif dq.inx.uid[v]._h.label != 'CMORvar':
                 raise Disaster("{} ({}) is {} not CMORvar".format(
                         dq.inx.uid[v].label, v, dq.inx.uid[v]._h.label))
-        if (post_checks[impl_name](args=(dq, mip, cmvids))
+        if (post_checks[impl](args=(dq, mip, cmvids))
             is False):
             raise Disaster("failed post checks")
         return cmvids
     else:
         raise Disaster("this can't happen")
 
-def validate_mip_experiment(dq, mip, experiment, impl_name):
+def validate_mip_experiment(dq, mip, experiment, impl):
     """Validate a MIP and an experiment if it is stringy.
 
     Raise suitable exceptions on failure, return value undefined.
@@ -153,7 +155,7 @@ def validate_mip_experiment(dq, mip, experiment, impl_name):
     else:
         # True, False or None
         exids = exids_of_mip(dq, mip, experiment)
-    if pre_checks[impl_name](args=(dq, mip, exids)) is False:
+    if pre_checks[impl](args=(dq, mip, exids)) is False:
         raise Disaster("failed pre checks")
 
 def exids_of_mip(dq, mip, match):
