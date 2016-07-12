@@ -171,6 +171,18 @@ that the provided paths (and the paths constructed for the tag) smell
 like DREQ checkouts, but they don't actually try and load a DREQ from
 them.  All the default values are thread-local.
 
+`ensure_dq(dqtag=None, dqroot=None)` will return an instance of the
+DREQ, loading it if needed.  By default `dqtag` and `dqroot` are the
+values set by `default_dqtag` and `default_dqroot`.  This is the
+function that `process_request` calls to get hold of the DREQ, but it
+can be called directly to get hold of an instance to explore.
+
+`invalidate_dq_cache()` will obliterate any cached DREQs that have
+been loaded.  This will save some memory, and might be useful if you
+think that the wrong version of the DREQ has been loaded for some
+reason.  The first subsequent call to `process_request`, or to
+`ensure_dq` explicitly, will reload the DREQ.
+
 There are some functions for noise control, exported from `djq.low`.
 
 * `verbosity_level(l=None)` will get or set the default verbosity
@@ -179,15 +191,6 @@ There are some functions for noise control, exported from `djq.low`.
 * `debug_level(l=None)` will get or set the default debug-noise level,
   with the fallback being `0`.  Currently it only matters whether is
   is zero or more than zero.
-
-These functions set and get the default values used by
-`process_request`.  All the default values are thread-local.
-
-Finally, `invalidate_dq_cache()` will obliterate any cached DREQs that
-have been loaded.  This will save some memory, and might be useful if
-for some reason you think that the wrong version of the DREQ has been
-loaded for some reason.  The first subsequent calls to
-`process_request` will reload the DREQ.
 
 ### Switching back ends
 (This section is preliminary.)
