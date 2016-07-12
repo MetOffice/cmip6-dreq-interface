@@ -146,10 +146,13 @@ def validate_mip_experiment(dq, mip, experiment, impl_name):
         if experiment not in dq.inx.experiment.label:
             # No experiment at all with that name
             raise NoExperiment(experiment)
-    exids = exids_of_mip(dq, mip, experiment)
-    if len(exids) == 0:
-        # Nothing matched
-        raise WrongExperiment(experiment, mip)
+        exids = exids_of_mip(dq, mip, experiment)
+        if len(exids) == 0:
+            # Nothing matched
+            raise WrongExperiment(experiment, mip)
+    else:
+        # True, False or None
+        exids = exids_of_mip(dq, mip, experiment)
     if pre_checks[impl_name](args=(dq, mip, exids)) is False:
         raise Disaster("failed pre checks")
 
