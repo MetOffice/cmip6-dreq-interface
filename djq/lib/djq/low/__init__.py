@@ -20,3 +20,7 @@ from .noise import *
 # Runtime checks
 from . import checks
 from .checks import *
+
+# Object validation
+from . import valob
+from .valob import *
