@@ -4,7 +4,7 @@
 from sys import modules
 from nose.tools import raises
 from compute import cv_implementation, BadCVImplementation
-import impl_dreq_example
+import cv_dreq_example
 
 # Check implementation switching
 
@@ -15,8 +15,8 @@ def test_switch_to_me():
     cv_implementation(me)
 
 def test_switch_to_good():
-    cv_implementation(impl_dreq_example)
-    assert cv_implementation() is impl_dreq_example
+    cv_implementation(cv_dreq_example)
+    assert cv_implementation() is cv_dreq_example
 
 def test_switch_to_fn():
     def impl(dq, mip, exids):
