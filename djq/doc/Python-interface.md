@@ -83,9 +83,9 @@ There are three packages you may need to use.
   query the DREQ itself, some tools to set and check the location of
   the DREQ and the default tag, and some more specific types of
   exception.
-* `djq.variables` contains the implementation of computing variables,
-  and supports switching the back end for this, possibly to a
-  user-provided one.
+* `djq.variables` contains the implementation of computing variables
+  and JSONifying the results, and supports switching the back ends for
+  these processes, possibly to user-provided ones.
 
 In almost all cases you probably want to just import some basic
 exceptions from `djq.low` and the actual interface from `djq`.  You
@@ -195,8 +195,8 @@ There are some functions for noise control, exported from `djq.low`.
 ### Switching back ends
 (This section is preliminary.)
 
-`djq.variables` contains a single function which allows you to select
-a different back end for computing variables:
+`djq.variables` contains two functions which allow you to select
+different back ends for computing variables and JSONifying the results.
 
 ```
 cv_implemementation(impl)
@@ -227,3 +227,23 @@ current back end: in the attribute case, this is the thing with the
 attribute, not the function (so
 `cv_implementation(cv_implementation())` does nothing if an
 implementation is set, for instance).
+
+### Switching JSONifiers
+There is a similar implementation switch for JSONifiers:
+
+```
+jsonify_implemementation(impl)
+```
+
+will select `impl` as the implementation for JSONifying.  `impl` can be either
+
+* a function, which is the implementation;
+* an object with an attribute named `jsonify_cmvids`, which names a
+  function which will do the work.
+
+The implementation function takes two arguments:
+
+1. the DREQ;
+2. a set of `CMORvar` IDs.
+
+It should return suitable structure to be converted into JSON.

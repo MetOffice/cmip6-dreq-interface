@@ -13,3 +13,6 @@ cv_implementation(cv_default)
 # jsonifying variable
 from . import jsonify
 from .jsonify import *
+
+from . import jsonify_default
+jsonify_implementation(jsonify_default)
