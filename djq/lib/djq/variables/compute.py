@@ -17,11 +17,7 @@
 #
 # There is no abstraction from the dreq interface at all here
 #
-# There is a check tree, called checks: checkers in it are called with
-#  - the dreq
-#  - the mip
-#  - an exid
-#
+
 __all__ = ('cv_implementation', 'compute_variables',
            'NoMIP', 'WrongExperiment', 'NoExperiment',
            'BadCVImplementation')

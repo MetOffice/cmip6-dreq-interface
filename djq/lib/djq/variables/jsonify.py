@@ -1,7 +1,8 @@
 """JSONifying variables
 """
 
-__all__ = ('jsonify_variables', 'jsonify_implementation')
+__all__ = ('jsonify_variables', 'jsonify_implementation',
+           'BadJSONifyImplementation')
 
 from threading import local
 from djq.low import whisper, ExternalException, Scram, Disaster

@@ -10,7 +10,8 @@ categories = {'instances': {FunctionType: ('compute_variables',
                                            'cv_implementation',
                                            'jsonify_implementation')},
               'types': {Exception: ('NoExperiment', 'NoMIP',
-                                    'WrongExperiment', 'BadCVImplementation')}}
+                                    'WrongExperiment', 'BadCVImplementation',
+                                    'BadJSONifyImplementation')}}
 
 def test_interface():
     if not validate_package_interface(variables, categories):
