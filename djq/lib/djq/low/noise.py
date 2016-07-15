@@ -6,14 +6,13 @@ __all__ = ('verbosity_level', 'debug_level',
            'debug')
 
 from sys import stderr
-from threading import local
+from state import State
 from traceback import format_stack
 
 # Thread-local state
 #
-state = local()
-
-state.verbosity = 0
+state = State(verbosity=0,
+              debugity=0)
 
 def verbosity_level(l=None):
     """Get or set the verbosity level"""
@@ -21,8 +20,6 @@ def verbosity_level(l=None):
         return state.verbosity
     else:
         state.verbosity = l
-
-state.debugity = 0
 
 def debug_level(l=None):
     """Get or set the debug level """

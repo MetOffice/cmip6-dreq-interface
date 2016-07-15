@@ -4,7 +4,7 @@
 __all__ = ('jsonify_variables', 'jsonify_implementation',
            'BadJSONifyImplementation')
 
-from threading import local
+from djq.low import State
 from djq.low import whisper, ExternalException, Scram, Disaster
 from djq.low import make_checktree, checker
 
@@ -16,14 +16,14 @@ class BadJSONifyImplementation(ExternalException):
 #
 checks = make_checktree()
 
-state = local()
-state.implementation = None
+state = State(implementation=None)
+fallback_implementation = None
 
 def effective_jsonify_implementation():
     # return a tuple of (function, impl), where function is the
     # callable thing, and impl is the thing to key checks from. Scram
     # if there is no sane implementation
-    impl = state.implementation
+    impl = jsonify_implementation()
     if callable(impl):
         return (impl, impl)
     elif (hasattr(impl, 'jsonify_cmvids')
@@ -35,9 +35,14 @@ def effective_jsonify_implementation():
 def jsonify_implementation(impl=None):
     """Get or set a back end for computing variables.
     """
+    # Note that the very first call to this with a non-None argument
+    # will also set the fallback. This is done in the package init.
+    global fallback_implementation
     if impl is None:
         # read
-        impl = state.implementation
+        impl = (state.implementation
+                if state.implementation is not None
+                else fallback_implementation)
         if (callable(impl) or (hasattr(impl, 'jsonify_cmvids')
                                and callable(impl.jsonify_cmvids))):
             return impl
@@ -50,6 +55,8 @@ def jsonify_implementation(impl=None):
         if (callable(impl) or (hasattr(impl, 'jsonify_cmvids')
                                and callable(impl.jsonify_cmvids))):
             state.implementation = impl
+            if fallback_implementation is None:
+                fallback_implementation = impl
         else:
             raise BadJSONifyImplementation("{} is no good".format(impl))
 

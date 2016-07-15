@@ -11,14 +11,12 @@
 __all__ = ('make_checktree', 'checker', 'enable_checks')
 
 from collections import defaultdict
-from threading import local
+from state import State
 from noise import chatter, mumble, debug
 from dtype import stringlike
 
-state = local()
-
-state.checks_enabled = True
-state.checks_minpri = 0
+state = State(checks_enabled=True,
+              checks_minpri = 0)
 
 def enable_checks(enabled=None, minpri=None):
     """Control which checks run.

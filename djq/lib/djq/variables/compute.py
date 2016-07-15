@@ -23,7 +23,7 @@ __all__ = ('cv_implementation', 'compute_variables',
            'BadCVImplementation')
 
 from collections import defaultdict
-from threading import local
+from djq.low import State
 from djq.low import ExternalException, InternalException, Disaster, Scram
 from djq.low import mutter, mumble, make_checktree
 from djq.low import stringlike, arraylike, setlike
@@ -59,14 +59,14 @@ post_checks = defaultdict(make_checktree)
 
 # Thread-local state
 #
-state = local()
-state.implementation = None
+state = State(implementation=None)
+fallback_implementation = None
 
 def effective_cv_implementation():
     # return a tuple of (function, impl), where function is the
     # callable thing, and impl is the thing to key checks from. Scram
     # if there is no sane implementation
-    impl = state.implementation
+    impl = cv_implementation()
     if callable(impl):
         return (impl, impl)
     elif (hasattr(impl, 'compute_cmvids_for_exids')
@@ -78,9 +78,14 @@ def effective_cv_implementation():
 def cv_implementation(impl=None):
     """Get or set a back end for computing variables.
     """
+    # Note that the very first call to this with a non-None argument
+    # will also set the fallback. This is done in the package init.
+    global fallback_implementation
     if impl is None:
         # read
-        impl = state.implementation
+        impl = (state.implementation
+                if state.implementation is not None
+                else fallback_implementation)
         if (callable(impl) or (hasattr(impl, 'compute_cmvids_for_exids')
                                and callable(impl.compute_cmvids_for_exids))):
             return impl
@@ -93,6 +98,8 @@ def cv_implementation(impl=None):
         if (callable(impl) or (hasattr(impl, 'compute_cmvids_for_exids')
                                and callable(impl.compute_cmvids_for_exids))):
             state.implementation = impl
+            if fallback_implementation is None:
+                fallback_implementation = impl
         else:
             raise BadCVImplementation("{} is no good".format(impl))
 

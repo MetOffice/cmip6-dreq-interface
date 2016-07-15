@@ -10,14 +10,12 @@ __all__ = ('default_dqroot', 'default_dqtag',
 
 from os import getenv
 from sys import argv
-from threading import local
+from low import State
 from os.path import expanduser, expandvars, isdir, join, split
 from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
 
-# Thread-local state
+# Thread-local state, and defaults
 #
-state = local()
-
 # Guessing a root and a tag.
 #
 # Either listen to environment variables, or fall back to a directory
@@ -28,10 +26,12 @@ state = local()
 # Python's pathname tools are annoyingly rudimentary compared to
 # File::Spec, hence this arcana.
 #
-state.dqroot = (expandvars("$DJQ_DQROOT") if getenv("DJQ_DQROOT")
-                else join(split(split(argv[0])[0])[0], "data", "CMIP6dreq"))
 
-state.dqtag = getenv("DJQ_DQTAG") or "latest"
+state = State(dqroot=(expandvars("$DJQ_DQROOT")
+                      if getenv("DJQ_DQROOT")
+                      else join(split(split(argv[0])[0])[0],
+                                "data", "CMIP6dreq")),
+              dqtag=getenv("DJQ_DQTAG") or "latest")
 
 def default_dqroot(dqroot=None):
     if dqroot is None:
