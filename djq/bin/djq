@@ -91,7 +91,7 @@ def main():
                    (args.jsonify_implementation.__name__
                     if hasattr(args.jsonify_implementation, '__name__')
                     else args.jsonify_implementation))
-            if args.request is not None:
+        if args.request is not None:
             mutter("from {}", args.request)
             with open(args.request) as input:
                 process_stream(input, stdout, backtrace=backtrace)
