@@ -17,6 +17,7 @@ __all__ = ()
 
 from sys import modules
 from djq.low import checker
+from djq.low import mutter, chatter
 from djq.variables.compute import pre_checks, post_checks
 
 impl = modules[__name__]
@@ -31,7 +32,19 @@ def compute_cmvids_for_exids(dq, mip, exids):
     cmvids = set(cmvids_of_mip(dq, mip))
     for exid in exids:
         cmvids.update(cmvids_of_exid(dq, exid))
-    return cmvids
+    # There can be bogons in the result (things which are not
+    # CMORvars), so grovel over the answer and remove them, reporting
+    # if any were removed fairly vigorously.
+    #
+    bads = set()
+    for v in cmvids:
+        l = dq.inx.uid[v]._h.label
+        if l != 'CMORvar':
+            bads.add(v)
+            mutter("[pruned {}: {} not CMORvar]", v, l)
+    if len(bads) > 0:
+        chatter("[pruned {} bogons]", len(bads))
+    return cmvids - bads
 
 # Finding the cmvids for MIPS
 # This is not insanely hard
