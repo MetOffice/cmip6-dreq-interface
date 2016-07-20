@@ -8,7 +8,8 @@ from djq.low import validate_package_interface, report_package_interface
 categories = {'instances': {FunctionType: ('process_stream', 'process_request',
                                            'default_dqroot', 'default_dqtag',
                                            'valid_dqroot', 'valid_dqtag',
-                                           'ensure_dq', 'invalidate_dq_cache'),
+                                           'ensure_dq', 'invalidate_dq_cache',
+                                           'dq_info'),
                             ModuleType: ('low', 'variables')},
               'types': {Exception: ('BadJSON', 'BadParse', 'BadSyntax')}}
 

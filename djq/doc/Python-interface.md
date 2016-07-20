@@ -183,6 +183,12 @@ think that the wrong version of the DREQ has been loaded for some
 reason.  The first subsequent call to `process_request`, or to
 `ensure_dq` explicitly, will reload the DREQ.
 
+`dq_info(dq)` will return a tuple of `(root, tag)` for `dq`, or `None`
+if it is unknown.  It will be unknown if it was not loaded with
+`ensure_dq`, or if the cache has been invalidated between the time it
+was loaded the time this function was called (or, in fact, if `dq` is
+just some random object).
+
 There are some functions for noise control, exported from `djq.low`.
 
 * `verbosity_level(l=None)` will get or set the default verbosity

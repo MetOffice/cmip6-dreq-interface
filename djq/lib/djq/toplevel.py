@@ -1,7 +1,7 @@
 """top-level functionality
 """
 
-__all__ = ('ensure_dq', 'invalidate_dq_cache',
+__all__ = ('ensure_dq', 'invalidate_dq_cache', 'dq_info',
            'process_stream', 'process_request')
 
 from collections import defaultdict
@@ -152,15 +152,17 @@ class DREQLoadFailure(DJQException):
 # anything bad.
 #
 # There's a potential problem if a huge number of requests come in for
-# different tags: I don't think this is likely in practice.
+# different tags: I don't think this is likely in practice.  A fix
+# would be to use weak references.
 #
 
 dqrs = defaultdict(dict)
+dqinfo = {}
 
 def invalidate_dq_cache():
     """Invalidate the cache of loaded DREQs."""
-    global dqrs
-    dqrs = defaultdict(dict)
+    dqrs.clear()
+    dqinfo.clear()
 
 def ensure_dq(dqtag=None, dqroot=None):
     """Ensure the dreq corresponding to a dqtag is loaded, returning it.
@@ -176,17 +178,30 @@ def ensure_dq(dqtag=None, dqroot=None):
         if dqtag is not None:
             if valid_dqtag(dqtag):
                 try:
-                    dqs[dqtag] =  dqload(dqtag=dqtag)
+                    dq = dqload(dqtag=dqtag)
+                    dqs[dqtag] = dq
+                    dqinfo[dq] = (dqroot, dqtag)
                 except Exception as e:
                     raise DREQLoadFailure(dqtag=dqtag, wrapped=e)
             else:
                 raise DREQLoadFailure(message="invalid tag", dqtag=dqtag)
         else:
             try:
-                dqs[None] = dqload()
+                dq = dqload()
+                dqs[None] = dq
+                dqinfo[dq] = (dqroot, None)
             except Exception as e:
                 raise DREQLoadFailure(wrapped=e)
     return dqs[dqtag]
+
+def dq_info(dq):
+    """Return a tuple of (root, tag) for dq, or None if unknown.
+
+    The dq will be unknown if it wasn't loaded with ensure_dq, or if
+    the cache has been invalidated between when it was loaded and the
+    call to this function.
+    """
+    return dqinfo[dq] if dq in dqinfo else None
 
 def process_single_request(r):
     """Process a single request, returning a suitable result for JSONisation.
