@@ -1,7 +1,7 @@
 """Validate objects against patterns
 """
 
-__all__ = ('validate_object', 'every_element', 'some_elements')
+__all__ = ('validate_object', 'every_element')
 
 def validate_object(ob, pattern, eql=lambda x, y: x == y):
     """Return True if ob matches pattern, otherwise False.
@@ -12,11 +12,16 @@ def validate_object(ob, pattern, eql=lambda x, y: x == y):
       the keys match;
     - they are both lists or tuples, ob is an instance of pattern's
       type, they are the same length and their entries match;
-    - pattern is a function which returns true on ob;
+    - pattern is a type and ob is an instance of that type;
+    - pattern is a predicate (a function) which returns true on ob;
     - eql(ob, pattern) is true, where eql defaultly compares with ==.
 
     Note there is no occurs check: if ob or pattern is circular this
     will fail to terminate.
+
+    See every_element, which is a function which returns suitable
+    predicates for checking that every element of an iterable matches
+    some pattern.
     """
     if isinstance(pattern, dict):
         # dictionaries should have matching keys and each value should
@@ -38,6 +43,8 @@ def validate_object(ob, pattern, eql=lambda x, y: x == y):
             return True
         else:
             return False
+    elif isinstance(pattern, type):
+        return True if isinstance(ob, pattern) else False
     elif callable(pattern):
         # if the pattern is a function simply call it on the object
         # and return True if its result is true.  Note this means you
@@ -48,19 +55,23 @@ def validate_object(ob, pattern, eql=lambda x, y: x == y):
         # just use eql
         return True if eql(ob, pattern) else False
 
-# CL's EVERY and SOME
-#
+def every_element(pattern, tp=None,eql=lambda x, y: x == y):
+    """Return a predicate which will check every element in an iterable.
 
-def every_element(predicate, iterable):
-    """Return True if predicate is true for every element of iterable."""
-    for elt in iterable:
-        if not predicate(elt):
-            return False
-    return True
+    - pattern is the pattern to check each element against;
+    - tp, if given, is a type which the iterable should be an instance
+      of;
+    - eql, if given, is the equality predicate for validate_object;
 
-def some_elements(predicate, iterable):
-    """Return True if predicate is true for at least one element of iterable."""
-    for elt in iterable:
-        if predicate(elt):
+    This then returns a function of one argument which validate_object
+    will use to check the object.
+    """
+    def eep(ob):
+        if tp is None or isinstance(ob, tp):
+            for e in ob:
+                if not validate_object(e, pattern, eql=eql):
+                    return False
             return True
-    return False
+        else:
+            return False
+    return eep
