@@ -1,7 +1,7 @@
 # Tests for valob
 #
 
-from valob import validate_object, every_element
+from valob import validate_object, every_element, all_of, one_of
 from djq.low import stringlike
 
 should_match = ((1, 1),
@@ -16,7 +16,9 @@ should_match = ((1, 1),
                   3: {'a': 1}},
                  {1: [1, int],
                   2: callable,
-                  3: {'a': 1}}))
+                  3: {'a': 1}}),
+                (1, all_of((1, int))),
+                (1, one_of((list, 1))))
 
 def test_should_match():
     def checker(ob, pattern):

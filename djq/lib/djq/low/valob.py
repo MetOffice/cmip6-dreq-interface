@@ -1,9 +1,15 @@
 """Validate objects against patterns
 """
 
-__all__ = ('validate_object', 'every_element')
+__all__ = ('validate_object', 'every_element', 'one_of', 'all_of')
 
-def validate_object(ob, pattern, eql=lambda x, y: x == y):
+def equal(x, y):
+    # Python doesn't have a proper eql predicate: '==' is pretty much
+    # EQUAL, while 'is' is EQ.  This is just one of Python's many
+    # uselessnesses.
+    return x == y
+
+def validate_object(ob, pattern, eql=equal):
     """Return True if ob matches pattern, otherwise False.
 
     ob matches pattern if:
@@ -55,7 +61,7 @@ def validate_object(ob, pattern, eql=lambda x, y: x == y):
         # just use eql
         return True if eql(ob, pattern) else False
 
-def every_element(pattern, tp=None,eql=lambda x, y: x == y):
+def every_element(pattern, tp=None, eql=equal):
     """Return a predicate which will check every element in an iterable.
 
     - pattern is the pattern to check each element against;
@@ -75,3 +81,23 @@ def every_element(pattern, tp=None,eql=lambda x, y: x == y):
         else:
             return False
     return eep
+
+def one_of(patterns, eql=equal):
+    """Return a predicate which checks an object matches one of the patterns.
+    """
+    def oop(ob):
+        for p in patterns:
+            if validate_object(ob, p, eql=eql):
+                return True
+        return False
+    return oop
+
+def all_of(patterns, eql=equal):
+    """Return a predicate which checks an object matches all of the patterns.
+    """
+    def aop(ob):
+        for p in patterns:
+            if not validate_object(ob, p, eql=eql):
+                return False
+        return True
+    return aop
