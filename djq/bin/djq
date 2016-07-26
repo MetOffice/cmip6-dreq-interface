@@ -8,6 +8,8 @@
 #
 
 from sys import stdin, stdout, argv
+from signal import SIGINT
+from os import _exit, EX_IOERR
 from argparse import ArgumentParser
 from importlib import import_module
 from djq import default_dqroot, valid_dqroot, default_dqtag, valid_dqtag
@@ -109,7 +111,17 @@ def main():
         else:
             raise
     except KeyboardInterrupt as e:
-        exit("interrupt")
+        exit(128 + SIGINT)
+
+    # Try and evade the 'lost stderr' spurions by just bottling out
+    #
+    try:
+        stdout.flush()
+        stdout.close()
+        stderr.flush()
+        stderr.close()
+    except:
+        _exit(EX_IOERR)
 
 if __name__ == '__main__':
     main()
