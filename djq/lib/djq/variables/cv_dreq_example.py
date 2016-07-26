@@ -12,8 +12,17 @@
 # object, called dq, and do a lot of grovelling around in dq.inx.* as
 # you'd expect.
 #
+# This implementation, djq.variables.cv_dreq_example, is based on
+# examples in the dreq documentation.  In particular it is based on
+# the material which can be found at
+# http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq/trunk/dreqPy/docs/dreqExamples.pdf,
+# or equivelently in CMIP6dreq/trunk/dreqPy/docs/dreqExamples.pdf in a
+# checkout, or equivalent places for branches & tags.  Some of the
+# code is also based on
+# http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq/trunk/dreqPy/scope.py.
+#
 
-__all__ = ()
+__all__ = ('compute_cmvids_for_exids',)
 
 from sys import modules
 from djq.low import checker
