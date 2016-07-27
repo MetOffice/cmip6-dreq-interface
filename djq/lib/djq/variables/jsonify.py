@@ -7,6 +7,7 @@ __all__ = ('jsonify_variables', 'jsonify_implementation',
 from djq.low import State
 from djq.low import whisper, ExternalException, Scram, Disaster
 from djq.low import make_checktree, checker
+from djq.low import validate_object, every_element, one_of, all_of, stringlike
 
 class BadJSONifyImplementation(ExternalException):
     pass
@@ -15,6 +16,24 @@ class BadJSONifyImplementation(ExternalException):
 # and are called with the dq, cmvids, and the JSON structure resulting
 #
 checks = make_checktree()
+
+@checker(checks, "variables.jsonify/validate-results")
+def validate_results(dq, cmvids, results):
+    # This checker looks at results and checks they smell basically
+    # good: it could actually just be in jsonify itself, since any
+    # implementation should pass this.
+    number = one_of((int, float)) # a JSON number
+    return validate_object(
+        results,
+        every_element({'uid': all_of((stringlike,
+                                      lambda u: u in cmvids)),
+                       'label': stringlike,
+                       'miptable': stringlike,
+                       'priority': number,
+                       'mips': every_element(
+                           {'mip': stringlike,
+                            'priority': number,
+                            'objectives': every_element(stringlike)})}))
 
 state = State(implementation=None)
 fallback_implementation = None
@@ -59,7 +78,6 @@ def jsonify_implementation(impl=None):
                 fallback_implementation = impl
         else:
             raise BadJSONifyImplementation("{} is no good".format(impl))
-
 
 def jsonify_variables(dq, cmvids):
     """Return a suitable dict for a bunch of cmv uids"""
