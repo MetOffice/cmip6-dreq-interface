@@ -1,13 +1,13 @@
 """Computing variables by inverting the map from variables to mips
 """
 
-__all__ = ()
+__all__ = ('compute_cmvids_for_exids',)
 
 from sys import modules
 from collections import defaultdict
-from dqi import mips_of_cmv
 from djq.low import checker
-from djq.variables.compute import pre_checks, post_checks
+from compute import pre_checks, post_checks
+from varmip import mips_of_cmv
 
 impl = modules[__name__]
 pre_checktree = pre_checks[impl]
@@ -23,6 +23,6 @@ def compute_cmvids_for_exids(dq, mip, exids):
     """
     mipcmvids = defaultdict(set)
     for cmv in dq.coll['CMORvar'].items:
-        for m in mips_of_cmv(cmv, dq):
+        for m in mips_of_cmv(dq, cmv, exids):
             mipcmvids[m].add(cmv.uid)
     return mipcmvids[mip]
