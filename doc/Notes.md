@@ -62,6 +62,26 @@ no way of enforcing what they should be other than convention.
 Packages generally don't do `from <subpackage> import *` for
 subpackages.
 
+### Short module names in packages
+
+Modules in a package which need other modules in the same package use
+short names.  So in `djq.variables`, `cv_invert_varmip.py` says
+
+```
+from varmip import mips_of_cmv
+```
+
+and not
+
+```
+from djq.variables.varmip import mips_of_cmv
+```
+
+I only do this for modules in the current package or subpackages, not
+upwards (so the same module says `from djq.low import ...`).  Test
+modules should always use fully-qualified names so they don't depend
+on where they are in the tree.
+
 ### Single and double quotes
 I use both `'single quotes'` and `"double quotes"` for strings (as
 well as `"""triple double quotes"""` for docstrings).

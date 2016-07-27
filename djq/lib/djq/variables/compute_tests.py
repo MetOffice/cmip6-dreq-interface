@@ -3,8 +3,8 @@
 
 from sys import modules
 from nose.tools import raises
-from compute import cv_implementation, BadCVImplementation
-import cv_dreq_example
+from djq.variables.compute import cv_implementation, BadCVImplementation
+from djq.variables import cv_dreq_example
 
 # Check implementation switching
 

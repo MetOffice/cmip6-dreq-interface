@@ -1,7 +1,7 @@
 # Tests for valob
 #
 
-from valob import validate_object, every_element, all_of, one_of
+from djq.low.valob import validate_object, every_element, all_of, one_of
 from djq.low import stringlike
 
 should_match = ((1, 1),

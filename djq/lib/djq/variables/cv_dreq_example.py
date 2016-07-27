@@ -27,7 +27,7 @@ __all__ = ('compute_cmvids_for_exids',)
 from sys import modules
 from djq.low import checker
 from djq.low import mutter, chatter
-from djq.variables.compute import pre_checks, post_checks
+from compute import pre_checks, post_checks
 
 impl = modules[__name__]
 pre_checktree = pre_checks[impl]
