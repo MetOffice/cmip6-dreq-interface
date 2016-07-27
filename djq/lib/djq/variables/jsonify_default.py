@@ -5,7 +5,7 @@ __all__ = ('jsonify_cmvids',)
 
 from djq.low import checker
 from djq.low import validate_object, every_element, one_of, all_of, stringlike
-from varmip import mips_of_cmv
+from varmip import mips_of_cmv, priority_of_cmv_in_mip
 from jsonify import checks
 
 @checker(checks, "variables.jsonify/validate-results")
@@ -45,5 +45,5 @@ def mipinfo_of_cmv(dq, cmv):
                   'objectives': tuple(o.description
                                       for o in dq.coll['objective'].items
                                       if o.mip == mip),
-                  'priority': 0} # just fake it for now
+                  'priority': priority_of_cmv_in_mip(dq, cmv, mip)}
                  for mip in mips_of_cmv(dq, cmv))

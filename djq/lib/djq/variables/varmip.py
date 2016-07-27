@@ -1,9 +1,12 @@
 """Working from variables to MIPs.  None of this code is an interface in djq.
 """
 
-# Note that most of this originated in dqi
+# This is meant to be functionality which several modules might use
+#
+# Note that some of this originated in dqi.
+#
 
-__all__ = ('mips_of_cmv',)
+__all__ = ('mips_of_cmv', 'priority_of_cmv_in_mip')
 
 from djq.low import DJQException
 
@@ -102,3 +105,22 @@ def mips_of_cmv(dq, cmv, exids=True):
                 raise BadDreq("{} isn't an experiment, group or mip"
                               .format(dqt))
     return mips
+
+def priority_of_cmv_in_mip(dq, cmv, mip):
+    # Compute the priority of a CMV in a MIP.
+    #
+    # Find all the requestVars which refer to cmv and whose groups are
+    # valid and which refer to mip, and compute the maximum priority
+    # of that set.  If the set is empty (which it can be), just use
+    # the default from the variable.
+    #
+    priorities = tuple(rv.priority
+                       for rv in (dq.inx.uid[rvid]
+                                  for rvid in
+                                  dq.inx.iref_by_sect[cmv.uid].a['requestVar'])
+                       if (validp(dq.inx.uid[rv.vgid])
+                           and rv.mip == mip))
+    if len(priorities) > 0:
+        return max(priorities)
+    else:
+        return cmv.defaultPriority
