@@ -9,7 +9,7 @@ from djq.low import validate_package_interface, report_package_interface
 
 categories = {'types': {Exception: ('DJQException', 'InternalException',
                                     'ExternalException', 'Disaster', 'Scram'),
-                        object: ('State',)},
+                        object: ('State', 'fluid')},
               'instances': {FunctionType:
                             (('arraylike', 'stringlike', 'setlike')
                              + ('verbosity_level', 'debug_level',
