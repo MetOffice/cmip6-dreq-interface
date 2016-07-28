@@ -7,16 +7,19 @@ __all__ = ('ensure_dq', 'invalidate_dq_cache', 'dq_info',
 from collections import defaultdict
 from low import DJQException, InternalException, ExternalException, Scram
 from low import mutter, debug, verbosity_level, debug_level
+from low import fluid
 from emit import emit_reply, emit_catastrophe
 from parse import (read_request, validate_toplevel_request,
                    validate_single_request)
 from load import (default_dqroot, default_dqtag, valid_dqroot, valid_dqtag,
                   dqload)
 from variables import (compute_variables, jsonify_variables,
+                       cv_implementation, jsonify_implementation,
                        NoMIP, NoExperiment, WrongExperiment)
 
 def process_stream(input, output, backtrace=False,
-                   dqroot=None, dqtag=None, dbg=None, verbosity=None):
+                   dqroot=None, dqtag=None, dbg=None, verbosity=None,
+                   cvimpl=None, jsimpl=None):
     """Process a request stream, emitting results on a reply stream.
 
     This reads a request from input, and from this generates a reply
@@ -31,7 +34,9 @@ def process_stream(input, output, backtrace=False,
 
     dqroot, dqtag, dbg and verbosity, if given, will set the dqroot,
     default tag, debug and verbose printing settings for this call,
-    only: the ambient values are restored on exit.
+    only: the ambient values are restored on exit.  cvimpl and jsimpl
+    will similarly set the implementations for computing and
+    jsonifying variables for this call only.
 
     There's no useful return value.
 
@@ -41,53 +46,43 @@ def process_stream(input, output, backtrace=False,
     whole process has failed).
     """
 
-    # Implementing special variables by hand.
-    saved_dbg = debug_level()
-    saved_verbosity = verbosity_level()
-    saved_dqroot = default_dqroot()
-    saved_dqtag = default_dqtag()
-    try:
-        if dbg is not None:
-            debug_level(dbg)
-        if verbosity is not None:
-            verbosity_level(verbosity)
-        if dqroot is not None:
-            default_dqroot(dqroot)
-        if dqtag is not None:
-            default_dqtag(dqtag)
-        emit_reply(tuple(process_single_request(s)
-                         for s in read_request(input)),
-                   output)
-    except Scram as e:
-        raise
-    except ExternalException as e:
-        emit_catastrophe("{}".format(e), output,
-                         note="external error")
-        if backtrace:
+    # hacky special variables (see djq.low.fluid)
+    with fluid((debug_level, dbg, dbg is not None),
+               (verbosity_level, verbosity, verbosity is not None),
+               (default_dqroot, dqroot, dqroot is not None),
+               (default_dqtag, dqtag, dqtag is not None),
+               (cv_implementation, cvimpl, cvimpl is not None),
+               (jsonify_implementation, jsimpl, jsimpl is not None)):
+        try:
+            emit_reply(tuple(process_single_request(s)
+                             for s in read_request(input)),
+                       output)
+        except Scram as e:
             raise
-    except InternalException as e:
-        emit_catastrophe("{}".format(e), output,
-                         note="internal error")
-        if backtrace:
-            raise
-    except DJQException as e:
-        emit_catastrophe("{}".format(e), output,
-                         note="unexpected error")
-        if backtrace:
-            raise
-    except Exception as e:
-        emit_catastrophe("{}".format(e), output,
-                         note="completely unexpected error")
-        if backtrace:
-            raise
-    finally:
-        default_dqtag(saved_dqtag)
-        default_dqroot(saved_dqroot)
-        verbosity_level(saved_verbosity)
-        debug_level(saved_dbg)
+        except ExternalException as e:
+            emit_catastrophe("{}".format(e), output,
+                             note="external error")
+            if backtrace:
+                raise
+        except InternalException as e:
+            emit_catastrophe("{}".format(e), output,
+                             note="internal error")
+            if backtrace:
+                raise
+        except DJQException as e:
+            emit_catastrophe("{}".format(e), output,
+                             note="unexpected error")
+            if backtrace:
+                raise
+        except Exception as e:
+            emit_catastrophe("{}".format(e), output,
+                             note="completely unexpected error")
+            if backtrace:
+                raise
 
 def process_request(request, dqroot=None, dqtag=None,
-                    dbg=None, verbosity=None):
+                    dbg=None, verbosity=None,
+                    cvimpl=None, jsimpl=None):
     """Process a request, as a Python object, and return the results.
 
     Arguments:
@@ -98,7 +93,9 @@ def process_request(request, dqroot=None, dqtag=None,
 
     - dqroot, dqtag, dbg and verbosity, if given, will set the dqroot,
       default tag, debug and verbose printing settings for this call,
-      only: the ambient values are restored on exit.
+      only: the ambient values are restored on exit.  cvimpl and
+      jsimpl will similarly set the implementations for computing and
+      jsonifying variables for this call only.
 
     This returns a tuple of the results for each single-request in the
     request argument.
@@ -109,27 +106,14 @@ def process_request(request, dqroot=None, dqtag=None,
     context.
     """
 
-    # Implementing special variables by hand.
-    saved_dbg = debug_level()
-    saved_verbosity = verbosity_level()
-    saved_dqroot = default_dqroot()
-    saved_dqtag = default_dqtag()
-    try:
-        if dbg is not None:
-            debug_level(dbg)
-        if verbosity is not None:
-            verbosity_level(verbosity)
-        if dqroot is not None:
-            default_dqroot(dqroot)
-        if dqtag is not None:
-            default_dqtag(dqtag)
+    with fluid((debug_level, dbg, dbg is not None),
+               (verbosity_level, verbosity, verbosity is not None),
+               (default_dqroot, dqroot, dqroot is not None),
+               (default_dqtag, dqtag, dqtag is not None),
+               (cv_implementation, cvimpl, cvimpl is not None),
+               (jsonify_implementation, jsimpl, jsimpl is not None)):
         return tuple(process_single_request(s)
                      for s in validate_toplevel_request(request))
-    finally:
-        default_dqtag(saved_dqtag)
-        default_dqroot(saved_dqroot)
-        verbosity_level(saved_verbosity)
-        debug_level(saved_dbg)
 
 class DREQLoadFailure(DJQException):
     """Failure to load the DREQ: it is indeterminate whose fault this is."""
