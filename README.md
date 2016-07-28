@@ -1,5 +1,4 @@
 # CMIP6 DREQ interfaces
-
 `djq` is the DREQ JSON Query tool, which you should be able to install
 from its `setup.py`.  It requires the `dreqPy` package from the DREQ
 (but is not fussy about version), nose to run tests, and will also
@@ -9,5 +8,22 @@ certainly need to teach it where this is.
 `dqi` is the DREQ Query Interface.  You do not need this to use `djq`,
 although some `djq` back ends may need it.
 
-See the `README` / `README.md` files in the respective directories for
-more information, as well as [some general documentation](doc/).
+## Pointers
+* [djq](djq/README.md)
+* [Some general documentation](doc/README.md)
+* (No documentation for `dqi` yet)
+
+## Browsing the documentation
+You can use [grip](https://github.com/joeyespo/grip) to view these
+locally.  It can be installed with `pip`:
+
+```
+$ pip install grip
+[...]
+$ grip
+ * Running on http://localhost:6419/ (Press CTRL+C to quit)
+```
+
+`grip -b` is also useful (opens a browser tab).
+
+See [its documentation](https://github.com/joeyespo/grip/blob/master/README.md).
