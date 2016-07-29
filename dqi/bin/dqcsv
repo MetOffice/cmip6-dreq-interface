@@ -32,7 +32,7 @@ paths = ('defaultPriority',
          ('structure', 'spatialShape', 'dimensions'),
          ('structure', 'temporalShape', 'dimensions'),
          ('structure', 'odims'),
-         'label'                # of the CMORvar itself
+         'label',                # of the CMORvar itself
          'modeling_realm',
          'frequency',
          ('structure', 'cell_measures'),
@@ -44,11 +44,18 @@ paths = ('defaultPriority',
 
 def walk(outdir, dqroot=None, 
          varkey=lambda v: v['rowIndex'],
-         tuplekey=min, varcmp=cmp):
+         tuplekey=min, varcmp=cmp,
+         writeheader=False, printheader=False):
     walked=walk_from_dqroot(dqroot, ruleset=spreadsheet)
+    header = tuple("/".join(p) if isinstance(p, tuple) else p
+                   for p in paths)
+    if printheader:
+        print ",".join(header)
     for table in walked.keys():
         with open(join(outdir, "{}.csv".format(table)), 'w') as out:
             w = writer(out)
+            if writeheader:
+                w.writerow(header)
             # each name in a mip table corresponds to a tuple of vars:
             # use varkey to find a key for each var in a tuple,
             # tuplekey to take an iterable of keys and pick one, and
@@ -84,6 +91,10 @@ if __name__ == '__main__':
                         help="directory where the data request files live")
     parser.add_argument("-D", action='store_true', dest='debug',
                         help="debugging (don't suppress backtraces)")
+    parser.add_argument("-w", action='store_true', dest='writeheader',
+                        help="write headers for the tables")
+    parser.add_argument("-p", action='store_true', dest='printheader',
+                         help="display header on stdout")
     args = parser.parse_args()
     outdir = args.outdir
     try:
@@ -91,7 +102,9 @@ if __name__ == '__main__':
             # this will raise an exception if it exists and is a file:
             # that's fine
             makedirs(outdir)
-        walk(outdir, args.root)
+        walk(outdir, args.root,
+             writeheader=args.writeheader,
+             printheader=args.printheader)
     except Exception as e:
         if not args.debug:
             exit(e)
