@@ -26,4 +26,7 @@ $ grip
 
 `grip -b` is also useful (opens a browser tab).
 
-See [its documentation](https://github.com/joeyespo/grip/blob/master/README.md).
+See [its
+documentation](https://github.com/joeyespo/grip/blob/master/README.md). Note
+that `grip` works by using GitHub's API to format the markdown files,
+and so sends their content to GitHub: it's not suitable for sensitive data.
