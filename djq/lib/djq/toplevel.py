@@ -18,7 +18,8 @@ from variables import (compute_variables, jsonify_variables,
                        NoMIP, NoExperiment, WrongExperiment)
 
 def process_stream(input, output, backtrace=False,
-                   dqroot=None, dqtag=None, dbg=None, verbosity=None,
+                   dqroot=None, dqtag=None, dq=None,
+                   dbg=None, verbosity=None,
                    cvimpl=None, jsimpl=None):
     """Process a request stream, emitting results on a reply stream.
 
@@ -34,9 +35,13 @@ def process_stream(input, output, backtrace=False,
 
     dqroot, dqtag, dbg and verbosity, if given, will set the dqroot,
     default tag, debug and verbose printing settings for this call,
-    only: the ambient values are restored on exit.  cvimpl and jsimpl
+    only: the ambient values are restored on exit. cvimpl and jsimpl
     will similarly set the implementations for computing and
     jsonifying variables for this call only.
+
+    You can explicitly pass a dreq as the dq argument, in which case
+    it it used, rather than whatever dqroot and dqtag would cause to
+    be loaded.
 
     There's no useful return value.
 
@@ -46,7 +51,9 @@ def process_stream(input, output, backtrace=False,
     whole process has failed).
     """
 
-    # hacky special variables (see djq.low.fluid)
+    # Hacky special variables.  This all needs to
+    # be thought about, since things like the dq get passed
+    # explicitly (see djq.low.fluid).
     with fluid((debug_level, dbg, dbg is not None),
                (verbosity_level, verbosity, verbosity is not None),
                (default_dqroot, dqroot, dqroot is not None),
@@ -54,7 +61,7 @@ def process_stream(input, output, backtrace=False,
                (cv_implementation, cvimpl, cvimpl is not None),
                (jsonify_implementation, jsimpl, jsimpl is not None)):
         try:
-            emit_reply(tuple(process_single_request(s)
+            emit_reply(tuple(process_single_request(s, dq=dq)
                              for s in read_request(input)),
                        output)
         except Scram as e:
@@ -80,7 +87,7 @@ def process_stream(input, output, backtrace=False,
             if backtrace:
                 raise
 
-def process_request(request, dqroot=None, dqtag=None,
+def process_request(request, dqroot=None, dqtag=None, dq=None,
                     dbg=None, verbosity=None,
                     cvimpl=None, jsimpl=None):
     """Process a request, as a Python object, and return the results.
@@ -97,6 +104,9 @@ def process_request(request, dqroot=None, dqtag=None,
       jsimpl will similarly set the implementations for computing and
       jsonifying variables for this call only.
 
+    - if dq is given then it should be the dreq to use, and in this
+      case dqroot and dqtag are ignored.
+
     This returns a tuple of the results for each single-request in the
     request argument.
 
@@ -112,7 +122,7 @@ def process_request(request, dqroot=None, dqtag=None,
                (default_dqtag, dqtag, dqtag is not None),
                (cv_implementation, cvimpl, cvimpl is not None),
                (jsonify_implementation, jsimpl, jsimpl is not None)):
-        return tuple(process_single_request(s)
+        return tuple(process_single_request(s, dq=dq)
                      for s in validate_toplevel_request(request))
 
 class DREQLoadFailure(DJQException):
@@ -187,7 +197,7 @@ def dq_info(dq):
     """
     return dqinfo[dq] if dq in dqinfo else None
 
-def process_single_request(r):
+def process_single_request(r, dq=None):
     """Process a single request, returning a suitable result for JSONisation.
 
     This returns either the computed result, or a bad-request response
@@ -199,12 +209,13 @@ def process_single_request(r):
     #
     try:
         rc = validate_single_request(r)
-        if 'dreq' in rc:
-            mutter("* single-request tag {}", rc['dreq'])
-            dq = ensure_dq(rc['dreq'])
-        else:
-            mutter("* single-request")
-            dq = ensure_dq(None)
+        if dq is None:
+            if 'dreq' in rc:
+                mutter("* single-request tag {}", rc['dreq'])
+                dq = ensure_dq(rc['dreq'])
+            else:
+                mutter("* single-request")
+                dq = ensure_dq(None)
         reply = dict(rc)
         # inner block handles semantic errors with the request and has
         # a fallback for other errors

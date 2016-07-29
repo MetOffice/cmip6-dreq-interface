@@ -1,6 +1,34 @@
 """Rudimentary & special-purpose dynamic binding
 """
 
+# This is not very satisfactory, but there probably is no good
+# solution to this problem in Python.
+#
+# This approach hides dynamic ('fluid') variables behind accessor
+# functions (the idea coming from Racket's parameters), and then uses
+# the code below to implement shallow binding of their values.
+# However the accessor functions need to be very carefully written, as
+# they need to make sure that the state they access is thread-local
+# (see state.py and the documentation for threading.local).  The
+# advantage of doing things like this is that naive code can just call
+# the accessor functions and not care.
+#
+# An alternative approach would be to pass around an explicit
+# deep-binding stack, so perhaps ({<varname>: <value>, ...}, <parent>)
+# or something.  This might be better but it would require every
+# function to know about it.  So it would not actually be better.
+#
+# Perhaps the best compromise would be to stash that stack in a single
+# thread-local variable, and use some context-manager thing to wind
+# and unwind the stack.  Accessor functions could then be written in
+# some stylised way to access the stack: you could probably almost
+# have Racket's make-parameter &c: p = make_parameter('p'), where
+# make_parameter would do all the work of setting things up at the
+# top-level of the stack, and then p would be the function which read
+# the state.  That's almost rerooting (it isn't, but it smells a bit
+# like it).  That's what should happen in all of this at some point.
+#
+
 __all__ = ('fluid',)
 
 from dtype import arraylike
