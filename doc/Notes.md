@@ -60,7 +60,9 @@ should be visible to other modules *within the package*, and there is
 no way of enforcing what they should be other than convention.
 
 Packages generally don't do `from <subpackage> import *` for
-subpackages.
+subpackages: this would mean that packages extended all their
+subpackages and that's not what you normally want I think (I don't
+want `djq` to be an extension of `djq.low`).
 
 ### Short module names in packages
 
@@ -78,9 +80,17 @@ from djq.variables.varmip import mips_of_cmv
 ```
 
 I only do this for modules in the current package or subpackages, not
-upwards (so the same module says `from djq.low import ...`).  Test
-modules should always use fully-qualified names so they don't depend
-on where they are in the tree.
+upwards (so the same module says `from djq.low import ...`).
+
+I don't understand [relative
+names](https://www.python.org/dev/peps/pep-0328/) very well, and I'm
+not sure if I should use them here as well: it has always been obscure
+to me just how `sys.path` gets set up.
+
+### Tests
+Test modules should live in subdirectories called `tests` but have not
+always done so.  They always use fully-qualified names for imports so
+they don't depend on where they are in the tree.
 
 ### Single and double quotes
 I use both `'single quotes'` and `"double quotes"` for strings (as

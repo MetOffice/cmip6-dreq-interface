@@ -13,6 +13,10 @@ although some `djq` back ends may need it.
 * [Some general documentation](doc/README.md)
 * (No documentation for `dqi` yet)
 
+## References
+* [The CMIP6 data request](https://w3id.org/cmip6dr) or DREQ (redirection page)
+* [Subversion repo for the DREQ](http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq/), also browsable
+
 ## Browsing the documentation
 You can use [grip](https://github.com/joeyespo/grip) to view these
 locally.  It can be installed with `pip`:
