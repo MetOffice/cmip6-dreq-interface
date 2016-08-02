@@ -8,7 +8,9 @@ from djq.low import validate_package_interface, report_package_interface
 categories = {'instances': {FunctionType: ('compute_variables',
                                            'jsonify_variables',
                                            'cv_implementation',
-                                           'jsonify_implementation')},
+                                           'validate_cv_implementation',
+                                           'jsonify_implementation',
+                                           'validate_jsonify_implementation')},
               'types': {Exception: ('NoExperiment', 'NoMIP',
                                     'WrongExperiment', 'BadCVImplementation',
                                     'BadJSONifyImplementation')}}

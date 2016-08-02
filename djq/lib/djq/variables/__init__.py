@@ -9,7 +9,7 @@ from .compute import *
 # call.
 #
 from . import cv_default
-cv_implementation(cv_default)
+validate_cv_implementation(cv_default, bootstrap=True)
 
 # jsonifying variables
 from . import jsonify
@@ -19,4 +19,4 @@ from .jsonify import *
 # sets the fallback as well.
 #
 from . import jsonify_default
-jsonify_implementation(jsonify_default)
+validate_jsonify_implementation(jsonify_default, bootstrap=True)

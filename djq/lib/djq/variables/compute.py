@@ -18,12 +18,13 @@
 # There is no abstraction from the dreq interface at all here
 #
 
-__all__ = ('cv_implementation', 'compute_variables',
+__all__ = ('cv_implementation', 'validate_cv_implementation',
+           'compute_variables',
            'NoMIP', 'WrongExperiment', 'NoExperiment',
            'BadCVImplementation')
 
 from collections import defaultdict
-from djq.low import State
+from djq.low import fluid, boundp, globalize
 from djq.low import ExternalException, InternalException, Disaster, Scram
 from djq.low import mutter, mumble, make_checktree
 from djq.low import stringlike, arraylike, setlike
@@ -57,51 +58,42 @@ class BadCVImplementation(ExternalException):
 pre_checks = defaultdict(make_checktree)
 post_checks = defaultdict(make_checktree)
 
-# Thread-local state
-#
-state = State(implementation=None)
-fallback_implementation = None
+# The fluid for the implementation: created unbound
+cv_implementation = fluid()
 
 def effective_cv_implementation():
     # return a tuple of (function, impl), where function is the
     # callable thing, and impl is the thing to key checks from. Scram
     # if there is no sane implementation
-    impl = cv_implementation()
-    if callable(impl):
-        return (impl, impl)
-    elif (hasattr(impl, 'compute_cmvids_for_exids')
-          and callable(impl.compute_cmvids_for_exids)):
-        return (impl.compute_cmvids_for_exids, impl)
+    if boundp(cv_implementation):
+        impl = validate_cv_implementation(cv_implementation())
+        return ((impl if callable(impl) else impl.compute_cmvids_for_exids),
+                impl)
     else:
-        raise Scram("no implementation")
+        raise Scram("no cv implementation")
 
-def cv_implementation(impl=None):
-    """Get or set a back end for computing variables.
+def validate_cv_implementation(impl, bootstrap=False):
+    """Validate a back end for computing variables, returning it.
+
+    Raise an exception if it is invalid.
     """
-    # Note that the very first call to this with a non-None argument
-    # will also set the fallback. This is done in the package init.
-    global fallback_implementation
-    if impl is None:
-        # read
-        impl = (state.implementation
-                if state.implementation is not None
-                else fallback_implementation)
-        if (callable(impl) or (hasattr(impl, 'compute_cmvids_for_exids')
-                               and callable(impl.compute_cmvids_for_exids))):
-            return impl
-        elif impl is None:
-            return None
-        else:
-            raise Disaster("mutant cv implementation")
-    else:
-        # set
-        if (callable(impl) or (hasattr(impl, 'compute_cmvids_for_exids')
-                               and callable(impl.compute_cmvids_for_exids))):
-            state.implementation = impl
-            if fallback_implementation is None:
-                fallback_implementation = impl
+    # Note that the very first call to this with a non-None argument,
+    # and with bootstrap given actually sets up the fluid.  This is
+    # just a hack to bootstrap things (it can't be set here, as this
+    # module should not know what the default is.
+    #
+    def validate(it):
+        if (callable(it) or (hasattr(it, 'compute_cmvids_for_exids')
+                             and callable(it.compute_cmvids_for_exids))):
+            return it
         else:
             raise BadCVImplementation("{} is no good".format(impl))
+
+    if bootstrap:
+        globalize(cv_implementation, validate(impl), threaded=True)
+        return impl
+    else:
+        return validate(impl)
 
 def compute_variables(dq, mip, experiment):
     """Compute the variables for a MIP and generalised experiment name.

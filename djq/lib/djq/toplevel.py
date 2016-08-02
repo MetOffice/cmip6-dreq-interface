@@ -7,14 +7,15 @@ __all__ = ('ensure_dq', 'invalidate_dq_cache', 'dq_info',
 from collections import defaultdict
 from low import DJQException, InternalException, ExternalException, Scram
 from low import mutter, debug, verbosity_level, debug_level
-from low import fluid
+from low import fluids
 from emit import emit_reply, emit_catastrophe
 from parse import (read_request, validate_toplevel_request,
                    validate_single_request)
 from load import (default_dqroot, default_dqtag, valid_dqroot, valid_dqtag,
                   dqload)
 from variables import (compute_variables, jsonify_variables,
-                       cv_implementation, jsonify_implementation,
+                       cv_implementation, validate_cv_implementation,
+                       jsonify_implementation, validate_jsonify_implementation,
                        NoMIP, NoExperiment, WrongExperiment)
 
 def process_stream(input, output, backtrace=False,
@@ -33,11 +34,10 @@ def process_stream(input, output, backtrace=False,
     case.  If backtrace is true it also reraises the exception so a
     stack trace can be created.
 
-    dqroot, dqtag, dbg and verbosity, if given, will set the dqroot,
+    dqroot, dqtag, dbg and verbosity, if given, will bind the dqroot,
     default tag, debug and verbose printing settings for this call,
-    only: the ambient values are restored on exit. cvimpl and jsimpl
-    will similarly set the implementations for computing and
-    jsonifying variables for this call only.
+    only. cvimpl and jsimpl will similarly bind the implementations
+    for computing and jsonifying variables for this call only.
 
     You can explicitly pass a dreq as the dq argument, in which case
     it it used, rather than whatever dqroot and dqtag would cause to
@@ -51,15 +51,25 @@ def process_stream(input, output, backtrace=False,
     whole process has failed).
     """
 
-    # Hacky special variables.  This all needs to
-    # be thought about, since things like the dq get passed
-    # explicitly (see djq.low.fluid).
-    with fluid((debug_level, dbg, dbg is not None),
-               (verbosity_level, verbosity, verbosity is not None),
-               (default_dqroot, dqroot, dqroot is not None),
-               (default_dqtag, dqtag, dqtag is not None),
-               (cv_implementation, cvimpl, cvimpl is not None),
-               (jsonify_implementation, jsimpl, jsimpl is not None)):
+    with fluids((debug_level, (dbg
+                               if dbg is not None
+                               else debug_level())),
+                (verbosity_level, (verbosity
+                                   if verbosity is not None
+                                   else verbosity_level())),
+                (default_dqroot, (dqroot
+                                  if dqroot is not None
+                                  else default_dqroot())),
+                (default_dqtag, (dqtag
+                                 if dqtag is not None
+                                 else default_dqtag())),
+                (cv_implementation, (validate_cv_implementation(cvimpl)
+                                     if cvimpl is not None
+                                     else cv_implementation())),
+                (jsonify_implementation,
+                 (validate_jsonify_implementation(jsimpl)
+                  if jsimpl is not None
+                  else jsonify_implementation()))):
         try:
             emit_reply(tuple(process_single_request(s, dq=dq)
                              for s in read_request(input)),
@@ -98,11 +108,10 @@ def process_request(request, dqroot=None, dqtag=None, dq=None,
       single-request objects.  Each single-request is a dict with
       appropriate keys.
 
-    - dqroot, dqtag, dbg and verbosity, if given, will set the dqroot,
-      default tag, debug and verbose printing settings for this call,
-      only: the ambient values are restored on exit.  cvimpl and
-      jsimpl will similarly set the implementations for computing and
-      jsonifying variables for this call only.
+    - dqroot, dqtag, dbg and verbosity, if given, will bind the
+      dqroot, default tag, debug and verbose printing settings for
+      this call.  cvimpl and jsimpl will similarly bind the
+      implementations for computing and jsonifying variables.
 
     - if dq is given then it should be the dreq to use, and in this
       case dqroot and dqtag are ignored.
@@ -116,12 +125,25 @@ def process_request(request, dqroot=None, dqtag=None, dq=None,
     context.
     """
 
-    with fluid((debug_level, dbg, dbg is not None),
-               (verbosity_level, verbosity, verbosity is not None),
-               (default_dqroot, dqroot, dqroot is not None),
-               (default_dqtag, dqtag, dqtag is not None),
-               (cv_implementation, cvimpl, cvimpl is not None),
-               (jsonify_implementation, jsimpl, jsimpl is not None)):
+    with fluids((debug_level, (dbg
+                               if dbg is not None
+                               else debug_level())),
+                (verbosity_level, (verbosity
+                                   if verbosity is not None
+                                   else verbosity_level())),
+                (default_dqroot, (dqroot
+                                  if dqroot is not None
+                                  else default_dqroot())),
+                (default_dqtag, (dqtag
+                                 if dqtag is not None
+                                 else default_dqtag())),
+                (cv_implementation, (validate_cv_implementation(cvimpl)
+                                     if cvimpl is not None
+                                     else cv_implementation())),
+                (jsonify_implementation,
+                 (validate_jsonify_implementation(jsimpl)
+                  if jsimpl is not None
+                  else jsonify_implementation()))):
         return tuple(process_single_request(s, dq=dq)
                      for s in validate_toplevel_request(request))
 

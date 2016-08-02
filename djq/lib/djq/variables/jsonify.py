@@ -2,9 +2,9 @@
 """
 
 __all__ = ('jsonify_variables', 'jsonify_implementation',
-           'BadJSONifyImplementation')
+           'validate_jsonify_implementation', 'BadJSONifyImplementation')
 
-from djq.low import State
+from djq.low import fluid, boundp, globalize
 from djq.low import whisper, ExternalException, Scram, Disaster
 from djq.low import make_checktree, checker
 from djq.low import validate_object, every_element, one_of, all_of, stringlike
@@ -35,49 +35,41 @@ def validate_results(dq, cmvids, results):
                             'priority': number,
                             'objectives': every_element(stringlike)})}))
 
-state = State(implementation=None)
-fallback_implementation = None
+# The fluid for the implementation, created unbound
+jsonify_implementation = fluid()
 
 def effective_jsonify_implementation():
     # return a tuple of (function, impl), where function is the
     # callable thing, and impl is the thing to key checks from. Scram
     # if there is no sane implementation
-    impl = jsonify_implementation()
-    if callable(impl):
-        return (impl, impl)
-    elif (hasattr(impl, 'jsonify_cmvids')
-          and callable(impl.jsonify_cmvids)):
-        return (impl.jsonify_cmvids, impl)
+    if boundp(jsonify_implementation):
+        impl = validate_jsonify_implementation(jsonify_implementation())
+        return ((impl if callable(impl) else impl.jsonify_cmvids), impl)
     else:
-        raise Scram("no implementation")
+        raise Scram("no jsonify implementation")
 
-def jsonify_implementation(impl=None):
-    """Get or set a back end for computing variables.
+def validate_jsonify_implementation(impl, bootstrap=False):
+    """Validate a jsonify implementation, returning it.
+
+    Raise an exception if it is invalid.
     """
-    # Note that the very first call to this with a non-None argument
-    # will also set the fallback. This is done in the package init.
-    global fallback_implementation
-    if impl is None:
-        # read
-        impl = (state.implementation
-                if state.implementation is not None
-                else fallback_implementation)
-        if (callable(impl) or (hasattr(impl, 'jsonify_cmvids')
-                               and callable(impl.jsonify_cmvids))):
-            return impl
-        elif impl is None:
-            return None
+    # Note that the very first call to this with a non-None argument,
+    # and with bootstrap given actually sets up the fluid.  This is
+    # just a hack to bootstrap things (it can't be set here, as this
+    # module should not know what the default is.
+    #
+    def validate(it):
+        if (callable(it) or (hasattr(it, 'jsonify_cmvids')
+                             and callable(it.jsonify_cmvids))):
+            return it
         else:
-            raise Disaster("mutant cv implementation")
+            raise BadJSONifyImplementation("{} is no good".format(it))
+
+    if bootstrap:
+        globalize(jsonify_implementation, validate(impl), threaded=True)
+        return impl
     else:
-        # set
-        if (callable(impl) or (hasattr(impl, 'jsonify_cmvids')
-                               and callable(impl.jsonify_cmvids))):
-            state.implementation = impl
-            if fallback_implementation is None:
-                fallback_implementation = impl
-        else:
-            raise BadJSONifyImplementation("{} is no good".format(impl))
+        return validate(impl)
 
 def jsonify_variables(dq, cmvids):
     """Return a suitable dict for a bunch of cmv uids"""
