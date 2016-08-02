@@ -25,10 +25,6 @@ from .checks import *
 from . import valob
 from .valob import *
 
-# thread-local state
-from . import state
-from .state import *
-
-# fluids (hack)
-from . import fluid
-from .fluid import *
+# fluid variables
+from . import nfluid
+from .nfluid import *
