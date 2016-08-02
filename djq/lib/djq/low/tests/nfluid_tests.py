@@ -1,7 +1,7 @@
 # Tests for new fluids
 #
 
-# This doesn't test evaporation since that's probably going away
+# This doesn't test localizing, as that's never used
 
 from djq.low.nfluid import fluid, boundp, fluids, globalize, Unbound
 from threading import Thread
