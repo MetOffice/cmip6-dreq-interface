@@ -3,11 +3,11 @@
 
 # This doesn't test evaporation since that's probably going away
 
-from djq.low.nfluid import fluid, fluids, Unbound
+from djq.low.nfluid import fluid, boundp, fluids, globalize, Unbound
 from threading import Thread
 from nose.tools import raises
 
-utf = fluid(1)
+utf = globalize(fluid(), 1)
 
 def test_global_utf_binding():
     assert utf() == 1
@@ -20,8 +20,10 @@ def test_global_utf_binding():
     assert utf() == 2
 
 def test_local_binding():
-    with fluids():
-        fl = fluid(2)
+    fl = fluid()
+    assert not boundp(fl)
+    with fluids((fl, 2)):
+        assert boundp(fl)
         assert fl() == 2
         with fluids((fl, 3)):
             assert fl() == 3
@@ -31,7 +33,7 @@ def test_local_binding():
         return fl()
     unbound()
 
-tf = fluid(1, toplevel=True, threaded=True)
+tf = globalize(fluid(), 1, threaded=True)
 
 def test_thr_binding():
     def set_tf_3():

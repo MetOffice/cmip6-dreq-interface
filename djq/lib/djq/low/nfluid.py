@@ -1,32 +1,56 @@
-"""Fluid (dynamic) bindings for Python
+"""Dynamic bindings for Python (New Fluids)
 """
 
-# Fluid bindings are functions which look themselves up in a stack to
-# find or set their values.  This therefore implements deeply-bound
-# dynamic variables.  The stack has a global top, and each thread has
-# at least oner stack frame below that.  Fluids can be made such that
-# they are automagically rebound into the thread's top stack frame.
+# Fluids, or dynamic variables are functions which look themselves up
+# in a stack to find or set their values.  This therefore implements
+# deeply-bound dynamic variables.  The stack has a global top, and
+# each thread has at least oner stack frame below that.  Fluids can be
+# made such that they are automagically rebound into the thread's top
+# stack frame.
 #
-# Some operations you might want are missing: you can make new fluids
-# with fluid, bind them locally with the fluids context manager and
-# remove toplevel bindings with evaporate (which may go away), but
-# there is no public boundp function, no way of controlling what the
-# thread-default value is after creating a fluid and so on.  The
-# intention is to provide enough to be useful with an interface which
-# smells stable rather than to try and fail to make a language-quality
-# interface.
+# This is not really a general-purpose implementation, and is probably
+# idiosyncractic, but it works well enough.
+#
+# Fluid variables are functions which can be called with zero or one
+# argument: when called with no argument they return their current
+# binding (or raise an Unbound exception if they are not bound), and
+# when called with one argument they set their current value.  A fluid
+# must be bound to set its value.  fluid() constructs fluids.
+#
+# boundp(v) tells you if v is bound.
+#
+# To locally bind fluids use the fluids context manager:
+#
+#  v = fluid()
+#  with fluids((v, 2)):
+#      assert v() == 2
+#      v(3)
+#      assert v() == 3
+#  assert not boundp(v)
+#
+# To globally bind a fluid use globalize: globalize(v, val) will make
+# v have the global value val.  globalize(v, val, threaded=True) will
+# do the same but cause it to be rebound at the top of each thread, so
+# each thread gets the default value val.  The fluid may also be
+# locally bound of course (and may already be locally bound before it
+# is globalized: its local value will be unchanged).  You can call
+# globalize repeatedly which will alter the top-level binding and can
+# alter its threadedness.
+#
+# localize(v) undoes everything that globalize does.  Again, if there
+# is a local binding it will not be changed.
+#
+# There is currently no way of knowing if a fluid is threaded or, if
+# it is bound, whether it has been globalized at all.
 #
 
-__all__ = ('fluid', 'fluids', 'evaporate')
+__all__ = ('fluid', 'boundp', 'globalize', 'localize', 'fluids',
+           'Unbound')
 
 from threading import local
 
 class Catastrophe(Exception):
     # A horror
-    pass
-
-class Silly(Exception):
-    # Asking for something impossible
     pass
 
 class Unbound(Exception):
@@ -67,7 +91,9 @@ class State(local):
 
 state = State()
 
-def getval(var):
+def getf(var):
+    # get a fluid value (nothing to do with CL's GETF, I just liked
+    # the name)
     def rv(bt):
         (car, cdr) = bt
         if var in car:
@@ -78,7 +104,8 @@ def getval(var):
             raise Unbound(var)
     return rv(state.frame)
 
-def setval(var, val):
+def setf(var, val):
+    # set a fluid value (again, no relation to SETF)
     def loc(bt):
         (car, cdr) = bt
         if var in car:
@@ -91,6 +118,7 @@ def setval(var, val):
     return val
 
 def boundp(var):
+    # is a fluid bound (this *is* related to BOUNDP)
     def bp(bt):
         (car, cdr) = bt
         if var in car:
@@ -101,27 +129,36 @@ def boundp(var):
             return False
     return bp(state.frame)
 
-def fluid(val=None, toplevel=False, threaded=False):
-    """Make a new bound fluid variable"""
-    if threaded and not toplevel:
-        raise Silly("threaded fluids must be bound at toplevel")
+def fluid():
+    """Make a new unbound fluid variable"""
+    # If Python had any coherent semantics for binding variables, this
+    # would rely on letrec / labels semantics, rather than let / flet:
+    # the binding corresponding to the function needs to be visible to
+    # the function itself.
     var = (lambda val=None:
-               (setval(var, val)
+               (setf(var, val)
                 if val is not None
-                else getval(var)))
-    if toplevel:
-        # bind globally
-        global_frame[0][var] = val
-        if threaded:
-            # Note it should be rebound, and bind at thread toplevel
-            thread_bound.add(var)
-            state.toplevel_frame[0][var] = val
-    else:
-        # bind locally
-        state.frame[0][var] = val
+                else getf(var)))
     return var
 
-def evaporate(var):
+def globalize(var, val, threaded=False):
+    """globalize a fluid variable.
+
+    This makes it have a toplevel value and, if threaded is true,
+    causes it to be rebound per thread.
+    """
+    global_frame[0][var] = val
+    if threaded:
+        # Note it should be rebound, and bind at thread toplevel
+        thread_bound.add(var)
+        state.toplevel_frame[0][var] = val
+    else:
+        # Remove any rebinding state
+        thread_bound.discard(var)
+        state.toplevel_frame[0].pop(var, None)
+    return var
+
+def localize(var):
     """Remove any toplevel binding of a fluid.
 
     This will make it have no global binding, no toplevel binding in
@@ -129,12 +166,11 @@ def evaporate(var):
     bindings in other threads are not altered, and if there are
     non-toplevel bindings in the current thread they will persist
     until the stack is unwound.
-
-    This function may go away.
     """
     thread_bound.discard(var)
     global_frame[0].pop(var, None)
     state.toplevel_frame[0].pop(var, None)
+    return var
 
 class fluids(object):
     """Context manager for fluid bindings"""
@@ -142,8 +178,6 @@ class fluids(object):
     def __init__(self, *bindings):
         self.bindings = {}
         for (var, val) in bindings:
-            if not boundp(var):
-                raise Unbound(var)
             self.bindings[var] = val
 
     def __enter__(self):
