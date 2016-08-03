@@ -58,6 +58,9 @@ def main():
                         action='store', type=int,
                         dest='check_priority', default=0,
                         help="set the lowest check priority that will run")
+    parser.add_argument("-o", "--output",
+                        default=None, dest='output',
+                        help="output file (stdout default)")
     parser.add_argument('request', nargs='?', default=None,
                         help="JSON request (stdin default)")
     backtrace = None
@@ -93,13 +96,15 @@ def main():
                    (args.jsonify_implementation.__name__
                     if hasattr(args.jsonify_implementation, '__name__')
                     else args.jsonify_implementation))
-        if args.request is not None:
-            mutter("from {}", args.request)
-            with open(args.request) as input:
-                process_stream(input, stdout, backtrace=backtrace)
-        else:
-            mutter("from -")
-            process_stream(stdin, stdout, backtrace=backtrace)
+        mutter("from {} to {}",
+               (args.request if args.request is not None else "-"),
+               (args.output if args.output is not None else "-"))
+        with (open(args.request)
+              if args.request is not None
+              else stdin) as input, (open(args.output, 'w')
+                                     if args.output is not None
+                                     else stdout) as output:
+            process_stream(input, output, backtrace=backtrace)
     except Scram as e:
         raise
     except Exception as e:
