@@ -124,8 +124,7 @@ def compute_variables(dq, mip, experiment):
             elif dq.inx.uid[v]._h.label != 'CMORvar':
                 raise Disaster("{} ({}) is {} not CMORvar".format(
                         dq.inx.uid[v].label, v, dq.inx.uid[v]._h.label))
-        if (post_checks[impl](args=(dq, mip, cmvids))
-            is False):
+        if post_checks[impl](args=(dq, mip, cmvids)) is False:
             raise Disaster("failed post checks")
         return cmvids
     else:

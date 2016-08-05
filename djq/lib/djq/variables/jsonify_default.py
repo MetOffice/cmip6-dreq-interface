@@ -3,7 +3,32 @@
 
 __all__ = ('jsonify_cmvids',)
 
+from sys import modules
+from djq.low import checker
+from djq.low import validate_object, every_element, one_of, all_of, stringlike
+from jsonify import checks
 from varmip import mips_of_cmv, priority_of_cmv_in_mip
+
+impl = modules[__name__]
+checktree = checks[impl]
+
+@checker(checktree, "variables.jsonify/validate-results")
+def validate_results(dq, cmvids, results):
+    # This checker looks at results and checks they smell basically
+    # good: it could actually just be in jsonify itself, since any
+    # implementation should pass this.
+    number = one_of((int, float)) # a JSON number
+    return validate_object(
+        results,
+        every_element({'uid': all_of((stringlike,
+                                      lambda u: u in cmvids)),
+                       'label': stringlike,
+                       'miptable': stringlike,
+                       'priority': number,
+                       'mips': every_element(
+                           {'mip': stringlike,
+                            'priority': number,
+                            'objectives': every_element(stringlike)})}))
 
 def jsonify_cmvids(dq, cmvids):
     """Convert a bunch of CMORvar IDs to JSON."""
