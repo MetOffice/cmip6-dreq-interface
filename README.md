@@ -8,6 +8,9 @@ certainly need to teach it where this is.
 `dqi` is the DREQ Query Interface.  You do not need this to use `djq`,
 although some `djq` back ends may need it.
 
+`comparisons` is some code to compare what `djq` computes with various
+other sources of information: there's nothing installable here.
+
 ## Pointers
 * [djq](djq/README.md)
 * [Some general documentation](doc/README.md)
