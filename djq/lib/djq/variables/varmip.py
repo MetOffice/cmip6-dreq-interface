@@ -6,7 +6,8 @@
 # Note that some of this originated in dqi.
 #
 
-__all__ = ('mips_of_cmv', 'priority_of_cmv_in_mip')
+__all__ = ('mips_of_cmv', 'priority_of_cmv_in_mip',
+           'validp', 'dqtype')
 
 from djq.low import DJQException
 
