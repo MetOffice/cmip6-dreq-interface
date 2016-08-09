@@ -4,9 +4,7 @@
 # This is experimental code
 #
 
-__all__ = ('DJQMap', 'XLSXMap',
-           'empty_miptables', 'prune_empty_miptables',
-           'miptables_with_empty_mipsets', 'prune_empty_mipsets')
+__all__ = ('DJQMap', 'XLSXMap')
 
 from os.path import join
 from collections import defaultdict
@@ -16,6 +14,13 @@ from djq import (process_request, default_dqroot, default_dqtag, ensure_dq,
 import djq.variables.cv_invert_varmip as civ
 
 from openpyxl import load_workbook
+
+def has(pred, iterable):
+    # does any element of an iterable matche a predicate?
+    for i in iterable:
+        if pred(i):
+            return True
+    return False
 
 class MTMap(object):
     # superclass for miptable maps
@@ -28,6 +33,19 @@ class MTMap(object):
         assert valid_dqroot(root), "bad root"
         self.tag = tag if tag is not None else default_dqtag()
         self.root = root if root is not None else default_dqroot()
+        self.__results = None
+
+    # Caching results.  This is pretty bogus
+    #
+    @property
+    def results(self):
+        if self.__results is None:
+            self.__results = self.compute_results()
+        return self.__results
+
+    @results.setter
+    def results(self, value):
+        self.__results = value
 
     @property
     def dq(self):
@@ -40,6 +58,36 @@ class MTMap(object):
                    for vs in self.results.itervalues()
                    for uid in vs.iterkeys()
                    if uid not in inx)
+
+    def empty_miptables(self):
+        # empty miptables of a map
+        return set((miptable
+                    for (miptable, variables) in self.results.iteritems()
+                    if (len(variables) == 0
+                        or max(map(len, variables.values())) == 0)))
+
+    def prune_empty_miptables(self):
+        return {miptable: variables
+                for (miptable, variables) in self.results.iteritems()
+                if (len(variables) > 0
+                    and max(map(len, variables.values())) > 0)}
+
+
+    def miptables_with_empty_mipsets(self):
+        return set((miptable
+                    for (miptable, variables) in self.results.iteritems()
+                    if has(lambda(s): len(s) == 0, variables.values())))
+
+    def prune_empty_mipsets(self):
+        empties = self.miptables_with_empty_mipsets()
+        def prune_maybe(mt, variables):
+            if mt in empties:
+                return {uid: mipset for (uid, mipset) in variables.iteritems()
+                        if len(mipset) > 0}
+            else:
+                return variables
+        return {miptable: prune_maybe(miptable, variables)
+                for (miptable, variables) in self.results.iteritems()}
 
 # Computing what djq thinks is going on
 #
@@ -71,21 +119,15 @@ class DJQMap(MTMap):
         # returning defaultdicts can be confusing
         return dict(table)
 
-    @property
-    def results(self):
-        # mindlessly cached results
-        if self.__results is not None:
-            return self.__results
-        else:
-            dq = self.dq
-            self.__results = self.invert_replies(
-                process_request(tuple({'mip': mip.label,
-                                       'experiment': True}
-                                      for mip in dq.coll['mip'].items),
-                                dq=dq,
-                                cvimpl=self.cvimpl,
-                                jsimpl=self.jsonify))
-            return self.__results
+    def compute_results(self):
+        # compute results (cached by MTMap)
+        dq = self.dq
+        return self.invert_replies(
+            process_request(tuple({'mip': mip.label, 'experiment': True}
+                                  for mip in dq.coll['mip'].items),
+                            dq=dq,
+                            cvimpl=self.cvimpl,
+                            jsimpl=self.jsonify))
 
 # Now do the same from the spreadsheet
 #
@@ -113,61 +155,15 @@ class XLSXMap(MTMap):
                    if mips is not None
                    else ())
 
-    @property
-    def results(self):
+    def compute_results(self):
         # The columns we want are 18 (UID), 22 and 23 (the two lists
         # of MIPs), and again we want to build a map from {miptable:
         # {uid: mips}}
-        if self.__results is not None:
-            return self.__results
-        else:
-            wb = self.wb
-            setify = self.setify_mips
-            skip = self.skip
-            self.__results = {miptable: {r[18].value: (setify(r[22].value)
-                                                       | setify(r[23].value))
-                                         for r in tuple(wb[miptable].rows)[1:]}
-                              for miptable in wb.sheetnames
-                              if miptable not in skip}
-            return self.__results
-
-# a miptable is empty if it has no variables, or if all its variables
-# have empty sets of MIPs.
-
-def empty_miptables(mtmap):
-    return set((miptable
-                for (miptable, variables) in mtmap.iteritems()
-                if (len(variables) == 0
-                    or max(map(len, variables.values())) == 0)))
-
-def prune_empty_miptables(mtmap):
-    return {miptable: variables
-            for (miptable, variables) in mtmap.iteritems()
-            if (len(variables) > 0
-                and max(map(len, variables.values())) > 0)}
-
-
-# A miptable has empty mipsets if any of its variables do
-#
-
-def has(pred, iterable):
-    for i in iterable:
-        if pred(i):
-            return True
-    return False
-
-def miptables_with_empty_mipsets(mtmap):
-    return set((miptable
-                for (miptable, variables) in mtmap.iteritems()
-                if has(lambda(s): len(s) == 0, variables.values())))
-
-def prune_empty_mipsets(mtmap):
-    empties = miptables_with_empty_mipsets(mtmap)
-    def prune_maybe(mt, variables):
-        if mt in empties:
-            return {uid: mipset for (uid, mipset) in variables.iteritems()
-                    if len(mipset) > 0}
-        else:
-            return variables
-    return {miptable: prune_maybe(miptable, variables)
-            for (miptable, variables) in mtmap.iteritems()}
+        wb = self.wb
+        setify = self.setify_mips
+        skip = self.skip
+        return {miptable: {r[18].value: (setify(r[22].value)
+                                         | setify(r[23].value))
+                           for r in tuple(wb[miptable].rows)[1:]}
+                for miptable in wb.sheetnames
+                if miptable not in skip}
