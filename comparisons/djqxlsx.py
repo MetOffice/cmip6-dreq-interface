@@ -1,6 +1,8 @@
 # Extracting miptable maps from the DREQ using djq and the spreadsheet
 # for comparisons
 #
+# This is experimental code
+#
 
 __all__ = ('DJQMap', 'XLSXMap',
            'empty_miptables', 'prune_empty_miptables',
@@ -21,10 +23,23 @@ class MTMap(object):
                  *args, **kwargs):
         # Is there any part of Python's argument defaulting and object
         # system which is not broken? How did it get to be this way?
+        super(MTMap, self).__init__(*args, **kwargs)
         assert valid_dqtag(tag), "bad tag"
         assert valid_dqroot(root), "bad root"
         self.tag = tag if tag is not None else default_dqtag()
         self.root = root if root is not None else default_dqroot()
+
+    @property
+    def dq(self):
+        return ensure_dq(dqtag=self.tag, dqroot=self.root)
+
+    def missing_uids(self):
+        # Return the UIDs missing in self's results
+        inx = self.dq.inx.uid
+        return set(uid
+                   for vs in self.results.itervalues()
+                   for uid in vs.iterkeys()
+                   if uid not in inx)
 
 # Computing what djq thinks is going on
 #
@@ -34,7 +49,6 @@ class DJQMap(MTMap):
     # and caching the result
     def __init__(self, cvimpl=civ, *args, **kwargs):
         super(DJQMap, self).__init__(*args, **kwargs)
-        self.dq = ensure_dq(dqtag=self.tag, dqroot=self.root)
         self.cvimpl = cvimpl
         self.__results = None
 
