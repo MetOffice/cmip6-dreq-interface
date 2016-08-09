@@ -1,7 +1,7 @@
 # Extracting miptable maps from the DREQ using djq and the spreadsheet
 # for comparisons
 #
-# This is experimental code
+# This is experimental code, and horrid in various places
 #
 
 __all__ = ('DJQMap', 'XLSXMap')
@@ -52,12 +52,19 @@ class MTMap(object):
         return ensure_dq(dqtag=self.tag, dqroot=self.root)
 
     def missing_uids(self):
-        # Return the UIDs missing in self's results
+        # Return the UIDs missing from the dreq in self's results
         inx = self.dq.inx.uid
         return set(uid
                    for vs in self.results.itervalues()
                    for uid in vs.iterkeys()
                    if uid not in inx)
+
+    def prune_missing_uids(self):
+        inx = self.dq.inx.uid
+        return {miptable: {variable: mipset
+                           for (variable, mipset) in variables.iteritems()
+                           if variable in inx}
+                for (miptable, variables) in self.results.iteritems()}
 
     def empty_miptables(self):
         # empty miptables of a map
@@ -74,6 +81,7 @@ class MTMap(object):
 
 
     def miptables_with_empty_mipsets(self):
+        # miptables containing variables with empty mipsets
         return set((miptable
                     for (miptable, variables) in self.results.iteritems()
                     if has(lambda(s): len(s) == 0, variables.values())))
