@@ -3,14 +3,20 @@
 # This is experimental code
 #
 
+from sys import exit
 from djq.low import chatter
 from djqxlsx import *
 
 dmap = DJQMap()
 xmap = XLSXMap()
+assert dmap.dq == xmap.dq, "mismatched dqs"
+dq = dmap.dq
+
+badnesses = 0
 
 def prune(mtmap, name):
-    # Prune destructively
+    # Prune bad things from a map object destructively, reporting if things
+    # are being pruned
     #
     # first UIDs which are altogether absent from the dreq
     badness = mtmap.missing_uids()
@@ -37,16 +43,13 @@ def prune(mtmap, name):
 dresults = prune(dmap, "dmap")
 xresults = prune(xmap, "xmap")
 
-def rtcounts(rt):
-    return tuple(sorted(((mt, len(vs)) for (mt, vs) in rt.iteritems()),
-                        key=lambda x: x[0]))
-
-drcounts = rtcounts(dresults)
-xrcounts = rtcounts(xresults)
+# Report on miptable sets matching, and any differences in variable
+# lists
 
 if set(dresults.keys()) != set(xresults.keys()):
     # failed horribly to even be the same miptables
     chatter("keys differ")
+    badnesses += 1
     xrk = set(xresults.keys())
     drk = set(dresults.keys())
     if len(xrk - drk) > 0:
@@ -58,18 +61,88 @@ if set(dresults.keys()) != set(xresults.keys()):
         for k in sorted(drk - xrk):
             chatter(" {}", k)
 else:
-    # miptables are OK, so we know we can go through drcounts and
-    # xrcounts
-    assert len(drcounts) == len(xrcounts), "madness"
-    for i in range(len(drcounts)):
-        dc = drcounts[i]
-        xc = xrcounts[i]
-        assert dc[0] == xc[0], "more madness"
-        if dc[1] != xc[1]:
-            chatter("{}: dc = {}, xc = {}", dc[0], dc[1], xc[1])
+    for miptable in sorted(dresults.keys()):
+        if len(dresults[miptable]) != len(xresults[miptable]):
+            badnesses += 1
+            chatter("{}: dc = {}, xc = {}", miptable,
+                    len(dresults[miptable]), len(xresults[miptable]))
 
-def rtvars(rt):
-    return {mt: set(vs.keys()) for (mt, vs) in rt.iteritems()}
+# Sanity check that all the variables refer to the miptables they belong to
+#
+def vars_consistent_p(varmap, dq):
+    inx = dq.inx.uid
+    for (miptable, uidmap) in varmap.iteritems():
+        for uid in uidmap.keys():
+            if inx[uid].mipTable != miptable:
+                return False
+    return True
 
-dvars = rtvars(dresults)
-xvars = rtvars(xresults)
+if not vars_consistent_p(dresults, dq):
+    badnesses += 1
+    chatter("DJQ results are inconsistent")
+if not vars_consistent_p(xresults, dq):
+    badnesses += 1
+    chatter("XLSX results are inconsistent")
+
+# Check the actual var sets are the same (or not)
+#
+
+def report_mt_var_differences(t1, t2, dq):
+    # Report differences in vars in each miptable (by assumption the
+    # miptable sets are the same by now)
+    inx = dq.inx.uid
+
+    def report(vs, where):
+        for (v, uid) in sorted(((inx[uid].label, uid) for uid in vs),
+                               key=lambda x: x[0]):
+            chatter("{} extra {} ({})", where, v, uid)
+
+    assert frozenset(t1.keys()) == frozenset(t2.keys()), "madness"
+    bad = False
+    for mt in sorted(t1.keys()):
+        t1vs = frozenset(t1[mt].keys())
+        t2vs = frozenset(t2[mt].keys())
+        if t1vs != t2vs:
+            chatter("{}", mt)
+            report(t1vs - t2vs, " lhs")
+            report(t2vs - t1vs, " rhs")
+            bad = True
+    return bad
+
+if report_mt_var_differences(dresults, xresults, dq):
+    badnesses += 1
+    chatter("some miptables don't match")
+
+# And check the mips
+#
+
+def report_mt_varmip_differences(t1, t2, dq):
+    # Report mismatched mip sets
+
+    def report(mips, where):
+        for mip in sorted(mips):
+            chatter("{} extra {}", where, mip)
+
+    inx = dq.inx.uid
+    assert frozenset(t1.keys()) == frozenset(t2.keys()), "madness"
+    bad = False
+    for mt in sorted(t1.keys()):
+        for uid in (frozenset(t1[mt].keys()) & frozenset(t2[mt].keys())):
+            lb = inx[uid].label
+            t1mips = t1[mt][uid]
+            t2mips = t2[mt][uid]
+            if t1mips != t2mips:
+                chatter("{}/{}", mt, lb)
+                report(t1mips - t2mips, " lhs")
+                report(t2mips - t1mips, " rhs")
+                bad = True
+    return bad
+
+if report_mt_varmip_differences(dresults, xresults, dq):
+    badnesses += 1
+    chatter("some mipsets don't match")
+
+if __name__ == '__main__':
+    exit(0 if badnesses == 0
+         else ("a badness" if badnesses == 1
+               else "many badnesses"))
