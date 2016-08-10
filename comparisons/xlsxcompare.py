@@ -132,7 +132,7 @@ def report_mt_varmip_differences(t1, t2, dq):
             t1mips = t1[mt][uid]
             t2mips = t2[mt][uid]
             if t1mips != t2mips:
-                chatter("{}/{}", mt, lb)
+                chatter("{}/{} ({})", mt, lb, uid)
                 report(t1mips - t2mips, " lhs")
                 report(t2mips - t1mips, " rhs")
                 bad = True
