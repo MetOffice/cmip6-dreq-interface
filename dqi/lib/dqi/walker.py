@@ -451,8 +451,10 @@ def mips_of_cmv(cmv, dq, direct=False):
                 rl = dq.inx.uid[rlid] # requestLink
                 if rl.opt == 'priority':
                     # if it has a priority, add it if it is high
-                    # enough. This is what he does: rounding?
-                    if int(float(rl.opar)) > pri:
+                    # enough. This is what he does: rounding?  (See
+                    # .../djq/variables/varmip.py for comments on a
+                    # long-standing bug here)
+                    if int(float(rl.opar)) >= pri:
                         linkids.add(rlid)
                 else:
                     # no priority, just add it
