@@ -47,6 +47,9 @@ def mips_of_cmv(dq, cmv, exids=True):
 
     # construct a dict mapping from variable group id to the highest
     # priority in that group
+    #
+    #|his code just adds all the priorities it finds to a set and then
+    #|uses max below: this is better I think.
     vgpri = dict()
     for rvid in rvids:
         rv = dq.inx.uid[rvid]   # the requestVar
@@ -63,7 +66,12 @@ def mips_of_cmv(dq, cmv, exids=True):
                 if rl.opt == 'priority':
                     # if it has a priority, add it if it is high
                     # enough. This is what he does: rounding?
-                    if int(float(rl.opar)) > pri:
+                    #
+                    #|he has the comparison the other way around
+                    #|remember that 'a <= b' is the same as 'b >= a'
+                    #|or 'not (a > b)', but *not* the same as 'b > a',
+                    #|which is what this said for a long time
+                    if int(float(rl.opar)) >= pri:
                         linkids.add(rlid)
                 else:
                     # no priority, just add it
