@@ -1,6 +1,7 @@
 # Just do some comparisons to save remembering them
 #
-# This is experimental code
+# This is experimental code.  Running it as a script does all the
+# checks and returns a useful exit code.
 #
 
 from sys import exit
@@ -143,6 +144,10 @@ if report_mt_varmip_differences(dresults, xresults, dq):
     chatter("some mipsets don't match")
 
 if __name__ == '__main__':
-    exit(0 if badnesses == 0
-         else ("a badness" if badnesses == 1
-               else "many badnesses"))
+    if badnesses == 0:
+        chatter("OK")
+        exit(0)
+    else:
+        exit("a badness"
+             if badnesses == 1
+             else "many badnesses")
