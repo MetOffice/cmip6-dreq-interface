@@ -7,3 +7,6 @@ with lists of variables.
 Everything is extremely incomplete and preliminary.
 
 See [documentation directory](doc/)
+
+`comparisons` is some code to compare what `djq` computes with various
+other sources of information: there's nothing installable here.
