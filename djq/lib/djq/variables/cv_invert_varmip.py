@@ -18,18 +18,21 @@ def compute_cmvids_for_exids(dq, mip, exids):
 
     This is the interface function for the back end.
 
-    This is an extremely rudimentary hack: ignore the experiments and
-    just use dqi to compute *all* the variables for all the MIPs.
+    This is a fairly rudimentary hack.
     """
     mipcmvids = defaultdict(set)
     bads = set()
     for cmv in dq.coll['CMORvar'].items:
         if validp(dq.inx.uid[cmv.vid]):
-            for m in mips_of_cmv(dq, cmv, exids):
-                mipcmvids[m].add(cmv.uid)
+            mips = mips_of_cmv(dq, cmv, exids)
+            if len(mips) > 0:
+                for m in mips:
+                    mipcmvids[m].add(cmv.uid)
+            else:
+                mumble("[{} ({}) belongs to no MIPs?]", cmv.label, cmv.uid)
         else:
             bads.add(cmv)
-            mumble("[pruned {}: var not valid]", cmv.uid)
+            mumble("[pruned {} ({}): var not valid]", cmv.label, cmv.uid)
     if len(bads) > 0:
         mutter("[pruned {} invalid vars]", len(bads))
     return mipcmvids[mip]
