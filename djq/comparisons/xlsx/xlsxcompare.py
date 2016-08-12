@@ -5,11 +5,17 @@
 #
 
 from sys import exit
+from os import getenv
 from djq.low import chatter
 from djqxlsx import *
 
-dmap = DJQMap()
-xmap = XLSXMap()
+dreq_tag = getenv("DREQ_TAG")
+
+if dreq_tag is not None:
+    chatter("dreq tag {}", dreq_tag)
+
+dmap = DJQMap(tag=dreq_tag)
+xmap = XLSXMap(tag=dreq_tag)
 assert dmap.dq == xmap.dq, "mismatched dqs"
 dq = dmap.dq
 
