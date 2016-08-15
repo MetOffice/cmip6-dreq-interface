@@ -4,9 +4,9 @@ request](w3id.org/cmip6dr) (dreq below): you can hand it requests
 specifying MIPs and experiments within those MIPs and it will reply
 with lists of variables.
 
-Everything is extremely incomplete and preliminary.
+See the [documentation directory](doc/).
 
-See [documentation directory](doc/)
-
-`comparisons` is some code to compare what `djq` computes with various
-other sources of information: there's nothing installable here.
+There is some code to compare what `djq` computes with various other
+sources of information in [comparisons](comparisons/): there's nothing
+installable here, but it may be worth running the tests there to make
+sure things make sense.
