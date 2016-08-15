@@ -26,7 +26,7 @@ __all__ = ('compute_cmvids_for_exids',)
 
 from sys import modules
 from djq.low import checker
-from djq.low import mutter, chatter
+from djq.low import mutter, mumble
 from compute import pre_checks, post_checks
 
 impl = modules[__name__]
@@ -50,9 +50,9 @@ def compute_cmvids_for_exids(dq, mip, exids):
         l = dq.inx.uid[v]._h.label
         if l != 'CMORvar':
             bads.add(v)
-            mutter("[pruned {}: {} not CMORvar]", v, l)
+            mumble("[pruned {}: {} not CMORvar]", v, l)
     if len(bads) > 0:
-        chatter("[pruned {} bogons]", len(bads))
+        mutter("[pruned {} bogons]", len(bads))
     return cmvids - bads
 
 # Finding the cmvids for MIPS

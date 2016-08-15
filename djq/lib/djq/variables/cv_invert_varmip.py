@@ -5,7 +5,7 @@ __all__ = ('compute_cmvids_for_exids',)
 
 from sys import modules
 from collections import defaultdict
-from djq.low import checker, mumble, mutter
+from djq.low import checker, mutter, mumble
 from compute import pre_checks, post_checks
 from varmip import mips_of_cmv, validp
 
@@ -22,6 +22,7 @@ def compute_cmvids_for_exids(dq, mip, exids):
     """
     mipcmvids = defaultdict(set)
     bads = set()
+    dubious = set()
     for cmv in dq.coll['CMORvar'].items:
         if validp(dq.inx.uid[cmv.vid]):
             mips = mips_of_cmv(dq, cmv, exids)
@@ -29,10 +30,13 @@ def compute_cmvids_for_exids(dq, mip, exids):
                 for m in mips:
                     mipcmvids[m].add(cmv.uid)
             else:
+                dubious.add(cmv)
                 mumble("[{} ({}) belongs to no MIPs?]", cmv.label, cmv.uid)
         else:
             bads.add(cmv)
             mumble("[pruned {} ({}): var not valid]", cmv.label, cmv.uid)
     if len(bads) > 0:
         mutter("[pruned {} invalid vars]", len(bads))
+    if len(dubious) > 0:
+        mutter("[pruned {} dubious vars]", len(dubious))
     return mipcmvids[mip]
