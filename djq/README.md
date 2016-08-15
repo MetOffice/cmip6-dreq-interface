@@ -6,6 +6,8 @@ with lists of variables.
 
 See the [documentation directory](doc/).
 
+There are [some samples](samples/): not yet very complete.
+
 There is some code to compare what `djq` computes with various other
 sources of information in [comparisons](comparisons/): there's nothing
 installable here, but it may be worth running the tests there to make
