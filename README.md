@@ -9,7 +9,7 @@ certainly need to teach it where this is.
 although some `djq` back ends may need it.
 
 ## Pointers
-* [djq](djq/README.md)
+* [`djq`](djq/README.md)
 * [Some general documentation](doc/README.md)
 * (No documentation for `dqi` yet)
 
