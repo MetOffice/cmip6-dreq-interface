@@ -422,6 +422,27 @@ with djq.variables.cv_invert_varmip: 798 variables
 The text in \[square brackets\] is noise from one of the backends on
 standard error.)
 
+## An example: writing a trivial implementation
+It's very easy to write a simple implementation: here is the code you
+need to write one which computes the union of the variables returned
+by the two implementations above.
+
+```python
+from djq.variables import cv_implementation, validate_cv_implementation
+from djq.variables.cv_dreq_example import compute_cmvids_for_exids as cvde
+from djq.variables.cv_invert_varmip import compute_cmvids_for_exids as cviv
+
+def cv_union(dq, mip, exids):
+    # Compute the union of two implementations
+    return cvde(dq, mip, exids) | cviv(dq, mip, exids)
+
+# Install cv_union as the implementation in this thread
+cv_implementation(validate_cv_implementation(cv_union))
+```
+
+A script which uses this implementation is in
+`samples/python/union_backend.py`.
+
 ---
 
 ## A note on dynamic variables
