@@ -127,8 +127,8 @@ def riids_of_mip(dq, mip):
 def rgids_of_rqlids(dq, rqlids):
     """Return the request group Ids for a bunch of request link ids.
 
-    This is close to part of mipcmvids above and should be made the
-    same thing.
+    This is close to part of cmvids_of_mip above and should be made
+    the same thing.
     """
     return set(dq.inx.uid[l.refid]
                for l in (dq.inx.uid[rqlid]
