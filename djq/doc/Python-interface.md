@@ -4,7 +4,7 @@ does not describe the details of request and reply objects: these
 correspond directly to the JSON objects in the [JSON
 interface](JSON-spec.md) however.  There is also a stream interface,
 whch is used by the `djq` command-line interface, which is not
-described here.
+described here at all.
 
 This is also not a complete API specification: I haven't described
 everything in the interface, although I don't think I've left out
@@ -349,6 +349,12 @@ The implementation function takes two arguments:
 2. a set of `CMORvar` IDs.
 
 It should return suitable structure to be converted into JSON.
+
+The elements of the structures that it returns should be `dict`s (or a
+compatible type) with entries for `'label'`: these are used for
+sorting them.  Things will blow up if the `x['label']` doesn't work
+for each element.  They also need to be something that the standard
+Python JSON interface knows how to turn into JSON.
 
 `validate_jsonify_implementation(impl)` does basic sanity checking on
 an implementation.  Again this is called by the system before the
