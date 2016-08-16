@@ -16,7 +16,8 @@ categories = {'types': {Exception: ('DJQException', 'InternalException',
                              + ('verbosity_level', 'debug_level',
                                 'chatter', 'mutter', 'mumble', 'whisper',
                                 'think', 'debug')
-                             + ('make_checktree', 'checker', 'enable_checks')
+                             + ('make_checktree', 'checker',
+                                'checks_enabled', 'checks_minpri')
                              + ('validate_object', 'every_element', 'one_of',
                                 'all_of')
                              + ('fluid', 'boundp', 'globalize', 'localize')

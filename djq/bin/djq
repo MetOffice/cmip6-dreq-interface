@@ -14,9 +14,9 @@ from argparse import ArgumentParser
 from importlib import import_module
 from djq import default_dqroot, valid_dqroot, default_dqtag, valid_dqtag
 from djq import process_stream
-from djq.low import verbosity_level, debug_level, mutter
+from djq.low import verbosity_level, mutter, debug_level, debug
 from djq.low import ExternalException, Scram
-from djq.low import enable_checks
+from djq.low import checks_minpri, checks_enabled
 from djq.variables import cv_implementation, jsonify_implementation
 
 class BadRoot(ExternalException):
@@ -69,7 +69,8 @@ def main():
         backtrace = args.backtrace
         debug_level(args.debug)
         verbosity_level(args.verbosity)
-        enable_checks(minpri=args.check_priority)
+        checks_minpri(args.check_priority)
+        debug("checks {} minpri {}", checks_enabled(), checks_minpri())
         if args.implementation is not None:
             cv_implementation(import_module(args.implementation))
         if args.jsonify_implementation is not None:

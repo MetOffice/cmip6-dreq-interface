@@ -8,31 +8,21 @@
 # given tree get the same arguments.  The tree is run by calling it.
 #
 
-__all__ = ('make_checktree', 'checker', 'enable_checks')
+__all__ = ('make_checktree', 'checker', 'checks_minpri', 'checks_enabled')
 
 from collections import defaultdict
-from state import State
+from nfluid import fluid, globalize
 from noise import chatter, mumble, debug
 from dtype import stringlike
 
-state = State(checks_enabled=True,
-              checks_minpri = 0)
-
-def enable_checks(enabled=None, minpri=None):
-    """Control which checks run.
-
-    If enabled is False, then checks are disabled, if minpri is a
-    number then it is used to set the minimum priority.
-
-    This state is per-thread.
-    """
-    if enabled is None:
-        enabled = state.checks_enabled
-    state.checks_enabled = (enabled if enabled is not None
-                            else state.checks_enabled)
-    state.checks_minpri = (minpri if minpri is not None
-                           else state.checks_minpri)
-    debug("enabled {} minpri {}", state.checks_enabled, state.checks_minpri)
+# Two fluids to control checks:
+# - checks_minpri controls the minimum priority that is run;
+# - checkes_enabled controls whether checks are run at all.
+# Both can be overridden at the point of call by, for instance
+#   checktree(minpri=10, enabled=True, ...)
+#
+checks_minpri = globalize(fluid(), 0, threaded=True)
+checks_enabled = globalize(fluid(), True, threaded=True)
 
 class CheckNode(object):
     """An object which can run a tree of checks.
@@ -40,7 +30,7 @@ class CheckNode(object):
     After creating an instance, add checks with the add method, and
     run them by calling the object.
 
-    When creating an instance, keyword arguments can be provided which
+   When creating an instance, keyword arguments can be provided which
     control the behaviour of the tree.
 
     - sprint is a function which may note that a check has succeeded.
@@ -103,9 +93,9 @@ class CheckNode(object):
         """Run some or all checks for tree
 
         If path is given run only checks under it.  If minpri is given
-        (fallback is 0 but this can be contolled with enable_checks)
+        (fallback is 0 but this can be contolled with checks_minpri())
         run only checks with priority greater than or equal to
-        it. enabled can be used to override what enable_checks would
+        it. enabled can be used to override what checks_enabled() would
         say.
 
         args and kwargs are passed to the check functions if given.
@@ -116,9 +106,9 @@ class CheckNode(object):
         the checks pass and False otherwise.
         """
         if minpri is None:
-            minpri = state.checks_minpri
+            minpri = checks_minpri()
         if enabled is None:
-            enabled = state.checks_enabled
+            enabled = checks_enabled()
 
         if enabled:
             node = self if path is None else self.find(path)
