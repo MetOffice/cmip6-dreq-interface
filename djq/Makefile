@@ -1,7 +1,8 @@
 # This is just a bunch of shorthands
 #
 
-.PHONY: default install develop test clean veryclean ready recent
+.PHONY: default install develop clean veryclean ready recent\
+	test compare sanity
 
 PYTHON=python
 
@@ -28,6 +29,12 @@ veryclean: clean
 
 test: clean
 	nosetests
+
+compare: clean
+	@$(MAKE) -C comparisons compare
+
+sanity: test compare
+
 
 # clean and test before installing, just clean before installing for
 # development

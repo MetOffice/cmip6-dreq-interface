@@ -3,6 +3,9 @@ This directory contains some code to compare what `djq` returns
 against other tools.  All of the code here is experimental: it works
 but it's not particularly sorted out.
 
+Running `make` or `make compare` in this directory should run all the
+comparisons which are fit to be run.
+
 ## [Spreadsheet comparisons](xlsx/)
 Currently the only comparison is against the spreadsheet which is
 provided with the DREQ.  This lives in [`xlsx`](xlsx/).  You will need
