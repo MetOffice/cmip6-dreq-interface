@@ -1,0 +1,123 @@
+#!/usr/bin/env python2.7
+# -*- mode: Python -*-
+#
+# Generate all possible requests for a dreq as JSON
+#
+
+from sys import stdin, stdout, argv
+from signal import SIGINT
+from os import _exit, EX_IOERR
+from argparse import ArgumentParser
+from json import dump
+from djq import (default_dqroot, valid_dqroot, default_dqtag, valid_dqtag,
+                 ensure_dq)
+from djq.low import verbosity_level, mutter, debug_level, debug
+from djq.low import checks_minpri, checks_enabled
+from djq.low import stringlike
+from djq.low import ExternalException, Scram
+
+from djq.variables import cv_implementation, jsonify_implementation
+
+class BadRoot(ExternalException):
+    def __init__(self, dqroot):
+        self.dqroot = dqroot
+    def __str__(self):
+        return "bad root {}".format(self.dqroot)
+
+class BadTag(ExternalException):
+    def __init__(self, dqtag):
+        self.dqtag = dqtag
+    def __str__(self):
+        return "bad tag {} for root {}".format(self.dqtag, default_dqroot())
+
+def emit_all_requests(dq, stream):
+    # emit all the requests from dq onto stream, including the True
+    # and None cases
+    wild = set((True, None))
+    emap = {mip.label: (set(expt.label for expt in dq.coll['experiment'].items
+                            if expt.mip == mip.label)
+                        | wild)
+            for mip in dq.coll['mip'].items}
+    dump(sorted(tuple({'mip': mip,
+                       'experiment': experiment}
+                      for (mip, expts) in emap.iteritems()
+                      for experiment in expts),
+                key=lambda e: (e['mip'] + e['experiment']
+                               if stringlike(e['experiment'])
+                               else e['mip'])),
+         stream, indent=2)
+    stream.write("\n")
+
+def main():
+    parser = ArgumentParser(description="Emit all JSON requests for a DREQ")
+    parser.add_argument("-r", "--root",
+                        default=None, dest='dqroot',
+                        help="the top of a checked out CMIP6 DREQ")
+    parser.add_argument("-t", "--tag",
+                        default=None, dest='dqtag',
+                        help="the default tag for the DREQ")
+    parser.add_argument("-v", "--verbose",
+                        action='count', dest='verbosity',
+                        help="increase verbosity (repeat for more noise)")
+    parser.add_argument("-d", "--debug",
+                        action='count', dest='debug',
+                        help="debugging output (repeat for, perhaps, more)")
+    parser.add_argument("-b", "--backtrace",
+                        action='store_true', dest='backtrace',
+                        help="don't suppress backtraces")
+    parser.add_argument("-c", "--check-priority",
+                        action='store', type=int,
+                        dest='check_priority', default=0,
+                        help="set the lowest check priority that will run")
+    parser.add_argument('output', nargs='?', default=None,
+                        help="output file (stdout default)")
+    backtrace = None
+    try:
+        args = parser.parse_args()
+        backtrace = args.backtrace
+        debug_level(args.debug)
+        verbosity_level(args.verbosity)
+        checks_minpri(args.check_priority)
+        debug("checks {} minpri {}", checks_enabled(), checks_minpri())
+        if args.dqroot is not None:
+            default_dqroot(args.dqroot)
+        # root can be checked, tag can't in general because it can be
+        # set in requests
+        if not valid_dqroot():
+            raise BadRoot(default_dqroot())
+        if args.dqtag is not None:
+            # but we can check it here
+            if not valid_dqtag(tag=args.dqtag):
+                raise BadTag(args.dqtag)
+            default_dqtag(args.dqtag)
+        mutter("root {} tag {}", default_dqroot(), default_dqtag())
+        mutter("to {}", (args.output if args.output is not None else "-"))
+        with (open(args.output, 'w')
+              if args.output is not None
+              else stdout) as output:
+            emit_all_requests(ensure_dq(), output)
+    except Scram as e:
+        raise
+    except Exception as e:
+        if not backtrace:
+            exit(e)
+        elif backtrace is None:
+            print >>stderr, "{}: very early badness".format(argv[0])
+            raise
+        else:
+            raise
+    except KeyboardInterrupt as e:
+        exit(128 + SIGINT)
+
+    # Try and evade the 'lost stderr' spurions by just bottling out
+    #
+    try:
+        stdout.flush()
+        stdout.close()
+        stderr.flush()
+        stderr.close()
+    except:
+        _exit(EX_IOERR)
+
+if __name__ == '__main__':
+    main()
