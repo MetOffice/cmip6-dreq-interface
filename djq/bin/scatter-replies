@@ -48,9 +48,9 @@ def scatter_replies(input, directory):
             chatter("unstringlike MIP {}", mip)
             return False
         if not (stringlike(experiment)
-                or experiment == True
-                or experiment == False
-                or experiment == None):
+                or experiment is True
+                or experiment is False
+                or experiment is None):
             chatter("mutant experiment {}", experiment)
             return False
         filename = join(directory,
@@ -78,7 +78,14 @@ def scatter_replies(input, directory):
         ic[0] += 1
         if (ic[0] % 100000) == 0:
             debug("at {} interned {} missed {}", ic[0], len(interned), ic[1])
-        if hasattr(o, '__hash__') and o.__hash__ is not None:
+        if o is True or o is False or o is None:
+            # All of these things overlap with 0 and 1.  Seriously,
+            # Python people: would it have been so hard to design a
+            # language which sucked just a bit less?  I guess too hard
+            # for you, anyway, and who needs languges not full of ugly
+            # surprises anyway?
+            return o
+        elif hasattr(o, '__hash__') and o.__hash__ is not None:
             if o in interned:
                 return interned[o]
             else:

@@ -42,7 +42,7 @@ def emit_all_requests(dq, stream):
                        'experiment': experiment}
                       for (mip, expts) in emap.iteritems()
                       for experiment in expts),
-                key=lambda e: (e['mip'] + e['experiment']
+                key=lambda e: ((e['mip'] + e['experiment'])
                                if stringlike(e['experiment'])
                                else e['mip'])),
          stream, indent=1)
