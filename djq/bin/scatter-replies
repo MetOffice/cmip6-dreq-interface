@@ -36,7 +36,7 @@ def ensure_directory(path):
         except:
             raise DirFail("failed to create {}".format(path))
 
-def scatter_replies(input, dir):
+def scatter_replies(input, directory):
 
     def emit_reply(reply):
         # emit a reply: return the filename if we manage, False if
@@ -53,31 +53,63 @@ def scatter_replies(input, dir):
                 or experiment == None):
             chatter("mutant experiment {}", experiment)
             return False
-        filename = join(dir, "{}_{}.json".format(mip.lower(),
-                                                 (experiment.lower()
-                                                  if stringlike(experiment)
-                                                  else ("ALL"
-                                                        if experiment is True
-                                                        else "NONE"))))
+        filename = join(directory,
+                        "{}_{}.json".format(mip.lower(),
+                                            (experiment.lower()
+                                             if stringlike(experiment)
+                                             else ("ALL"
+                                                   if experiment is True
+                                                   else "NONE"))))
         mumble("{}/{} -> {}", mip, experiment, filename)
         # if we fail to write a file we just give up altogether
         with open(filename, 'w') as output:
             dump(reply, output, indent=1)
         return filename
 
-    replies = load(input)
+    # Some hacky interning to try to save space.  With this hack it
+    # will run in 4GB for all requests in 01.beta.32, without it it
+    # won't.
+    #
+
+    interned = {}
+    ic = [0, 0]
+
+    def intern_maybe(o):
+        ic[0] += 1
+        if (ic[0] % 100000) == 0:
+            debug("at {} interned {} missed {}", ic[0], len(interned), ic[1])
+        if hasattr(o, '__hash__') and o.__hash__ is not None:
+            if o in interned:
+                return interned[o]
+            else:
+                interned[o] = o
+                return o
+        else:
+            ic[1] += 1
+            return o
+
+    def intern_pairs_maybe(pairs):
+        return {intern_maybe(k): intern_maybe(v)
+                for (k, v) in pairs}
+
+    replies = load(input, object_pairs_hook=intern_pairs_maybe)
     badnesses = 0
+    emitted = 0
     if not arraylike(replies):
         raise BadJSON("didn't get a list of JSON replies")
     for reply in replies:
         if (isinstance(reply, dict)
             and 'mip' in reply
             and 'experiment' in reply):
-            if not emit_reply(reply):
+            if emit_reply(reply):
+                emitted += 1
+            else:
                 badnesses += 1
         else:
             chatter("ignoring a bogus reply")
             badnesses += 1
+    mutter("scattered {} replies", emitted)
+    debug("finally {} interned {} missed {}", ic[0], len(interned), ic[1])
     if badnesses > 0:
         raise BadJSON("{} bogus {}".format(badnesses,
                                            ("reply"
@@ -112,7 +144,7 @@ def main():
         verbosity_level(args.verbosity)
         checks_minpri(args.check_priority)
         debug("checks {} minpri {}", checks_enabled(), checks_minpri())
-        mutter("from {} to {}",
+        mutter("scattering from {} to {}",
                (args.replies if args.replies is not None else "-"),
                args.output_directory)
         with (open(args.replies)
