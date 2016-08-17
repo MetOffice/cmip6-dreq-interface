@@ -45,7 +45,7 @@ def emit_all_requests(dq, stream):
                 key=lambda e: (e['mip'] + e['experiment']
                                if stringlike(e['experiment'])
                                else e['mip'])),
-         stream, indent=2)
+         stream, indent=1)
     stream.write("\n")
 
 def main():

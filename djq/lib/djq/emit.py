@@ -26,7 +26,7 @@ def emit_reply(reply, fp):
     No useful return value.  Raises EmitFailed if anything goes wrong.
     """
     try:
-        dump(reply, fp, indent=2)
+        dump(reply, fp, indent=1)
         fp.write("\n")          # prettier: I think it is safe JSON
     except Exception as e:
         raise EmitFailed("badness when emitting", e)
