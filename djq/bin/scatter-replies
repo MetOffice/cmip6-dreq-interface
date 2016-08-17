@@ -1,0 +1,142 @@
+#!/usr/bin/env python2.7
+# -*- mode: Python -*-
+#
+# Read replies from djq and scatter them into files
+#
+
+from sys import stdin, argv
+from signal import SIGINT
+from os import _exit, EX_IOERR
+from os import curdir, makedirs
+from os.path import exists, isdir, normpath, join
+from argparse import ArgumentParser
+from json import load, dump
+from djq.low import (verbosity_level, mutter, mumble, chatter,
+                     debug_level, debug)
+from djq.low import checks_minpri, checks_enabled
+from djq.low import stringlike, arraylike
+
+class DirFail(Exception):
+    pass
+
+class BadJSON(Exception):
+    pass
+
+def ensure_directory(path):
+    # Ensure path exists and is a directory.  Return path, or raise an
+    # exception
+    if isdir(path):
+        return path
+    elif exists(path):
+        raise DirFail("{} exists but is not a directory".format(path))
+    else:
+        try:
+            makedirs(normpath(path)) # makedirs doesn't like ..
+            return path
+        except:
+            raise DirFail("failed to create {}".format(path))
+
+def scatter_replies(input, dir):
+
+    def emit_reply(reply):
+        # emit a reply: return the filename if we manage, False if
+        # something goes wrong that needs to be noted but which we can
+        # continue from
+        mip = reply['mip']
+        experiment = reply['experiment']
+        if not stringlike(mip):
+            chatter("unstringlike MIP {}", mip)
+            return False
+        if not (stringlike(experiment)
+                or experiment == True
+                or experiment == False
+                or experiment == None):
+            chatter("mutant experiment {}", experiment)
+            return False
+        filename = join(dir, "{}_{}.json".format(mip.lower(),
+                                                 (experiment.lower()
+                                                  if stringlike(experiment)
+                                                  else ("ALL"
+                                                        if experiment is True
+                                                        else "NONE"))))
+        mumble("{}/{} -> {}", mip, experiment, filename)
+        # if we fail to write a file we just give up altogether
+        with open(filename, 'w') as output:
+            dump(reply, output, indent=1)
+        return filename
+
+    replies = load(input)
+    badnesses = 0
+    if not arraylike(replies):
+        raise BadJSON("didn't get a list of JSON replies")
+    for reply in replies:
+        if (isinstance(reply, dict)
+            and 'mip' in reply
+            and 'experiment' in reply):
+            if not emit_reply(reply):
+                badnesses += 1
+        else:
+            chatter("ignoring a bogus reply")
+            badnesses += 1
+    if badnesses > 0:
+        raise BadJSON("{} bogus {}".format(badnesses,
+                                           ("reply"
+                                            if badnesses == 1
+                                            else "replies")))
+
+def main():
+    parser = ArgumentParser(description="Scatter JSON DREQ replies into files")
+    parser.add_argument("-v", "--verbose",
+                        action='count', dest='verbosity',
+                        help="increase verbosity (repeat for more noise)")
+    parser.add_argument("-d", "--debug",
+                        action='count', dest='debug',
+                        help="debugging output (repeat for, perhaps, more)")
+    parser.add_argument("-b", "--backtrace",
+                        action='store_true', dest='backtrace',
+                        help="don't suppress backtraces")
+    parser.add_argument("-c", "--check-priority",
+                        action='store', type=int,
+                        dest='check_priority', default=0,
+                        help="set the lowest check priority that will run")
+    parser.add_argument("-o", "--output-directory",
+                        default=curdir, dest='output_directory',
+                        help="output directory: default is current directory")
+    parser.add_argument('replies', nargs='?', default=None,
+                        help="file to read replies from: default is stdin")
+    backtrace = None
+    try:
+        args = parser.parse_args()
+        backtrace = args.backtrace
+        debug_level(args.debug)
+        verbosity_level(args.verbosity)
+        checks_minpri(args.check_priority)
+        debug("checks {} minpri {}", checks_enabled(), checks_minpri())
+        mutter("from {} to {}",
+               (args.replies if args.replies is not None else "-"),
+               args.output_directory)
+        with (open(args.replies)
+              if args.replies is not None
+              else stdin) as input:
+            scatter_replies(input, ensure_directory(args.output_directory))
+    except Exception as e:
+        if not backtrace:
+            exit(e)
+        elif backtrace is None:
+            print >>stderr, "{}: very early badness".format(argv[0])
+            raise
+        else:
+            raise
+    except KeyboardInterrupt as e:
+        exit(128 + SIGINT)
+
+    # Try and evade the 'lost stderr' spurions by just bottling out
+    #
+    try:
+        stderr.flush()
+        stderr.close()
+    except:
+        _exit(EX_IOERR)
+
+if __name__ == '__main__':
+    main()
