@@ -83,7 +83,7 @@ def main():
             raise BadRoot(default_dqroot())
         if args.dqtag is not None:
             # but we can check it here
-            if not valid_dqtag(tag=args.dqtag):
+            if not valid_dqtag(args.dqtag):
                 raise BadTag(args.dqtag)
             default_dqtag(args.dqtag)
         mutter("root {} tag {}", default_dqroot(), default_dqtag())
