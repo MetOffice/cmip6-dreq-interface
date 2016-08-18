@@ -1,5 +1,8 @@
 # Installation
 This currently only describes how to install `djq` using Conda.
+However, apart from the installation of Conda itself, and the use of
+the `conda` package manager to install requirements, installing on top
+of other Python environments should be similar.
 
 ## Requirements
 `djq` requires:
@@ -7,17 +10,19 @@ This currently only describes how to install `djq` using Conda.
 * Python 2.7;
 * the Python [nose](https://pypi.python.org/pypi/nose) library for
   tests;
-* an installed copy of the dreq Python interface (so `import dreqPy`
+* an installed copy of the DREQ Python interface (so `import dreqPy`
   must work);
 * a checkout of the [Subversion
-  dreq](http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq/) from the root
+  DREQ](http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq/) from the root
   (so tags are available);
-* possibly an installed version of `dqi`, for some back ends.
+* possibly the Python
+  [openpyxl](https://pypi.python.org/pypi/openpyxl) library, for some
+  comparison checks.
 
 ## Installation using Conda
 The way I install `djq` is using [Conda](http://conda.pydata.org/),
 which provides an encapsulated, controllable environment independent
-of the vagaries whatever of version of Python is installed on the
+of the vagaries of whatever version of Python is installed on the
 system this week.  I'm not going to describe how to use Conda to
 manage and control dependencies in a repeatable and traceable way,
 just how to do the minimum to get `djq` working in a Conda
@@ -50,7 +55,9 @@ do in the environment at this point.)
 
 Install nose in the environment: `conda install nose`.
 
-Now checkout the top level of the dreq to a known directory:
+Install openpyxl in the environment: `conda install openpyxl`.
+
+Now checkout the top level of the DREQ to a known directory:
 
 ```
 svn co http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq
@@ -58,23 +65,19 @@ svn co http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq
 
 It is important you fetch the top level, *not* a tag or a branch, as
 `djq` wants to be able to specify a tag to use in the request, so you
-can select which version of the dreq to load.  I'll refer to this
+can select which version of the DREQ to load.  I'll refer to this
 directory as `<dqroot>` below.
 
 Install the `dreqPy` library.  It should not be critical which version
 of it you install, but it's possible that the API has changed over
-time.  Currently, the version from `01.beta.29` is known to work, so
-`(cd <dqroot>/tags/01.beta.29 && python setup.py install)` to install
+time.  Currently, the version from `01.beta.32` is known to work, so
+`(cd <dqroot>/tags/01.beta.32 && python setup.py install)` to install
 it.
-
-If you are planning to use a back end which needs it, install `dqi`:
-this lives in `../../dqi` from this file, and `python setup.py
-install` will unstall it in the usual way.
 
 Finally check and install `djq` itself.
 
-* Run the tests: from the directory containing this file say
-  `nosetests`: they should all pass.
+* Run the tests: from the toplevel `djq` directory say `make test`:
+  everything should be fine.
 * Install `djq`: from the same directory run `python setup.py install`
   (or `python setup.py develop` if you might want to make changes or
   do other work on `djq`).
@@ -88,8 +91,8 @@ $ type -p djq
 
 (Output will differ, but it should be there).
 
-## Installation smoke test
-`djq` needs to know where the dreq is: the path I called `<dqroot>`
+## Installation smoke tests
+`djq` needs to know where the DREQ is: the path I called `<dqroot>`
 above.  It has a built-in default but this will always be wrong in
 practice.  You either need to tell it with a command-line option, or
 by setting the environment variable `DJQ_DQROOT`.
@@ -108,6 +111,24 @@ from -
 
 If this works then it is basically working.
 
-If you are in the toplevel directory of the `djq` distribution you can
-also point it at sample files in the `samples` directory which
-represent various queries.  See the `README.md` in that directory.
+You can also run the sanity checks: from the top-level `djq` directory
+say `make sanity`.  This first of all runs the unit tests as above,
+and then does a comparison of the results computed by `djq` to the
+spreadsheet for the same DREQ version.  If this comparison fails, it
+*may* be `djq`'s fault, but it also may be due to a bug in the DREQ
+release.  You can test a specific release by, for instance
+
+```
+make sanity DREQ_TAG=01.beta.32
+```
+
+which should work.  The default tag is `latest`.
+
+## Samples
+There are also samples, in the `samples` directory:
+
+* `samples/python` has samples of the Python interface;
+* `samples/json` has sample JSON files usable by either interface.
+
+There is at least some documentation for these in the corresponding
+`README.md` files.

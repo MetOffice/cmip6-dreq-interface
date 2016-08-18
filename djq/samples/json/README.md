@@ -1,4 +1,4 @@
-# Samples for `djq`
+# JSON samples for `djq`
 The samples in this directory are things I used during the development
 of `djq`.  Unfortunately you can't put comments in JSON so they're not
 very self-descriptive.
