@@ -18,8 +18,17 @@ although some `djq` back ends may need it.
 * [Subversion repo for the DREQ](http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq/), also browsable
 
 ## Browsing the documentation
-You can use [grip](https://github.com/joeyespo/grip) to view these
-locally.  It can be installed with `pip`:
+All the documentation is in
+[Markdown](http://daringfireball.net/projects/markdown/) (and
+specifically [GitHub flavoured
+Markdown](https://help.github.com/categories/writing-on-github/)):
+this should be fairly readable as plain text.  `README.md` files are
+the entry points, and any extended documentation is in subdirectories
+called `doc`.
+
+You can use [grip](https://github.com/joeyespo/grip) to view the
+pretty version of the documentation locally.  It can be installed with
+`pip`:
 
 ```
 $ pip install grip
