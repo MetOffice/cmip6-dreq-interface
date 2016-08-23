@@ -133,9 +133,10 @@ corresponding `djq` run.
 ## `scatter-replies`: scatter replies from `djq` into files
 `scatter-replies` is a program which reads a reply from `djq` and
 scatters its individual *single-reply*s into files, named after the
-MIP and experiment.  The files are named as `<mip>_<experiment>.json`
+MIP and experiment.  The files are named as `<project>_<mip>_<experiment>.json`
 where:
 
+* `<project>` is the name of the project, which is `cmip6` by default;
 * `<mip>` is the name of the MIP, in lower case;
 * `<experiment>` is the name of the experiment, in lower case, *or*
   `ALL` meaning 'all experiments' or `NONE` meaning 'no experiments'.
@@ -144,7 +145,7 @@ It has some of the same options as `djq`:
 
 ```
 usage: scatter-replies [-h] [-v] [-d] [-b] [-c CHECK_PRIORITY]
-                       [-o OUTPUT_DIRECTORY]
+                       [-o OUTPUT_DIRECTORY] [-p PROJECT]
                        [replies]
 ```
 
@@ -154,6 +155,8 @@ usage: scatter-replies [-h] [-v] [-d] [-b] [-c CHECK_PRIORITY]
   files should live, with the default being the current directory.
   This directory (and all its parents) is created if it does not
   exist.
+* `-p` *PROJECT* specifies the project name, which is `cmip6` by
+  default.
 
 The remaining options are as for `djq`, but again there is less to
 `scatter-replies` than `djq` so some of them don't actually do

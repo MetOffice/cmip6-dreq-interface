@@ -16,6 +16,9 @@ from djq.low import (verbosity_level, mutter, mumble, chatter,
 from djq.low import checks_minpri, checks_enabled
 from djq.low import stringlike, arraylike
 
+# This sets the default for -p and hence filenames
+default_project = "cmip6"
+
 class DirFail(Exception):
     pass
 
@@ -36,7 +39,7 @@ def ensure_directory(path):
         except:
             raise DirFail("failed to create {}".format(path))
 
-def scatter_replies(input, directory):
+def scatter_replies(input, directory, project):
 
     def emit_reply(reply):
         # emit a reply: return the filename if we manage, False if
@@ -54,12 +57,12 @@ def scatter_replies(input, directory):
             chatter("mutant experiment {}", experiment)
             return False
         filename = join(directory,
-                        "{}_{}.json".format(mip.lower(),
-                                            (experiment.lower()
-                                             if stringlike(experiment)
-                                             else ("ALL"
-                                                   if experiment is True
-                                                   else "NONE"))))
+                        "{}_{}_{}.json".format(project, mip.lower(),
+                                               (experiment.lower()
+                                                if stringlike(experiment)
+                                                else ("ALL"
+                                                      if experiment is True
+                                                      else "NONE"))))
         mumble("{}/{} -> {}", mip, experiment, filename)
         # if we fail to write a file we just give up altogether
         with open(filename, 'w') as output:
@@ -141,6 +144,9 @@ def main():
     parser.add_argument("-o", "--output-directory",
                         default=curdir, dest='output_directory',
                         help="output directory: default is current directory")
+    parser.add_argument("-p", "--project",
+                        default=default_project, dest='project',
+                        help="project, default is {}".format(default_project))
     parser.add_argument('replies', nargs='?', default=None,
                         help="file to read replies from: default is stdin")
     backtrace = None
@@ -157,7 +163,8 @@ def main():
         with (open(args.replies)
               if args.replies is not None
               else stdin) as input:
-            scatter_replies(input, ensure_directory(args.output_directory))
+            scatter_replies(input, ensure_directory(args.output_directory),
+                            args.project)
     except Exception as e:
         if not backtrace:
             exit(e)
