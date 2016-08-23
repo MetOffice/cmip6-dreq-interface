@@ -1,7 +1,8 @@
 # Just do some comparisons to save remembering them
 #
 # This is experimental code.  Running it as a script does all the
-# checks and returns a useful exit code.
+# checks and returns a useful exit code.  Other than that it is just
+# messy: it tangles up reporting and tests in a horrid way.
 #
 
 from sys import exit
@@ -9,23 +10,12 @@ from os import getenv
 from djq.low import chatter
 from djqxlsx import *
 
-dreq_tag = getenv("DREQ_TAG")
-
-if dreq_tag is not None:
-    chatter("dreq tag {}", dreq_tag)
-
-dmap = DJQMap(tag=dreq_tag)
-xmap = XLSXMap(tag=dreq_tag)
-assert dmap.dq == xmap.dq, "mismatched dqs"
-dq = dmap.dq
-
-badnesses = 0
-
-def prune(mtmap, name):
-    # Prune bad things from a map object destructively, reporting if things
-    # are being pruned
+def prune(mtmap):
+    # Prune bad things from a map object destructively, reporting if
+    # things are being pruned.  Return the object
     #
     # first UIDs which are altogether absent from the dreq
+    name = mtmap.name
     badness = mtmap.missing_uids()
     if len(badness) > 0:
         chatter("{}: pruning {} missing variables", name, len(badness))
@@ -45,59 +35,62 @@ def prune(mtmap, name):
         for mt in sorted(badness):
             chatter(" {}", mt)
         mtmap.results = mtmap.prune_empty_miptables()
-    return mtmap.results
+    return mtmap
 
-dresults = prune(dmap, "dmap")
-xresults = prune(xmap, "xmap")
-
-# Report on miptable sets matching, and any differences in variable
-# lists
-
-if set(dresults.keys()) != set(xresults.keys()):
-    # failed horribly to even be the same miptables
-    chatter("keys differ")
-    badnesses += 1
-    xrk = set(xresults.keys())
-    drk = set(dresults.keys())
-    if len(xrk - drk) > 0:
-        chatter("xresults extras")
-        for k in sorted(xrk - drk):
-            chatter(" {}", k)
-    if len(drk - xrk) > 0:
-        chatter("dresults extras")
-        for k in sorted(drk - xrk):
-            chatter(" {}", k)
-else:
-    for miptable in sorted(dresults.keys()):
-        if len(dresults[miptable]) != len(xresults[miptable]):
-            badnesses += 1
-            chatter("{}: dc = {}, xc = {}", miptable,
-                    len(dresults[miptable]), len(xresults[miptable]))
-
-# Sanity check that all the variables refer to the miptables they belong to
+# report_* functions return true if they found anything bad
 #
-def vars_consistent_p(varmap, dq):
-    inx = dq.inx.uid
-    for (miptable, uidmap) in varmap.iteritems():
+
+def report_miptable_differences(m1, m2):
+    # report differences in the miptables that exist
+    badness = False
+    (t1, n1) = (m1.results, m1.name)
+    (t2, n2) = (m2.results, m2.name)
+    if set(t1.keys()) == set(t2.keys()):
+        return 0
+    else:
+        # failed horribly to even be the same miptables
+        chatter("keys differ")
+        badness = True
+        xrk = set(t2.keys())
+        drk = set(t1.keys())
+        if len(xrk - drk) > 0:
+            chatter("{} extras", n2)
+            for k in sorted(xrk - drk):
+                chatter(" {}", k)
+        if len(drk - xrk) > 0:
+            chatter("{} extras", n1)
+            for k in sorted(drk - xrk):
+                chatter(" {}", k)
+        return badness
+
+def report_mt_count_differences(m1, m2):
+    # report miptable count differences
+    badness = False
+    (t1, n1) = (m1.results, m1.name)
+    (t2, n2) = (m2.results, m2.name)
+    for miptable in sorted(t1.keys()):
+        if len(t1[miptable]) != len(t2[miptable]):
+            badness = True
+            chatter("{}: {} = {}, {} = {}", miptable,
+                    n1, len(t1[miptable]), n2, len(t2[miptable]))
+    return badness
+
+def vars_consistent_p(m):
+    # check a map is consistent: all variables in each miptable should
+    # point at the miptable
+    inx = m.dq.inx.uid
+    for (miptable, uidmap) in m.results.iteritems():
         for uid in uidmap.keys():
             if inx[uid].mipTable != miptable:
                 return False
     return True
 
-if not vars_consistent_p(dresults, dq):
-    badnesses += 1
-    chatter("DJQ results are inconsistent")
-if not vars_consistent_p(xresults, dq):
-    badnesses += 1
-    chatter("XLSX results are inconsistent")
-
-# Check the actual var sets are the same (or not)
-#
-
-def report_mt_var_differences(t1, t2, dq):
+def report_mt_var_differences(m1, m2):
     # Report differences in vars in each miptable (by assumption the
-    # miptable sets are the same by now)
-    inx = dq.inx.uid
+    # miptable sets are the same by now: the assertion checks this.
+    (t1, n1) = (m1.results, m1.name)
+    (t2, n2) = (m2.results, m2.name)
+    inx = m1.dq.inx.uid
 
     def report(vs, where):
         for (v, uid) in sorted(((inx[uid].label, uid) for uid in vs),
@@ -111,26 +104,22 @@ def report_mt_var_differences(t1, t2, dq):
         t2vs = frozenset(t2[mt].keys())
         if t1vs != t2vs:
             chatter("{}", mt)
-            report(t1vs - t2vs, " lhs")
-            report(t2vs - t1vs, " rhs")
+            report(t1vs - t2vs, " {}".format(n1))
+            report(t2vs - t1vs, " {}".format(n2))
             bad = True
     return bad
 
-if report_mt_var_differences(dresults, xresults, dq):
-    badnesses += 1
-    chatter("some miptables don't match")
-
-# And check the mips
-#
-
-def report_mt_varmip_differences(t1, t2, dq):
-    # Report mismatched mip sets
+def report_mt_varmip_differences(m1, m2):
+    # Report mismatched mip sets for each variable.  Miptables are
+    # assumed to match: the assertion checks this.
 
     def report(mips, where):
         for mip in sorted(mips):
             chatter("{} extra {}", where, mip)
 
-    inx = dq.inx.uid
+    (t1, n1) = (m1.results, m1.name)
+    (t2, n2) = (m2.results, m2.name)
+    inx = m1.dq.inx.uid
     assert frozenset(t1.keys()) == frozenset(t2.keys()), "madness"
     bad = False
     for mt in sorted(t1.keys()):
@@ -140,20 +129,65 @@ def report_mt_varmip_differences(t1, t2, dq):
             t2mips = t2[mt][uid]
             if t1mips != t2mips:
                 chatter("{}/{} ({})", mt, lb, uid)
-                report(t1mips - t2mips, " lhs")
-                report(t2mips - t1mips, " rhs")
+                report(t1mips - t2mips, " {}".format(n1))
+                report(t2mips - t1mips, " {}".format(n2))
                 bad = True
     return bad
 
-if report_mt_varmip_differences(dresults, xresults, dq):
-    badnesses += 1
-    chatter("some mipsets don't match")
+def load_and_prune_maps(tag=None):
+    # load the maps and prune them
+    if tag is None:
+        tag = getenv("DREQ_TAG")
+    if tag is not None:
+        chatter("dreq tag {}", tag)
+
+    return(prune(DJQMap(tag=tag)),
+           prune(XLSXMap(tag=tag)))
+
+def count_badnesses(dmap, xmap):
+    # Find what badnesses there are, and count them
+    badnesses = 0
+
+    # check to see if there are the same set of miptables after
+    # pruning
+    if report_miptable_differences(dmap, xmap):
+        # We can't go on from this
+        return 1
+
+    # report count of differences in how many variables there are in
+    # each table
+    if report_mt_count_differences(dmap, xmap):
+        badnesses += 1
+
+    # Sanity check that all the variables refer to the miptables they
+    # belong to
+    #
+    for m in (dmap, xmap):
+        if not vars_consistent_p(m):
+            badnesses += 1
+            chatter("{} results are inconsistent", m.name)
+
+    # Check the actual var sets are the same (or not)
+    #
+    if report_mt_var_differences(dmap, xmap):
+        badnesses += 1
+        chatter("some miptables don't match")
+
+    # And check the mips
+    #
+    if report_mt_varmip_differences(dmap, xmap):
+        badnesses += 1
+        chatter("some mipsets don't match")
+
+    return badnesses
 
 if __name__ == '__main__':
+    (dmap, xmap) = load_and_prune_maps()
+    badnesses = count_badnesses(dmap, xmap)
     if badnesses == 0:
         chatter("OK")
         exit(0)
     else:
-        exit("a badness"
+        exit("There is a badness"
              if badnesses == 1
-             else "many badnesses")
+             else "There are many badnesses")

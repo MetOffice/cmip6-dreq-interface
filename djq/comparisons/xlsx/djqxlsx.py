@@ -24,15 +24,23 @@ def has(pred, iterable):
 
 class MTMap(object):
     # superclass for miptable maps
-    def __init__(self, tag=None, root=None,
+    #
+    # The interesting attributes are:
+    # - root & tag are what you think
+    # - name is a name for the object
+    # - results is a dict mapping miptables to dicts mapping CMORvar
+    #   UIDs to sets of MIPs
+    #
+    def __init__(self, tag=None, root=None, name=None,
                  *args, **kwargs):
         # Is there any part of Python's argument defaulting and object
         # system which is not broken? How did it get to be this way?
         super(MTMap, self).__init__(*args, **kwargs)
-        assert valid_dqtag(tag), "bad tag"
-        assert valid_dqroot(root), "bad root"
-        self.tag = tag if tag is not None else default_dqtag()
         self.root = root if root is not None else default_dqroot()
+        self.tag = tag if tag is not None else default_dqtag()
+        assert valid_dqroot(self.root), "bad root"
+        assert valid_dqtag(self.tag), "bad tag"
+        self.name = name
         self.__results = None
 
     # Caching results.  This is pretty bogus
@@ -103,8 +111,8 @@ class MTMap(object):
 class DJQMap(MTMap):
     # This is just wrapping up various functions (as static methods)
     # and caching the result
-    def __init__(self, cvimpl=civ, *args, **kwargs):
-        super(DJQMap, self).__init__(*args, **kwargs)
+    def __init__(self, cvimpl=civ, name="djq", *args, **kwargs):
+        super(DJQMap, self).__init__(*args, name=name, **kwargs)
         self.cvimpl = cvimpl
         self.__results = None
 
@@ -124,8 +132,9 @@ class DJQMap(MTMap):
         for reply in replies:
             for vt in reply['reply-variables']:
                 table[vt['miptable']][vt['uid']].add(reply['mip'])
-        # returning defaultdicts can be confusing
-        return dict(table)
+        # returning defaultdicts can be confusing (note we have to
+        # convert two levels)
+        return {mt: dict(vs) for (mt, vs) in table.iteritems()}
 
     def compute_results(self):
         # compute results (cached by MTMap)
@@ -141,8 +150,8 @@ class DJQMap(MTMap):
 #
 
 class XLSXMap(MTMap):
-    def __init__(self, skip = {'Notes'}, *args, **kwargs):
-        super(XLSXMap, self).__init__(*args, **kwargs)
+    def __init__(self, skip={'Notes'}, name="xlsx", *args, **kwargs):
+        super(XLSXMap, self).__init__(*args, name=name, **kwargs)
         self.wb = load_workbook(
             filename=join(self.root, "tags", self.tag,
                           "dreqPy/docs/CMIP6_MIP_tables.xlsx"),
