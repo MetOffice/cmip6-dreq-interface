@@ -16,4 +16,6 @@ itself.  This code explicitly uses `djq.variables.cv_invert_varmip` as
 that's the only implementation which makes sense in this context.
 
 If running `xlsxcompare.py` doesn't print `OK` (and return an exit
-code of zero) then something is wrong.
+code of zero) then something is wrong.  It may well be that something
+is wrong with the DREQ rather than with `djq` however: this has been
+the case on several previous occasions.

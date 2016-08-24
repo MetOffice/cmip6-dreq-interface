@@ -1,3 +1,12 @@
+# Changes since 20160822
+
+## `djq`
+The problem with DREQ betas after `01.beta.32` is due to bugs in the
+DREQ spreadsheet: `djq` itself is fine.  See #11.
+
+The names of files produced by `scatter-replies` has changed to
+include the project (by default this is `cmip6` but you can set it).
+
 # 20160822
 This is the initial release.
 
