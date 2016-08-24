@@ -8,7 +8,9 @@ certainly need to teach it where this is.
 `dqi` is the DREQ Query Interface.  You do not need this to use `djq`,
 although some `djq` back ends may need it.
 
-See [the release notes](RELEASES.md).
+See [the change log](Changes.md), which contains at least an entry for
+each release, and often also any changes which matter since the most
+recent release.
 
 ## Pointers
 * [`djq`](djq/README.md)
