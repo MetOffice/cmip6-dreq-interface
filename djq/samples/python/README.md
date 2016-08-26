@@ -1,3 +1,6 @@
+<!-- (C) British Crown Copyright 2016, Met Office.
+     See LICENSE.md in the top directory for license details. -->
+
 # Python samples for `djq`
 These are some small samples of how to use the `djq` Python interface.
 They are all scripts and can be run directly.

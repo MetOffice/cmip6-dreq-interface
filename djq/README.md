@@ -1,3 +1,6 @@
+<!-- (C) British Crown Copyright 2016, Met Office.
+     See LICENSE.md in the top directory for license details. -->
+
 # `djq`: the CMIP6 Data request JSON Query tool
 `djq` is a program which can be used to query the [CMIP6 data
 request](w3id.org/cmip6dr) (DREQ below): you can hand it requests

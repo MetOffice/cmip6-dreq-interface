@@ -1,3 +1,6 @@
+<!-- (C) British Crown Copyright 2016, Met Office.
+     See LICENSE.md in the top directory for license details. -->
+
 # Implementations for `djq`
 In [the Python interface notes](Python-interface.md) I described how
 `djq` lets you switch between various methods of computing variables,

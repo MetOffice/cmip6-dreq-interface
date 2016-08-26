@@ -1,3 +1,6 @@
+<!-- (C) British Crown Copyright 2016, Met Office.
+     See LICENSE.md in the top directory for license details. -->
+
 # Using `djq` from Python
 This document describes how to use the Python interface to `djq`. It
 does not describe the details of request and reply objects: these

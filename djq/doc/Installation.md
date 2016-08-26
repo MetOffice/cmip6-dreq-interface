@@ -1,3 +1,6 @@
+<!-- (C) British Crown Copyright 2016, Met Office.
+     See LICENSE.md in the top directory for license details. -->
+
 # Installation
 This currently only describes how to install `djq` using Conda.
 However, apart from the installation of Conda itself, and the use of

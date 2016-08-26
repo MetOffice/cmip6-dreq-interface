@@ -1,3 +1,6 @@
+<!-- (C) British Crown Copyright 2016, Met Office.
+     See LICENSE.md in the top directory for license details. -->
+
 # JSON samples for `djq`
 The samples in this directory are things I used during the development
 of `djq`.  Unfortunately you can't put comments in JSON so they're not

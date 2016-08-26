@@ -1,3 +1,6 @@
+<!-- (C) British Crown Copyright 2016, Met Office.
+     See LICENSE.md in the top directory for license details. -->
+
 # Notes
 ## Python style
 I've read [PEP 8](https://www.python.org/dev/peps/pep-0008/) but don't

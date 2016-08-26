@@ -1,3 +1,6 @@
+<!-- (C) British Crown Copyright 2016, Met Office.
+     See LICENSE.md in the top directory for license details. -->
+
 # CMIP6 DREQ interfaces
 `djq` is the DREQ JSON Query tool, which you should be able to install
 from its `setup.py`.  It requires the `dreqPy` package from the DREQ
@@ -47,3 +50,8 @@ See [its
 documentation](https://github.com/joeyespo/grip/blob/master/README.md). Note
 that `grip` works by using GitHub's API to format the markdown files,
 and so sends their content to GitHub: it's not suitable for sensitive data.
+
+---
+
+&copy; British Crown Copyright 2016, Met Office.  See
+[LICENSE.md](LICENSE.md) for license details.

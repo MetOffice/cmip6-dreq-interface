@@ -1,3 +1,6 @@
+<!-- (C) British Crown Copyright 2016, Met Office.
+     See LICENSE.md in the top directory for license details. -->
+
 # Comparisons of `djq`'s mappings
 This directory contains some code to compare what `djq` returns
 against other tools.  All of the code here is experimental: it works
