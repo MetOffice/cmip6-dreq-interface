@@ -1,3 +1,7 @@
+# (C) British Crown Copyright 2016, Met Office.
+# See LICENSE.md in the top directory for license details.
+#
+
 """djq.low: low-level for djq
 """
 

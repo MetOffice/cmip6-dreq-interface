@@ -1,3 +1,7 @@
+# (C) British Crown Copyright 2016, Met Office.
+# See LICENSE.md in the top directory for license details.
+#
+
 # Some rulesets for the walker
 #
 # These are actually used by things: it's not clear if they should be

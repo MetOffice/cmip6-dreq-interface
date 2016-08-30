@@ -1,3 +1,7 @@
+# (C) British Crown Copyright 2016, Met Office.
+# See LICENSE.md in the top directory for license details.
+#
+
 # This is just some test data for walk_linked
 
 from dreqPy.dreq import loadDreq

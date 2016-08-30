@@ -1,3 +1,7 @@
+# (C) British Crown Copyright 2016, Met Office.
+# See LICENSE.md in the top directory for license details.
+#
+
 # Some general tools
 #
 # None of this is relied on by anything else

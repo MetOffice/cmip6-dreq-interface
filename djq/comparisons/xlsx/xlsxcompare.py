@@ -1,3 +1,7 @@
+# (C) British Crown Copyright 2016, Met Office.
+# See LICENSE.md in the top directory for license details.
+#
+
 # Just do some comparisons to save remembering them
 #
 # This is experimental code.  Running it as a script does all the

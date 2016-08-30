@@ -1,3 +1,7 @@
+# (C) British Crown Copyright 2016, Met Office.
+# See LICENSE.md in the top directory for license details.
+#
+
 # just to see if it works to finish walks early
 
 from dqi import (walk_dq, walk_linked, dqtype, 

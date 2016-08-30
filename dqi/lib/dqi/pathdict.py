@@ -1,3 +1,7 @@
+# (C) British Crown Copyright 2016, Met Office.
+# See LICENSE.md in the top directory for license details.
+#
+
 # PathDicts are dicts (of dicts)* and can take keys which are tuples
 # to search the tree.
 #

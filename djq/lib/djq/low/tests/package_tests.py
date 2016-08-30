@@ -1,3 +1,7 @@
+# (C) British Crown Copyright 2016, Met Office.
+# See LICENSE.md in the top directory for license details.
+#
+
 # Package tests for djq.low
 #
 # This will only work if djq.low is basically there.

@@ -1,3 +1,7 @@
+# (C) British Crown Copyright 2016, Met Office.
+# See LICENSE.md in the top directory for license details.
+#
+
 # djq.variables: finding and jsonifying CMOR variables
 
 # computing variables

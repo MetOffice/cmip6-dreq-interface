@@ -1,3 +1,7 @@
+# (C) British Crown Copyright 2016, Met Office.
+# See LICENSE.md in the top directory for license details.
+#
+
 # Low level support for dqi
 #
 # Nothing here should depend on the dreq API: see util.py for that

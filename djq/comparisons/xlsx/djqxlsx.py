@@ -1,3 +1,7 @@
+# (C) British Crown Copyright 2016, Met Office.
+# See LICENSE.md in the top directory for license details.
+#
+
 # Extracting miptable maps from the DREQ using djq and the spreadsheet
 # for comparisons
 #

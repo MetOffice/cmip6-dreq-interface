@@ -1,3 +1,7 @@
+# (C) British Crown Copyright 2016, Met Office.
+# See LICENSE.md in the top directory for license details.
+#
+
 """Working from variables to MIPs.  None of this code is an interface in djq.
 """
 

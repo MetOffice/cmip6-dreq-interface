@@ -1,6 +1,9 @@
 #!/usr/bin/env python -
 # -*- mode: Python -*-
 #
+# (C) British Crown Copyright 2016, Met Office.
+# See LICENSE.md in the top directory for license details.
+#
 
 """Writing a simple backend which uses a union of two existing ones.
 """
