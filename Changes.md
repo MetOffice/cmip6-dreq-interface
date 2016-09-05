@@ -1,7 +1,8 @@
 <!-- (C) British Crown Copyright 2016, Met Office.
      See LICENSE.md in the top directory for license details. -->
 
-# Changes since 20160822
+# 20160905
+Copyrights and license in all files.
 
 ## `djq`
 The problem with DREQ betas after `01.beta.32` is due to bugs in the
