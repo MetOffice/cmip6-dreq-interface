@@ -16,7 +16,7 @@ from emit import emit_reply, emit_catastrophe
 from parse import (read_request, validate_toplevel_request,
                    validate_single_request)
 from load import (default_dqroot, default_dqtag, valid_dqroot, valid_dqtag,
-                  dqload)
+                  effective_dqpath, dqload)
 from variables import (compute_variables, jsonify_variables,
                        cv_implementation, validate_cv_implementation,
                        jsonify_implementation, validate_jsonify_implementation,
@@ -153,12 +153,16 @@ def process_request(request, dqroot=None, dqtag=None, dq=None,
 
 class DREQLoadFailure(DJQException):
     """Failure to load the DREQ: it is indeterminate whose fault this is."""
-    def __init__(self, message=None, dqroot=None, dqtag=None, wrapped=None):
-        # I assume you don't need to call the superclass method here
+    def __init__(self, message="failed to load DREQ",
+                 dqroot=None, dqtag=None, wrapped=None):
         self.message = message
         self.dqroot = dqroot if dqroot is not None else default_dqroot()
         self.dqtag = dqtag if dqtag is not None else default_dqtag()
         self.wrapped = wrapped
+        super(DJQException, self).__init__(
+            "{}: path {}".format(self.message,
+                                 effective_dqpath(dqroot=self.dqroot,
+                                                  dqtag=self.dqtag)))
 
 # Caching loaded DREQs.  The cache has two levels, indexed on root and
 # then tag: since roots are thread-local this means there won't be
