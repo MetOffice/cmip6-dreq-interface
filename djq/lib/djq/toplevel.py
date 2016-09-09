@@ -196,6 +196,8 @@ def ensure_dq(dqtag=None, dqroot=None):
     """
     if dqroot is None:
         dqroot = default_dqroot()
+    if dqtag is None:
+        dqtag = default_dqtag()
     dqs = dqrs[dqroot]
     if dqtag not in dqs:
         debug("missed {} for {}, loading dreq", dqtag, dqroot)
