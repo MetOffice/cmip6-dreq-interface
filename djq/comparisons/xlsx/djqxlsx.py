@@ -157,8 +157,11 @@ class XLSXMap(MTMap):
     def __init__(self, skip={'Notes'}, name="xlsx", *args, **kwargs):
         super(XLSXMap, self).__init__(*args, name=name, **kwargs)
         self.wb = load_workbook(
-            filename=join(self.root, "tags", self.tag,
-                          "dreqPy/docs/CMIP6_MIP_tables.xlsx"),
+            filename=(join(self.root, "tags", self.tag,
+                           "dreqPy/docs/CMIP6_MIP_tables.xlsx")
+                      if self.tag is not False
+                      else join(self.root, "trunk",
+                                "dreqPy/docs/CMIP6_MIP_tables.xlsx")),
             read_only=True)
         # this is just for inspectability: it is not used
         self.headers = tuple(

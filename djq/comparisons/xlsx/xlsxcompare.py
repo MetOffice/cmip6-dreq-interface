@@ -141,9 +141,15 @@ def report_mt_varmip_differences(m1, m2):
 def load_and_prune_maps(tag=None):
     # load the maps and prune them
     if tag is None:
-        tag = getenv("DREQ_TAG")
+        if getenv("DREQ_TRUNK"):
+            tag = False
+        else:
+            tag = getenv("DREQ_TAG")
     if tag is not None:
-        chatter("dreq tag {}", tag)
+        if tag is False:
+            chatter("dreq trunk")
+        else:
+            chatter("dreq tag {}", tag)
 
     return(prune(DJQMap(tag=tag)),
            prune(XLSXMap(tag=tag)))
