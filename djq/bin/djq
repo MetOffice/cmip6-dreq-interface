@@ -43,6 +43,9 @@ def main():
     parser.add_argument("-t", "--tag",
                         default=None, dest='dqtag',
                         help="the default tag for the DREQ")
+    parser.add_argument("-u", "--use-trunk",
+                        action='store_false', dest='dqtag',
+                        help="use the DREQ trunk instead of a tag")
     parser.add_argument("-i", "--implementation",
                         default=None, dest='implementation',
                         help="the name of an implementation to load")

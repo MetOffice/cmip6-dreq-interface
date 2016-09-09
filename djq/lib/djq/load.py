@@ -11,6 +11,7 @@ __all__ = ('default_dqroot', 'default_dqtag',
 
 # Interface
 # - dqload
+# - effective_dqpath
 
 from os import getenv
 from sys import argv
@@ -48,10 +49,9 @@ def valid_dqroot(dqroot=None):
     """
     if dqroot is None:
         dqroot = default_dqroot()
-    if isdir(dqroot) and isdir(join(dqroot, "tags")):
-        return True
-    else:
-        return False
+    return (isdir(dqroot)
+            and isdir(join(dqroot, "tags"))
+            and isdir(join(dqroot, "trunk")))
 
 def valid_dqtag(dqtag=None, dqroot=None):
     """Is dqtag a valid tag for the dreq anchored at dqroot?
@@ -59,13 +59,36 @@ def valid_dqtag(dqtag=None, dqroot=None):
     This is a heuristic check.  Note that dqroot is defaulted dynamically
     from default_dqroot() and dqtag from default_dqtag()
     """
-    if isdir(join(dqroot if dqroot is not None else default_dqroot(),
-                  "tags",
-                  dqtag if dqtag is not None else default_dqtag(),
-                  "dreqPy", "docs")):
-        return True
+    if dqtag is not False:
+        if isdir(join(dqroot if dqroot is not None else default_dqroot(),
+                      "tags",
+                      dqtag if dqtag is not None else default_dqtag(),
+                      "dreqPy", "docs")):
+            return True
+        else:
+            return False
     else:
-        return False
+        if isdir(join(dqroot if dqroot is not None else default_dqroot(),
+                      "trunk", "dreqPy", "docs")):
+            return True
+        else:
+            return False
+
+def effective_dqpath(dqtag=None, dqroot=None):
+    """Return the effective path to the DREQ.
+
+    Arguments:
+    - tag -- the tag, dynamically defaulted from default_dqtag()
+    - dqroot -- the dreq root directory, dynamically defaulted from
+      default_dqroot()
+    """
+    return (join(dqroot if dqroot is not None else default_dqroot(),
+                 "tags",
+                 dqtag if dqtag is not None else default_dqtag(),
+                 "dreqPy", "docs")
+            if dqtag is not False
+            else join(dqroot if dqroot is not None else default_dqroot(),
+                      "trunk", "dreqPy", "docs"))
 
 def dqload(dqtag=None, dqroot=None):
     """Load the dreq from a dqtag and dqroot, both dynamically defaulted.
@@ -81,9 +104,6 @@ def dqload(dqtag=None, dqroot=None):
     """
     # This replicates some code in dqi.util and dqi.low, to avoid a
     # dependency on dqi as this is the only place djq relied on it.
-    top = join(dqroot if dqroot is not None else default_dqroot(),
-                  "tags",
-                  dqtag if dqtag is not None else default_dqtag(),
-                  "dreqPy", "docs")
+    top = effective_dqpath(dqtag, dqroot)
     return loadDreq(dreqXML=join(top, split(defaultDreqPath)[1]),
                     configdoc=join(top, split(defaultConfigPath)[1]))
