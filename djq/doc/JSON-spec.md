@@ -9,6 +9,8 @@ Everything should be case-insensitive unless that is not possible.  Case should 
 
 While this document describes the JSON syntax, `djq` uses the standard Python [JSON](https://docs.python.org/2/library/json.html) interface with no special options set, so the Python-level data structures used by the Python interface correspond to the structures described here in a fairly straightforward way as defined by that interface.
 
+For replies, the specification below applies to the default JSONifier.
+
 In the syntax below nonterminals are in *italics*, optional things are in (parentheses).  The formatting leaves much to be desired, but it's all I could manage given the contstraints of Markdown.
 
 ## Request
@@ -45,6 +47,8 @@ The reason that *requests* are arrays of *single-requests* is to allow multiple 
 
 ## Reply
 A reply is either an array of *single-reply*s, or a single *catastrophic-reply* object, if something horrible went wrong.  These two cases are immediately distinguishable: if you get an array then all is basically well, if you don't then a catastrophe has happened.
+
+What is described here is what the default JSONifier does.  The JSONifier is responsible for returning an object which is used as the value of the `"reply-variables"` field, which by default is an array of *single-reply-variables*: any alternative JSONifier may alter what appears here.
 
 |||
 |---:|:---|
