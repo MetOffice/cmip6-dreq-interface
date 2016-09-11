@@ -288,6 +288,20 @@ There are some functions for noise control, exported from `djq.low`.
 
 Both of these settings are thread-local.
 
+### A note on tags and the trunk
+Normally the system loads the DREQ from a tagged release.  However it
+can also be useful to load from the trunk, to get the absolute latest
+version.  So when specifying tags there are three options:
+
+* if the tag is a string, then it simply specifies the tag to load
+  from;
+* if the tag is `None` then the ambient default tag is used -- the
+  value of which can be retrieved or set with `default_dqtag`;
+* if the tag is `False` then the DREQ is loaded from the trunk.
+
+Note that you can specify the trunk as the ambient default tag with a
+call to `default_dqtag(False)` for instance.
+
 ### Controlling how variables are computed
 There are several possible approaches to computing the variables
 corresponing to a MIP and experiment and I could not work out which

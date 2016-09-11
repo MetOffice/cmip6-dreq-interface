@@ -35,7 +35,7 @@ it should be, what back end to use and so on.  `djq -h` will print a
 usage message:
 
 ```
-usage: djq [-h] [-r DQROOT] [-t DQTAG] [-i IMPLEMENTATION]
+usage: djq [-h] [-r DQROOT] [-t DQTAG] [-u] [-i IMPLEMENTATION]
            [-j JSONIFY_IMPLEMENTATION] [-v] [-d] [-b] [-c CHECK_PRIORITY]
            [-o OUTPUT]
            [request]
@@ -54,6 +54,7 @@ Here are some details:
 * `-t` *DQTAG* allows you to specify the tag.  This is defaulted from
   the `DJQ_DQTAG` environment variable, with a fallback to `latest`
   (which often is right).
+* `-u` will load the DREQ from the trunk rather than from a tag.
 * `-i` *IMPLEMENTATION* lets you set the implementation for computing
   variables.  See the [the API documentation](Pythin-interface.md) and
   [the implementations documentation](Implementations.md).
@@ -99,7 +100,7 @@ and no experiments for each MIP.  It has some of the same options that
 `djq` has.
 
 ```
-usage: all-requests [-h] [-r DQROOT] [-t DQTAG] [-v] [-d] [-b]
+usage: all-requests [-h] [-r DQROOT] [-t DQTAG] [-u] [-v] [-d] [-b]
                     [-c CHECK_PRIORITY]
                     [output]
 ```
@@ -108,6 +109,7 @@ usage: all-requests [-h] [-r DQROOT] [-t DQTAG] [-v] [-d] [-b]
 standard output .
 * `-r` *DQROOT* sets the root, as for `djq`.
 * `-t` *DQTAG* sets the tag.
+* `-u` loads from the trunk rather than from a tag.
 * `-v` makes it more verbose.
 * `-d` prints internal debugging output.
 * `-b` does not suppress backtraces.
