@@ -259,11 +259,13 @@ that the provided paths (and the paths constructed for the tag) smell
 like DREQ checkouts, but they don't actually try and load a DREQ from
 them.  All the default values are thread-local.
 
-`ensure_dq(dqtag=None, dqroot=None)` will return an instance of the
-DREQ, loading it if needed.  By default `dqtag` and `dqroot` are the
-values set by `default_dqtag` and `default_dqroot`.  This is the
-function that `process_request` calls to get hold of the DREQ, but it
-can be called directly to get hold of an instance to explore.
+`ensure_dq(dqtag=None, dqroot=None, force=False)` will return an
+instance of the DREQ, loading it if needed.  By default `dqtag` and
+`dqroot` are the values set by `default_dqtag` and `default_dqroot`.
+This is the function that `process_request` calls to get hold of the
+DREQ, but it can be called directly to get hold of an instance to
+explore.  If `force` is true then the cache is bypassed and a new
+instance of the DREQ is loaded, replacing any old cached instance.
 
 `invalidate_dq_cache()` will obliterate any cached DREQs that have
 been loaded.  This will save some memory, and might be useful if you

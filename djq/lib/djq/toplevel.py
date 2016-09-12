@@ -188,18 +188,25 @@ def invalidate_dq_cache():
     dqrs.clear()
     dqinfo.clear()
 
-def ensure_dq(dqtag=None, dqroot=None):
+def ensure_dq(dqtag=None, dqroot=None, force=False):
     """Ensure the dreq corresponding to a dqtag is loaded, returning it.
 
+    Arguments:
+    - dqroot is the root, defaulted from default_dqroot();
+    - dqtag is the tag, which defaults from default_dqtag();
+    - force, if true, will bypass the cache and force the dreq to be
+      loaded, and the loaded copy to be cached.
+
     Multiple requests for the same dqtag will return the same instance
-    of the dreq.
+    of the dreq, unless force is true.
+
     """
     if dqroot is None:
         dqroot = default_dqroot()
     if dqtag is None:
         dqtag = default_dqtag()
     dqs = dqrs[dqroot]
-    if dqtag not in dqs:
+    if force or (dqtag not in dqs):
         debug("missed {} for {}, loading dreq", dqtag, dqroot)
         if dqtag is not None:
             if valid_dqtag(dqtag):
