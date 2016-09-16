@@ -1,6 +1,23 @@
 <!-- (C) British Crown Copyright 2016, Met Office.
      See LICENSE.md in the top directory for license details. -->
 
+# 20160916
+
+## djq
+Support for loading the DREQ trunk.  Previously it was only possible
+to load tags, which made it impossible to look at any trunk version of
+the DREQ.  Now you can load the trunk by the slightly hacky expedient
+of setting the tag to `False` (not `None`, which generally means 'use
+the ambient default').
+
+Fix a horrible bug in `ensure_dq`: it was not properly defaulting the
+tag.
+
+`ensure_dq` can forcibly load the DREQ, by saying `ensure_dq(...,
+force=True)`.  This will update the cached copy.
+
+Also some small improvements to documentation and error reporting.
+
 # 20160905
 Copyrights and license in all files.
 
