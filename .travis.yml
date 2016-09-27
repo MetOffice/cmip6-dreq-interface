@@ -1,0 +1,23 @@
+# (C) British Crown Copyright 2016, Met Office.
+# See LICENSE.md in the top directory for license details.
+#
+
+# Run unit tests on djq and dqi and sanity tests on djq
+#
+
+language: python
+python: "2.7"
+
+install:
+  # Everything needs the DREQ API
+  - svn co http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq
+  - (cd CMIP6dreq/tags/latest && python setup.py install)
+  # Sanity tests need openpyxl
+  - pip install openpyxl
+
+script:
+  # Basic unit tests
+  - nosetests -w djq
+  - nosetests -w dqi
+  # Sanity test for djq (this actually runs the unit tests again)
+  - make -C djq install sanity DJQ_DQROOT=$(pwd)/CMIP6dreq

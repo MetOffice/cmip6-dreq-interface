@@ -24,6 +24,23 @@ recent release.
 * [The CMIP6 data request](https://w3id.org/cmip6dr) or DREQ (redirection page)
 * [Subversion repo for the DREQ](http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq/), also browsable
 
+## Builds and tests
+[![Build Status](https://travis-ci.org/tfeb/cmip6-dreq-interface.svg)](https://travis-ci.org/tfeb/cmip6-dreq-interface)
+
+This status corresponds to
+[`github.com/tfeb/cmip6-dreq-interface`](https://github.com/tfeb/cmip6-dreq-interface)
+and may not completely correspond to the status of the [Met Office
+repo](https://github.com/MetOffice/cmip6-dreq-interface).  Almost all of the tests are for `djq`: `dqi` has no tests at all.
+
+There are two reasons for the `djq` tests failing:
+
+* there are bugs in `djq`;
+* there are problems which causes `djq` to fail its sanity test.
+
+In the second case it is often initially obscure where the problem
+which is causing the sanity tests lies, but it has often been due to
+problems with the DREQ itself.
+
 ## Browsing the documentation
 All the documentation is in
 [Markdown](http://daringfireball.net/projects/markdown/) (and

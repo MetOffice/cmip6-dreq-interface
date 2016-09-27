@@ -1,6 +1,9 @@
 <!-- (C) British Crown Copyright 2016, Met Office.
      See LICENSE.md in the top directory for license details. -->
 
+# Changes since 20160916
+Support for Travis CI.
+
 # 20160916
 
 ## djq
