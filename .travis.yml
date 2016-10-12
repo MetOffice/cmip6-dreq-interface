@@ -2,6 +2,12 @@
 # See LICENSE.md in the top directory for license details.
 #
 
+# Don't build the diagnostic-reviewers branch
+#
+branches:
+  except:
+    - diagnostic-reviewers
+
 # Run unit tests on djq and dqi and sanity tests on djq
 #
 
