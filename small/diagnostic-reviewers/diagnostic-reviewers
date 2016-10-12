@@ -1,0 +1,190 @@
+#!/usr/bin/env python2.7
+# -*- mode: Python -*-
+#
+# (C) British Crown Copyright 2016, Met Office.
+# See LICENSE.md in the top directory for license details.
+#
+
+# Find the best assignment of reviewers for diagnostics.
+#
+# A reviewer is eligible to review a diagnostic if they are either the
+# expert for its realm, or the leader of a MIP which it partakes in.
+# The best assignment is the one which has the most even load among
+# eligible reviewers.
+#
+# This takes four JSON files as input, each of which contains a
+# JSON object.  They are, in order:
+# - diag2realm maps diagnostics to their realms (both strings);
+# - realm2expert maps realms to their experts (both strings);
+# - diag2mips maps diagnostics to their mips (diagnostics are strings,
+#   mips are arrays of strings);
+# - mip2lead maps mips to their leaders (both strings).
+#
+# All diagnostics must have both a realm and some mips (an empty list
+# of mips is allowed, but they must appear in the mapping file), all
+# realms must have experts and all mips must have leaders: this is
+# checked and the program will puke if this is not the case.
+#
+# Switches:
+#   -d will cause backtraces not to be suppressed;
+#   -j will make JSON output
+#
+# This is not heavily tested
+#
+
+from sys import stdin, stdout, argv
+from signal import SIGINT
+from os import _exit, EX_IOERR
+from argparse import ArgumentParser
+from json import load, dump
+
+class BadJSON(Exception):
+    pass
+
+class InsaneMappings(Exception):
+    pass
+
+def main():
+    backtrace = None
+    parser = ArgumentParser(description="print reviewers for diagnostics")
+    parser.add_argument("-d", "--debug",
+                        action='store_true', dest='debug',
+                        help="don't suppress backtraces")
+    parser.add_argument("-j", "--json",
+                        action='store_true', dest='as_json',
+                        help="generate JSON output")
+    parser.add_argument("diag2realm", nargs=1,
+                        help="JSON file mapping diagnostics to realms")
+    parser.add_argument("realm2expert", nargs=1,
+                        help="JSON file mapping realms to their expert")
+    parser.add_argument("diag2mips", nargs=1,
+                        help="JSON file mapping diagnostics to lists of MIPs")
+    parser.add_argument("mip2lead", nargs=1,
+                        help="JSON file mapping MIPs to their leads")
+    try:
+        args = parser.parse_args()
+        backtrace = args.debug
+        spit(grovel(d2r=jread(args.diag2realm[0]),
+                    r2e=jread(args.realm2expert[0]),
+                    d2ms=jread(args.diag2mips[0], listy=True),
+                    m2l=jread(args.mip2lead[0])),
+             as_json=args.as_json)
+    except Exception as e:
+        if not backtrace:
+            exit(e)
+        elif backtrace is None:
+            print >>stderr, "{}: very early badness".format(argv[0])
+            raise
+        else:
+            raise
+    except KeyboardInterrupt as e:
+        exit(128 + SIGINT)
+
+    # Try and evade the 'lost stderr' spurions by just bottling out
+    #
+    try:
+        stdout.flush()
+        stdout.close()
+        stderr.flush()
+        stderr.close()
+    except:
+        _exit(EX_IOERR)
+
+def jread(json_file, listy=False):
+    # read json_file, check it smells right and return the dict if
+    # listy is true then it maps keys to lists of stringy things,
+    # otherwise it maps keys to stringy things
+    #
+    with open(json_file) as jp:
+        table = load(jp)
+    if not isinstance(table, dict):
+        raise BadJSON("not even a dict in {}".format(json_file))
+    for (k, v) in table.iteritems():
+        if not stringlike(k):
+            raise BadJSON("bogus key {} in {}".format(k, json_file))
+        if not listy:
+            if not stringlike(v):
+                raise BadJSON("bogus value {} in {}".format(v, json_file))
+        else:
+            if not arraylike(v):
+                raise BadJSON("{} should be arraylike in {}"
+                              .format(v, json_file))
+            for e in v:
+                if not stringlike(e):
+                    raise BadJSON("{} should be strings in {}"
+                                  .format(v, json_file))
+    return table
+
+def grovel(d2r, r2e, d2ms, m2l):
+    # Grovel the mappings into a set of assignments:
+    # - d2r maps diagnostics to realms
+    # - r2e maps realms to experts
+    # - d2ms maps diagnostics to lists of mips
+    # - m2l maps a mip to its leader
+    #
+    # Return a dictionary mapping victims to lists of diagnostics they
+    # need to review
+    #
+    # check the mappings are sane so we can assume it later.
+    sanity(d2r, r2e, d2ms, m2l)
+    # start with empty assignments for each expert and mip lead (the
+    # possible victims)
+    assignments = {p: [] for p in set(r2e.values()) | set(m2l.values())}
+    # sorting the diagnostics means the assignments should be stable
+    # where there are several equally good options
+    for (d, r) in sorted(d2r.iteritems(), key=lambda e: e[0]):
+        # for each diagnostic, the expert of its realm is eligible,
+        # and the leaders of all its mips are eligible
+        eligible = {r2e[r]} | {m2l[m] for m in d2ms[d]}
+        # to find the victim, sort the eligible people and pick the
+        # one who has the least diagnostics to look at so far
+        victim = sorted(eligible, key=lambda e: len(assignments[e]))[0]
+        # and add the diagnostic to the assignments for the victim
+        assignments[victim].append(d)
+    return assignments
+
+def sanity(d2r, r2e, d2ms, m2l):
+    # Sanity check mappings, raising an exception if doomed
+    # - d2r maps diagnostics to realms
+    # - r2e maps realms to experts
+    # - d2ms maps diagnostics to lists of mips
+    # - m2l maps a mip to its leader
+    #
+    # Every diagnostic must be on the LHS of both d2r and d2ms
+    if set(d2r.keys()) != set(d2ms.keys()):
+        raise InsaneMappings("botched diagnostics")
+    # every realm must be on the LHS of r2e
+    if not set(d2r.values()) <= set(r2e.keys()):
+        raise InsaneMappings("orphaned realm")
+    # every mip must be on the LHS of m2l
+    if not set(m for ms in d2ms.values() for m in ms) <= set(m2l.keys()):
+        raise InsaneMappings("orphaned mip")
+
+def spit(mappings, as_json=False):
+    # Print the mappings, possibly as JSON
+    if not as_json:
+        for (victim, diags) in sorted(mappings.iteritems(), key=lambda e: e[0]):
+            if len(diags) > 0:
+                # if printing just text don't mention people with
+                # nothing to do
+                print victim,
+                for d in diags:
+                    print d,
+                print
+    else:
+        dump(mappings, stdout, sort_keys=True, indent=1)
+        print
+
+# Some type predicates
+#
+
+def stringlike(x):
+    return isinstance(x, unicode) or isinstance(x, str)
+
+def arraylike(x):
+    return isinstance(x, list) or isinstance(x, tuple)
+
+# Go
+#
+if __name__ == '__main__':
+    main()

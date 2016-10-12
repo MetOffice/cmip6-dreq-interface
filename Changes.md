@@ -2,6 +2,8 @@
      See LICENSE.md in the top directory for license details. -->
 
 # Changes since 20160916
+Diagnostic reviewers script.
+
 Support for Travis CI.
 
 # 20160916

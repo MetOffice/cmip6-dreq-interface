@@ -11,6 +11,10 @@ certainly need to teach it where this is.
 `dqi` is the DREQ Query Interface.  You do not need this to use `djq`,
 although some `djq` back ends may need it.
 
+`small` contains some small, more-or-less ad-hoc programs which are
+related to the CMIP6 DREQ.  These are almost entirely undocumented and
+may or may not work.
+
 See [the change log](Changes.md), which contains at least an entry for
 each release, and often also any changes which matter since the most
 recent release.
