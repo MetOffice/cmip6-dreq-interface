@@ -9,7 +9,7 @@
 # diagnostics.
 #
 # A reviewer is eligible to review a diagnostic if they are either the
-# expert for its realm, or the leader of a MIP which it partakes in.
+# expert for its component, or the leader of a MIP which it partakes in.
 # The best assignment is the one which has the most even load among
 # eligible reviewers.  This does not actually compute that, because it
 # assigns dvictims based only on what diagnostics it has seen so far,
@@ -28,15 +28,15 @@
 #
 # This takes four JSON files as input, each of which contains a
 # JSON object.  They are, in order:
-# - diag2realm maps diagnostics to their realms (both strings);
-# - realm2expert maps realms to their experts (both strings);
+# - diag2component maps diagnostics to their components (both strings);
+# - component2expert maps components to their experts (both strings);
 # - diag2mips maps diagnostics to their mips (diagnostics are strings,
 #   mips are arrays of strings);
 # - mip2lead maps mips to their leaders (both strings).
 #
-# All diagnostics must have both a realm and some mips (an empty list
+# All diagnostics must have both a component and some mips (an empty list
 # of mips is allowed, but they must appear in the mapping file), all
-# realms must have experts and all mips must have leaders: this is
+# components must have experts and all mips must have leaders: this is
 # checked and the program will puke if this is not the case.
 #
 # Switches:
@@ -72,10 +72,10 @@ def main():
     parser.add_argument("-s", "--seed", type=int,
                         dest='random_seed', default=None,
                         help="seed for the random number generator")
-    parser.add_argument("diag2realm", nargs=1,
-                        help="JSON file mapping diagnostics to realms")
-    parser.add_argument("realm2expert", nargs=1,
-                        help="JSON file mapping realms to their expert")
+    parser.add_argument("diag2component", nargs=1,
+                        help="JSON file mapping diagnostics to components")
+    parser.add_argument("component2expert", nargs=1,
+                        help="JSON file mapping components to their expert")
     parser.add_argument("diag2mips", nargs=1,
                         help="JSON file mapping diagnostics to lists of MIPs")
     parser.add_argument("mip2lead", nargs=1,
@@ -83,8 +83,8 @@ def main():
     try:
         args = parser.parse_args()
         backtrace = args.debug
-        spit(grovel(d2r=jread(args.diag2realm[0]),
-                    r2e=jread(args.realm2expert[0]),
+        spit(grovel(d2c=jread(args.diag2component[0]),
+                    c2e=jread(args.component2expert[0]),
                     d2ms=jread(args.diag2mips[0], listy=True),
                     m2l=jread(args.mip2lead[0]),
                     random_seed=args.random_seed),
@@ -135,10 +135,10 @@ def jread(json_file, listy=False):
                                   .format(v, json_file))
     return table
 
-def grovel(d2r, r2e, d2ms, m2l, random_seed=None):
+def grovel(d2c, c2e, d2ms, m2l, random_seed=None):
     # Grovel the mappings into a set of assignments:
-    # - d2r maps diagnostics to realms
-    # - r2e maps realms to experts
+    # - d2c maps diagnostics to components
+    # - c2e maps components to experts
     # - d2ms maps diagnostics to lists of mips
     # - m2l maps a mip to its leader
     #
@@ -149,17 +149,17 @@ def grovel(d2r, r2e, d2ms, m2l, random_seed=None):
     # is specified.
     #
     # check the mappings are sane so we can assume it later.
-    sanity(d2r, r2e, d2ms, m2l)
+    sanity(d2c, c2e, d2ms, m2l)
     if random_seed is not None:
         seed(random_seed)
     # start with empty assignments for each expert and mip lead (the
     # possible victims)
-    assignments = {p: [] for p in set(r2e.values()) | set(m2l.values())}
+    assignments = {p: [] for p in set(c2e.values()) | set(m2l.values())}
     # sorting the diagnostics makes it not depend on hash order
-    for (d, r) in sorted(d2r.iteritems(), key=lambda e: e[0]):
-        # for each diagnostic, the expert of its realm is eligible,
+    for (d, c) in sorted(d2c.iteritems(), key=lambda e: e[0]):
+        # for each diagnostic, the expert of its component is eligible,
         # and the leaders of all its mips are eligible
-        eligible = {r2e[r]} | {m2l[m] for m in d2ms[d]}
+        eligible = {c2e[c]} | {m2l[m] for m in d2ms[d]}
         # The possible victims are those who have no more diagnostics
         # to review than the person with fewest.  Again, sort so we
         # don't depend on hash order.
@@ -171,19 +171,19 @@ def grovel(d2r, r2e, d2ms, m2l, random_seed=None):
         assignments[victim].append(d)
     return assignments
 
-def sanity(d2r, r2e, d2ms, m2l):
+def sanity(d2c, c2e, d2ms, m2l):
     # Sanity check mappings, raising an exception if doomed
-    # - d2r maps diagnostics to realms
-    # - r2e maps realms to experts
+    # - d2c maps diagnostics to components
+    # - c2e maps components to experts
     # - d2ms maps diagnostics to lists of mips
     # - m2l maps a mip to its leader
     #
-    # Every diagnostic must be on the LHS of both d2r and d2ms
-    if set(d2r.keys()) != set(d2ms.keys()):
+    # Every diagnostic must be on the LHS of both d2c and d2ms
+    if set(d2c.keys()) != set(d2ms.keys()):
         raise InsaneMappings("botched diagnostics")
-    # every realm must be on the LHS of r2e
-    if not set(d2r.values()) <= set(r2e.keys()):
-        raise InsaneMappings("orphaned realm")
+    # every component must be on the LHS of c2e
+    if not set(d2c.values()) <= set(c2e.keys()):
+        raise InsaneMappings("orphaned component")
     # every mip must be on the LHS of m2l
     if not set(m for ms in d2ms.values() for m in ms) <= set(m2l.keys()):
         raise InsaneMappings("orphaned mip")
