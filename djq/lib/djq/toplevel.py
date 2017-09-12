@@ -211,20 +211,22 @@ def ensure_dq(dqtag=None, dqroot=None, force=False):
         if dqtag is not None:
             if valid_dqtag(dqtag):
                 try:
-                    dq = dqload(dqtag=dqtag)
+                    dq = dqload(dqroot=dqroot, dqtag=dqtag)
                     dqs[dqtag] = dq
                     dqinfo[dq] = (dqroot, dqtag)
                 except Exception as e:
-                    raise DREQLoadFailure(dqtag=dqtag, wrapped=e)
+                    raise DREQLoadFailure(wrapped=e, dqroot=dqroot, dqtag=dqtag)
             else:
-                raise DREQLoadFailure(message="invalid tag", dqtag=dqtag)
+                raise DREQLoadFailure(message="invalid tag",
+                                      dqroot=dqroot, dqtag=dqtag)
         else:
+            # dqtag is None
             try:
-                dq = dqload()
+                dq = dqload(dqroot=dqroot)
                 dqs[None] = dq
                 dqinfo[dq] = (dqroot, None)
             except Exception as e:
-                raise DREQLoadFailure(wrapped=e)
+                raise DREQLoadFailure(wrapped=e, dqroot=dqroot)
     return dqs[dqtag]
 
 def dq_info(dq):
