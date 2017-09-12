@@ -16,8 +16,10 @@ __all__ = ('default_dqroot', 'default_dqtag',
 from os import getenv
 from sys import argv
 from low import fluid, globalize
+from low import debug
 from os.path import expanduser, expandvars, isdir, join, split
 from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
+from dreqPy import __path__ as dreqPy_path
 
 # Thread-local fluids for the default root and tag.
 #
@@ -82,6 +84,8 @@ def effective_dqpath(dqtag=None, dqroot=None):
     - dqroot -- the dreq root directory, dynamically defaulted from
       default_dqroot()
     """
+    debug("dqroot    = {}\n  default = {}", dqroot, default_dqroot())
+    debug("dqtag     = {}\n  default = {}", dqtag, default_dqtag())
     return (join(dqroot if dqroot is not None else default_dqroot(),
                  "tags",
                  dqtag if dqtag is not None else default_dqtag(),
@@ -104,6 +108,12 @@ def dqload(dqtag=None, dqroot=None):
     """
     # This replicates some code in dqi.util and dqi.low, to avoid a
     # dependency on dqi as this is the only place djq relied on it.
+    debug("dreqPy from {}", dreqPy_path[0])
     top = effective_dqpath(dqtag, dqroot)
-    return loadDreq(dreqXML=join(top, split(defaultDreqPath)[1]),
-                    configdoc=join(top, split(defaultConfigPath)[1]))
+    debug("effective = {}", top)
+    xml = join(top, split(defaultDreqPath)[1])
+    config = join(top, split(defaultConfigPath)[1])
+    debug("XML       = {}\nconfig    = {}", xml, config)
+    dreq = loadDreq(dreqXML=xml, configdoc=config)
+    debug("dreq version {}", dreq.version)
+    return dreq

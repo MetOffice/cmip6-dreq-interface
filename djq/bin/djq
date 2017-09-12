@@ -22,6 +22,7 @@ from djq.low import verbosity_level, mutter, debug_level, debug
 from djq.low import ExternalException, Scram
 from djq.low import checks_minpri, checks_enabled
 from djq.variables import cv_implementation, jsonify_implementation
+from djq import __path__ as djq_path
 
 class BadRoot(ExternalException):
     def __init__(self, dqroot):
@@ -77,6 +78,7 @@ def main():
         debug_level(args.debug)
         verbosity_level(args.verbosity)
         checks_minpri(args.check_priority)
+        debug("djq from {}", djq_path[0])
         debug("checks {} minpri {}", checks_enabled(), checks_minpri())
         if args.implementation is not None:
             cv_implementation(import_module(args.implementation))
