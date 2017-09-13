@@ -114,6 +114,6 @@ def dqload(dqtag=None, dqroot=None):
     xml = join(top, split(defaultDreqPath)[1])
     config = join(top, split(defaultConfigPath)[1])
     debug("XML       = {}\nconfig    = {}", xml, config)
-    dreq = loadDreq(dreqXML=xml, configdoc=config)
-    debug("dreq version {}", dreq.version)
+    dreq = loadDreq(dreqXML=xml, configdoc=config, manifest=None)
+    debug("loaded dreq version {}", dreq.version)
     return dreq
