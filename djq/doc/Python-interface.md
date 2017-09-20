@@ -43,7 +43,7 @@ True
 True
 ```
 
-You can do equivalent things for the tag, although if you get thwe
+You can do equivalent things for the tag, although if you get the
 root right then the default tag is usually right.
 
 These checks are not definitive: the only way to know if there's
@@ -129,11 +129,13 @@ if __name__ == '__main__':
 
 Running this example should produce a great deal of output on standard
 output, as well as some noise on standard error.  The standard output
-begin something like this:
+begins something like this:
 
 ```python
-({'experiment': None,
+({'dreq': '01.00.15',
+  'experiment': None,
   'mip': 'DCPP',
+  'reply-metadata': {...},
   'reply-status': 'ok',
   'reply-variables': [{'label': 'alb',
                        'mips': ({'mip': 'DCPP',
@@ -483,20 +485,21 @@ will set the value of `verbosity_level` and `cv_implementation` for
 this call only.
 
 These things are in fact implemented as dynamically-scoped variables:
-variables whose bindings have indefinite scope (they can be referenced
+variables whose bindings have dynamic scope (they can be referenced
 anywhere, not just where they are lexically visible) and definite
 extent (the bindings only exist until the end of the form that
 establishes them).  Python doesn't have such variables (and indeed
 habitually conflates binding and assignment in a horrid way), so there
 is an implementation in `djq.low.nfluids`, where they are called
-'fluid variables'.  They are implemented as functions which look up
-values on a secret binding stack, together with a context manager
-which pushes and pops stack frames.  This is why, for instance
-`cv_implementation` doesn't check its argument for sanity: it's just a
-fluid variable.  Fluid bindings are per-thread (each thread has its
-own stack) and there's an option of causing them to be automatically
-rebound for each thread, so setting (as opposed to binding) verbosity
-in one thread does not alter its value in another thread.
+'fluid variables', which is another traditional name for this kind of
+binding.  They are implemented as functions which look up values on a
+secret binding stack, together with a context manager which pushes and
+pops stack frames.  This is why, for instance `cv_implementation`
+doesn't check its argument for sanity: it's just a fluid variable.
+Fluid bindings are per-thread (each thread has its own stack) and
+there's an option of causing them to be automatically rebound for each
+thread, so setting (as opposed to binding) verbosity in one thread
+does not alter its value in another thread.
 
 The implementation of `process_request` then looks, in part, like
 this:

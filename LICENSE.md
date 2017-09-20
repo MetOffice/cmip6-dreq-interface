@@ -2,7 +2,7 @@
 
 The CMIP6 DREQ interfaces are licensed under the BSD license.
 
-British Crown Copyright (C) 2016, Met Office.
+British Crown Copyright (C) 2016, 2017 Met Office.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

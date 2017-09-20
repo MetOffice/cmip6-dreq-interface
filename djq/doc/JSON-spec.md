@@ -54,7 +54,7 @@ What is described here is what the default JSONifier does.  The JSONifier is res
 |---:|:---|
 | *reply*|**either** array of *single-reply*s, **or** a *catastrophic-reply* |
 | *single-reply*|object with keys as follows |
-||`"dreq"`: the DREQ version: this is the actual version of the DREQ which was loaded: if it's different than what was in the request there is almost certainly a problem |
+||`"dreq"`: the DREQ version.  This is the actual version of the DREQ which was loaded: if it's different than what was in the request there is usually a problem.  However note that if you asked for `"latest"` you will get a specific version back. |
 ||`"mip"`: as in request |
 ||`"experiment"`: as in request |
 ||`"reply-variables"`: an array of *single-reply-variable*s, or `null`, in which case `"reply-status"` will not be `"ok"` |
