@@ -7,6 +7,8 @@
 # low-level (package)
 from . import low
 
+# metadata (no package interfce so don't import this)
+
 # Parser
 from . import parse
 from .parse import *

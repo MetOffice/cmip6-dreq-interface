@@ -60,7 +60,8 @@ What is described here is what the default JSONifier does.  The JSONifier is res
 ||`"reply-variables"`: an array of *single-reply-variable*s, or `null`, in which case `"reply-status"` will not be `"ok"` |
 ||`"reply-status"`: one of `"ok"` (normal reply), `"not-found"` (MIP or experiment not found), `"bad-request"` (request was ill-formed) or `"error"` (something went wrong).  In anything but the first case there may be more information in `"reply-status-detail"` |
 ||(`"reply-status-detail"`): a string providing additional information if something went wrong: this is only present if `"reply-status"` is not `"ok"` |
-||posssible additional keys: any additional keys must begin with the string `"reply-"`, except that any additional keys and values from the request will be returned unaltered |
+||`"reply-metadata"`: an object containing some metadata about the reply, useful for debugging.  There are a number of fields in this object, none of which are stable. |
+||possible additional keys: any additional keys must begin with the string `"reply-"`, except that any additional keys and values from the request will be returned unaltered |
 | *single-reply-variable*|object with keys as follows |
 ||`"label"`: the label of the variable, a string |
 ||`"miptable"`: the miptable name, a string |
@@ -86,6 +87,7 @@ An example successful reply might look like:
   "experiment": "control",
   "dreq": "b27",
   "reply-status": "ok",
+  "reply-metadata": {...},
   "reply-variables": [{"label": ...,
                        "miptable": ...,
                        "priority": ...,
@@ -104,6 +106,7 @@ An error response would be:
   "experiment": "control",
   "reply-status": "error",
   "reply-status-detail": "computer on fire",
+  "reply-metadata": {...},
   "reply-variables": null}]
 ```
 

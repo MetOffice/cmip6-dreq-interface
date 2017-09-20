@@ -14,12 +14,16 @@ __all__ = ('arraylike', 'stringlike', 'setlike')
 
 def arraylike(thing):
     """Is thing like an array?"""
-    return isinstance(thing, list) or isinstance(thing, tuple)
+    return isinstance(thing, (list, tuple))
 
 def stringlike(thing):
     """Is thing like a string?"""
-    return isinstance(thing, str) or isinstance(thing, unicode)
+    return isinstance(thing, (str, unicode))
 
 def setlike(thing):
     """Is thing like a set?"""
-    return isinstance(thing, set) or isinstance(thing, frozenset)
+    return isinstance(thing, (set, frozenset))
+
+def numberlike(thing):
+    """Is thing some kind of number?"""
+    return isinstance(thing, (int, float, long, complex))

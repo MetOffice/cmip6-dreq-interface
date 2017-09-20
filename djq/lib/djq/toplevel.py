@@ -21,6 +21,7 @@ from variables import (compute_variables, jsonify_variables,
                        cv_implementation, validate_cv_implementation,
                        jsonify_implementation, validate_jsonify_implementation,
                        NoMIP, NoExperiment, WrongExperiment)
+from metadata import reply_metadata, note_reply_metadata
 
 def process_stream(input, output, backtrace=False,
                    dqroot=None, dqtag=None, dq=None,
@@ -73,7 +74,8 @@ def process_stream(input, output, backtrace=False,
                 (jsonify_implementation,
                  (validate_jsonify_implementation(jsimpl)
                   if jsimpl is not None
-                  else jsonify_implementation()))):
+                  else jsonify_implementation())),
+                (reply_metadata, dict())):
         try:
             emit_reply(tuple(process_single_request(s, dq=dq)
                              for s in read_request(input)),
@@ -147,7 +149,8 @@ def process_request(request, dqroot=None, dqtag=None, dq=None,
                 (jsonify_implementation,
                  (validate_jsonify_implementation(jsimpl)
                   if jsimpl is not None
-                  else jsonify_implementation()))):
+                  else jsonify_implementation())),
+                (reply_metadata, dict())):
         return tuple(process_single_request(s, dq=dq)
                      for s in validate_toplevel_request(request))
 
@@ -257,6 +260,7 @@ def process_single_request(r, dq=None):
             else:
                 mutter("* single-request")
                 dq = ensure_dq(None)
+        note_reply_metadata(dq_info=dq_info(dq))
         reply = dict(rc)
         reply['dreq'] = dq.version # this that the dreq has this slot
         # inner block handles semantic errors with the request and has
@@ -286,6 +290,7 @@ def process_single_request(r, dq=None):
             reply.update({'reply-variables': None,
                           'reply-status': "error",
                           'reply-status-detail': "{}".format(e)})
+        reply.update({'reply-metadata': reply_metadata()})
         return reply
     except DREQLoadFailure as e:
         # rc is valid here
@@ -297,7 +302,8 @@ def process_single_request(r, dq=None):
                                                                     e.dqtag)
                        + (": {}".format(e.message)
                           if e.message is not None
-                          else ""))})
+                          else "")),
+                      'reply-metadata': reply_metadata()})
         return reply
     except ExternalException as e:
         # if this happens then rc is not valid
@@ -305,4 +311,5 @@ def process_single_request(r, dq=None):
                 'experiment': r['experiment'] if 'experiment' in r else "?",
                 'reply-variables': None,
                 'reply-status': 'bad-request',
-                'reply-status-detail': "{}".format(e)}
+                'reply-status-detail': "{}".format(e),
+                'reply-metadata': reply_metadata()}
