@@ -258,6 +258,7 @@ def process_single_request(r, dq=None):
                 mutter("* single-request")
                 dq = ensure_dq(None)
         reply = dict(rc)
+        reply['dreq'] = dq.version # this that the dreq has this slot
         # inner block handles semantic errors with the request and has
         # a fallback for other errors
         try:
@@ -291,7 +292,7 @@ def process_single_request(r, dq=None):
         reply = dict(rc)
         reply.update({'reply-variables': None,
                       'reply-status': "error",
-                      'reply-status=detail':
+                      'reply-status-detail':
                       ("failed to load dreq, root={} tag={}".format(e.dqroot,
                                                                     e.dqtag)
                        + (": {}".format(e.message)
