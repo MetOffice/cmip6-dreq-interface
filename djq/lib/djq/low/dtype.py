@@ -23,7 +23,3 @@ def stringlike(thing):
 def setlike(thing):
     """Is thing like a set?"""
     return isinstance(thing, (set, frozenset))
-
-def numberlike(thing):
-    """Is thing some kind of number?"""
-    return isinstance(thing, (int, float, long, complex))
