@@ -22,6 +22,7 @@ from variables import (compute_variables, jsonify_variables,
                        jsonify_implementation, validate_jsonify_implementation,
                        NoMIP, NoExperiment, WrongExperiment)
 from metadata import reply_metadata, note_reply_metadata
+from . import __path__ as djq_path
 
 def process_stream(input, output, backtrace=False,
                    dqroot=None, dqtag=None, dq=None,
@@ -260,6 +261,7 @@ def process_single_request(r, dq=None):
             else:
                 mutter("* single-request")
                 dq = ensure_dq(None)
+        note_reply_metadata(djq_path=djq_path)
         note_reply_metadata(dq_info=dq_info(dq))
         reply = dict(rc)
         reply['dreq'] = dq.version # this that the dreq has this slot
