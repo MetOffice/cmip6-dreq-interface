@@ -17,7 +17,7 @@ from os import getenv
 from sys import argv
 from low import fluid, globalize
 from metadata import note_reply_metadata
-from os.path import expanduser, expandvars, isdir, join, split
+from os.path import isdir, join, split
 from dreqPy.dreq import loadDreq, defaultDreqPath, defaultConfigPath
 from dreqPy import __path__ as dreqPy_path
 
@@ -33,10 +33,9 @@ from dreqPy import __path__ as dreqPy_path
 #
 
 default_dqroot = globalize(fluid(),
-                           (expandvars("$DJQ_DQROOT")
-                            if getenv("DJQ_DQROOT")
-                            else join(split(split(argv[0])[0])[0],
-                                      "data", "CMIP6dreq")),
+                           (getenv("DJQ_DQROOT")
+                            or join(split(split(argv[0])[0])[0],
+                                    "data", "CMIP6dreq")),
                            threaded=True)
 
 default_dqtag = globalize(fluid(),
