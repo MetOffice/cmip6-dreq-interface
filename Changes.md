@@ -1,7 +1,31 @@
-<!-- (C) British Crown Copyright 2016, Met Office.
+<!-- (C) British Crown Copyright 2016, 2018, Met Office.
      See LICENSE.md in the top directory for license details. -->
 
-# Changes since 20160916
+# Changes since 20180320
+The diagnostic reveiewers script is gone: it was never used and serves
+no purpose now.
+
+Support for direct paths.
+
+Update copyright dates.
+
+If there is no ambient metadata don't give up.
+
+# 20180320
+This is a catch-up release, just coagulating everything that has
+changed.
+
+There is more metadata in replies.
+
+Suppress the manifest when loading the DREQ.
+
+There is better reporting of the root & tag directoeries.
+
+Report the version of the dreq actually loaded rather than the one
+asked for (they can be different).
+
+Rename realm to component throughout.
+
 Diagnostic reviewers script.
 
 Support for Travis CI.
