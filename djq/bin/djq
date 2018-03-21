@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 # -*- mode: Python -*-
 #
-# (C) British Crown Copyright 2016, 2017, Met Office.
+# (C) British Crown Copyright 2016-2018, Met Office.
 # See LICENSE.md in the top directory for license details.
 #
 
@@ -16,7 +16,9 @@ from signal import SIGINT
 from os import _exit, EX_IOERR
 from argparse import ArgumentParser
 from importlib import import_module
-from djq import default_dqroot, valid_dqroot, default_dqtag, valid_dqtag
+from djq import (default_dqroot, valid_dqroot,
+                 default_dqtag, valid_dqtag,
+                 default_dqpath)
 from djq import process_stream
 from djq.low import verbosity_level, mutter, debug_level, debug
 from djq.low import ExternalException, Scram
@@ -47,6 +49,9 @@ def main():
     parser.add_argument("-u", "--use-trunk",
                         action='store_false', dest='dqtag',
                         help="use the DREQ trunk instead of a tag")
+    parser.add_argument("-p", "--path-to-xml-directory",
+                        default=None, dest='dqpath',
+                        help="Directory containing the XML files")
     parser.add_argument("-i", "--implementation",
                         default=None, dest='implementation',
                         help="the name of an implementation to load")
@@ -84,18 +89,27 @@ def main():
             cv_implementation(import_module(args.implementation))
         if args.jsonify_implementation is not None:
             jsonify_implementation(import_module(args.jsonify_implementation))
-        if args.dqroot is not None:
-            default_dqroot(args.dqroot)
-        # root can be checked, tag can't in general because it can be
-        # set in requests
-        if not valid_dqroot():
-            raise BadRoot(default_dqroot())
-        if args.dqtag is not None:
-            # but we can check it here
-            if not valid_dqtag(args.dqtag):
-                raise BadTag(args.dqtag)
-            default_dqtag(args.dqtag)
-        mutter("root {} tag {}", default_dqroot(), default_dqtag())
+        if args.dqpath is None:
+            # this is normal (older) case: work out a root and a tag &
+            # check them.  They will be used to construct the path later.
+            if args.dqroot is not None:
+                default_dqroot(args.dqroot)
+            # root can be checked, tag can't in general because it can
+            # be set in requests
+            if not valid_dqroot():
+                raise BadRoot(default_dqroot())
+            if args.dqtag is not None:
+                # but we can check it here
+                if not valid_dqtag(args.dqtag):
+                    raise BadTag(args.dqtag)
+                default_dqtag(args.dqtag)
+            mutter("root {} tag {}", default_dqroot(), default_dqtag())
+        else:
+            # This is the new case: we have been given path to the XML
+            # directory and we assume it is correct.  Set the ambient
+            # path in this case.
+            default_dqpath(args.dqpath)
+            mutter("path {}", default_dqpath())
         if args.implementation is not None:
             mutter("implementation {}",
                    (args.implementation.__name__

@@ -15,7 +15,9 @@ from low import fluids
 from emit import emit_reply, emit_catastrophe
 from parse import (read_request, validate_toplevel_request,
                    validate_single_request)
-from load import (default_dqroot, default_dqtag, valid_dqroot, valid_dqtag,
+from load import (default_dqroot, valid_dqroot,
+                  default_dqtag, valid_dqtag,
+                  default_dqpath,
                   effective_dqpath, dqload)
 from variables import (compute_variables, jsonify_variables,
                        cv_implementation, validate_cv_implementation,
@@ -25,7 +27,8 @@ from metadata import reply_metadata, note_reply_metadata
 from . import __path__ as djq_path
 
 def process_stream(input, output, backtrace=False,
-                   dqroot=None, dqtag=None, dq=None,
+                   dqroot=None, dqtag=None, dqpath=None,
+                   dq=None,
                    dbg=None, verbosity=None,
                    cvimpl=None, jsimpl=None):
     """Process a request stream, emitting results on a reply stream.
@@ -40,10 +43,11 @@ def process_stream(input, output, backtrace=False,
     case.  If backtrace is true it also reraises the exception so a
     stack trace can be created.
 
-    dqroot, dqtag, dbg and verbosity, if given, will bind the dqroot,
-    default tag, debug and verbose printing settings for this call,
-    only. cvimpl and jsimpl will similarly bind the implementations
-    for computing and jsonifying variables for this call only.
+    dqroot, dqtag, dqpath, dbg and verbosity, if given, will bind the
+    default dqroot, default tag, default path, debug and verbose
+    printing settings for this call, only. cvimpl and jsimpl will
+    similarly bind the implementations for computing and jsonifying
+    variables for this call only.
 
     You can explicitly pass a dreq as the dq argument, in which case
     it it used, rather than whatever dqroot and dqtag would cause to
@@ -55,6 +59,7 @@ def process_stream(input, output, backtrace=False,
     generate a suitable per-single-request error response: anything
     which reaches this function is treated as a catastrophe (ie the
     whole process has failed).
+
     """
 
     with fluids((debug_level, (dbg
@@ -69,6 +74,9 @@ def process_stream(input, output, backtrace=False,
                 (default_dqtag, (dqtag
                                  if dqtag is not None
                                  else default_dqtag())),
+                (default_dqpath, (dqpath
+                                  if dqpath is not None
+                                  else default_dqpath())),
                 (cv_implementation, (validate_cv_implementation(cvimpl)
                                      if cvimpl is not None
                                      else cv_implementation())),
@@ -104,7 +112,8 @@ def process_stream(input, output, backtrace=False,
             if backtrace:
                 raise
 
-def process_request(request, dqroot=None, dqtag=None, dq=None,
+def process_request(request, dqroot=None, dqtag=None, dqpath=None,
+                    dq=None,
                     dbg=None, verbosity=None,
                     cvimpl=None, jsimpl=None):
     """Process a request, as a Python object, and return the results.
@@ -115,10 +124,11 @@ def process_request(request, dqroot=None, dqtag=None, dq=None,
       single-request objects.  Each single-request is a dict with
       appropriate keys.
 
-    - dqroot, dqtag, dbg and verbosity, if given, will bind the
-      dqroot, default tag, debug and verbose printing settings for
-      this call.  cvimpl and jsimpl will similarly bind the
-      implementations for computing and jsonifying variables.
+    - dqroot, dqtag, dqpath, dbg and verbosity, if given, will bind
+      the default dqroot, default tag, default dqpath, debug and
+      verbose printing settings for this call.  cvimpl and jsimpl will
+      similarly bind the implementations for computing and jsonifying
+      variables.
 
     - if dq is given then it should be the dreq to use, and in this
       case dqroot and dqtag are ignored.
@@ -144,6 +154,9 @@ def process_request(request, dqroot=None, dqtag=None, dq=None,
                 (default_dqtag, (dqtag
                                  if dqtag is not None
                                  else default_dqtag())),
+                (default_dqpath, (dqpath
+                                  if dqpath is not None
+                                  else default_dqpath())),
                 (cv_implementation, (validate_cv_implementation(cvimpl)
                                      if cvimpl is not None
                                      else cv_implementation())),
@@ -158,17 +171,23 @@ def process_request(request, dqroot=None, dqtag=None, dq=None,
 class DREQLoadFailure(DJQException):
     """Failure to load the DREQ: it is indeterminate whose fault this is."""
     def __init__(self, message="failed to load DREQ",
-                 dqroot=None, dqtag=None, wrapped=None):
+                 dqroot=None, dqtag=None, dqpath=None,
+                 wrapped=None):
         self.message = message
         self.dqroot = dqroot if dqroot is not None else default_dqroot()
         self.dqtag = dqtag if dqtag is not None else default_dqtag()
+        self.dqpath = dqpath if dqpath is not None else default_dqpath()
         self.wrapped = wrapped
         super(DJQException, self).__init__(
             "{}: path {}".format(self.message,
                                  effective_dqpath(dqroot=self.dqroot,
-                                                  dqtag=self.dqtag)))
+                                                  dqtag=self.dqtag,
+                                                  dqpath=self.dqpath)))
 
-# Caching loaded DREQs.  The cache has two levels, indexed on root and
+# Caching loaded DREQs.  There are two caches: a cache by root & tag,
+# and a separate cache for dreqs specified by path.
+#
+# The root & tag cache. The cache has two levels, indexed on root and
 # then tag: since roots are thread-local this means there won't be
 # false positives: identical tags for different roots will not be
 # treated as the same.  This depends on dicts being low-level
@@ -179,25 +198,31 @@ class DREQLoadFailure(DJQException):
 # files don't change this is just extra work, and won't result in
 # anything bad.
 #
+# The path cache.  This is just a dictionary, indexed on path.
+#
 # There's a potential problem if a huge number of requests come in for
-# different tags: I don't think this is likely in practice.  A fix
+# different tags or paths: I don't think this is likely in practice.  A fix
 # would be to use weak references.
 #
 
-dqrs = defaultdict(dict)
-dqinfo = {}
+
+dqrs = defaultdict(dict)        # root & tag cache
+dqps = {}                       # path cache
+dqinfo = {}                     # info, indexed by dq
 
 def invalidate_dq_cache():
     """Invalidate the cache of loaded DREQs."""
     dqrs.clear()
+    dqps.clear()
     dqinfo.clear()
 
-def ensure_dq(dqtag=None, dqroot=None, force=False):
+def ensure_dq(dqtag=None, dqroot=None, dqpath=None, force=False):
     """Ensure the dreq corresponding to a dqtag is loaded, returning it.
 
     Arguments:
     - dqroot is the root, defaulted from default_dqroot();
     - dqtag is the tag, which defaults from default_dqtag();
+    - dqpath is the path, defaulted from default_dqpath();
     - force, if true, will bypass the cache and force the dreq to be
       loaded, and the loaded copy to be cached.
 
@@ -209,32 +234,51 @@ def ensure_dq(dqtag=None, dqroot=None, force=False):
         dqroot = default_dqroot()
     if dqtag is None:
         dqtag = default_dqtag()
-    dqs = dqrs[dqroot]
-    if force or (dqtag not in dqs):
-        debug("missed {} for {}, loading dreq", dqtag, dqroot)
-        if dqtag is not None:
-            if valid_dqtag(dqtag):
-                try:
-                    dq = dqload(dqroot=dqroot, dqtag=dqtag)
-                    dqs[dqtag] = dq
-                    dqinfo[dq] = (dqroot, dqtag)
-                except Exception as e:
-                    raise DREQLoadFailure(wrapped=e, dqroot=dqroot, dqtag=dqtag)
+    if dqpath is None:
+        dqpath = default_dqpath()
+
+    if dqpath is None:
+        # The normal case: load by root & tag
+        dqs = dqrs[dqroot]
+        if force or (dqtag not in dqs):
+            debug("missed {} for {}, loading dreq", dqtag, dqroot)
+            if dqtag is not None:
+                if valid_dqtag(dqtag):
+                    try:
+                        dq = dqload(dqroot=dqroot, dqtag=dqtag)
+                        dqs[dqtag] = dq
+                        dqinfo[dq] = (dqroot, dqtag)
+                    except Exception as e:
+                        raise DREQLoadFailure(wrapped=e, dqroot=dqroot,
+                                              dqtag=dqtag)
+                else:
+                    raise DREQLoadFailure(message="invalid tag",
+                                          dqroot=dqroot, dqtag=dqtag)
             else:
-                raise DREQLoadFailure(message="invalid tag",
-                                      dqroot=dqroot, dqtag=dqtag)
-        else:
-            # dqtag is None
+                # dqtag is None
+                try:
+                    dq = dqload(dqroot=dqroot)
+                    dqs[None] = dq
+                    dqinfo[dq] = (dqroot, None)
+                except Exception as e:
+                    raise DREQLoadFailure(wrapped=e, dqroot=dqroot)
+        return dqs[dqtag]
+    else:
+        # dqpath is given, load directly
+        if force or (dqpath not in dqps):
+            debug("missed path {}, loading dreq", dqpath)
             try:
-                dq = dqload(dqroot=dqroot)
-                dqs[None] = dq
-                dqinfo[dq] = (dqroot, None)
+                dq = dqload(dqpath=dqpath)
+                dqps[dqpath] = dq
+                dqinfo[dq] = dqpath
             except Exception as e:
-                raise DREQLoadFailure(wrapped=e, dqroot=dqroot)
-    return dqs[dqtag]
+                raise DREQLoadFailure(wrapped=e, dqpath=dqpath)
+        return dqps[dqpath]
 
 def dq_info(dq):
-    """Return a tuple of (root, tag) for dq, or None if unknown.
+    """Return a tuple of (root, tag) for dq if it was loaded by root
+    & tag, a single path if it was loaded by path, or None if it is
+    unknown.
 
     The dq will be unknown if it wasn't loaded with ensure_dq, or if
     the cache has been invalidated between when it was loaded and the
@@ -300,11 +344,12 @@ def process_single_request(r, dq=None):
         reply.update({'reply-variables': None,
                       'reply-status': "error",
                       'reply-status-detail':
-                      ("failed to load dreq, root={} tag={}".format(e.dqroot,
-                                                                    e.dqtag)
-                       + (": {}".format(e.message)
-                          if e.message is not None
-                          else "")),
+                      (("{}: ".format(e.message)
+                        if e.message
+                        else "failed to load dreq: ")
+                       + ("root={} tag={}".format(e.dqroot, e.dqtag)
+                          if e.dqpath is None
+                          else "path={}".format(e.dqpath))),
                       'reply-metadata': reply_metadata()})
         return reply
     except ExternalException as e:

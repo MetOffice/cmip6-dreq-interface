@@ -13,7 +13,9 @@ from signal import SIGINT
 from os import _exit, EX_IOERR
 from argparse import ArgumentParser
 from json import dump
-from djq import (default_dqroot, valid_dqroot, default_dqtag, valid_dqtag,
+from djq import (default_dqroot, valid_dqroot,
+                 default_dqtag, valid_dqtag,
+                 default_dqpath,
                  ensure_dq)
 from djq.low import verbosity_level, mutter, debug_level, debug
 from djq.low import checks_minpri, checks_enabled
@@ -63,6 +65,9 @@ def main():
     parser.add_argument("-u", "--use-trunk",
                         action='store_false', dest='dqtag',
                         help="use the DREQ trunk instead of a tag")
+    parser.add_argument("-p", "--path-to-xml-directory",
+                        default=None, dest='dqpath',
+                        help="Directory containing the XML files")
     parser.add_argument("-v", "--verbose",
                         action='count', dest='verbosity',
                         help="increase verbosity (repeat for more noise)")
@@ -86,18 +91,24 @@ def main():
         verbosity_level(args.verbosity)
         checks_minpri(args.check_priority)
         debug("checks {} minpri {}", checks_enabled(), checks_minpri())
-        if args.dqroot is not None:
-            default_dqroot(args.dqroot)
-        # root can be checked, tag can't in general because it can be
-        # set in requests
-        if not valid_dqroot():
-            raise BadRoot(default_dqroot())
-        if args.dqtag is not None:
-            # but we can check it here
-            if not valid_dqtag(args.dqtag):
-                raise BadTag(args.dqtag)
-            default_dqtag(args.dqtag)
-        mutter("root {} tag {}", default_dqroot(), default_dqtag())
+        if args.dqpath is None:
+            # The traditional version: load by root & tag
+            if args.dqroot is not None:
+                default_dqroot(args.dqroot)
+            # root can be checked, tag can't in general because it can be
+            # set in requests
+            if not valid_dqroot():
+                raise BadRoot(default_dqroot())
+            if args.dqtag is not None:
+                # but we can check it here
+                if not valid_dqtag(args.dqtag):
+                    raise BadTag(args.dqtag)
+                default_dqtag(args.dqtag)
+            mutter("root {} tag {}", default_dqroot(), default_dqtag())
+        else:
+            # New version: load by path
+            default_dqpath(args.dqpath)
+            mutter("path {}", default_dqpath())
         mutter("to {}", (args.output if args.output is not None else "-"))
         with (open(args.output, 'w')
               if args.output is not None

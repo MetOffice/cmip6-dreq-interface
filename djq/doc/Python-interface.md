@@ -1,4 +1,4 @@
-<!-- (C) British Crown Copyright 2016, 2017, Met Office.
+<!-- (C) British Crown Copyright 2016-2018, Met Office.
      See LICENSE.md in the top directory for license details. -->
 
 # Using `djq` from Python
@@ -221,7 +221,7 @@ which does this.
 
 ```python
 process_request(request,
-                dqroot=None, dqtag=None, dq=None,
+                dqroot=None, dqtag=None, dqpath=None, dq=None,
                 dbg=None, verbosity=None,
                 cvimpl=None, jsimpl=None)
 ```
@@ -233,6 +233,8 @@ with loading the DREQ if need be.
 * `dqroot` is the root of the DREQ if given, otherwise a default will
   be used;
 * `dqtag` is the DREQ tag if given, otherwise a default will be used;
+* `dqpath`, if given, causes it to look in the specified directory for
+  the XML files, in this case `dqroot` & `dqtag` are ignored;
 * `dq`, if given, is an instance of the loaded DREQ -- if it is
   provided then `dqroot` and `dqtag` don't do anything;
 * `dbg` is the debug level for this request if given, otherwise a
@@ -275,11 +277,17 @@ think that the wrong version of the DREQ has been loaded for some
 reason.  The first subsequent call to `process_request`, or to
 `ensure_dq` explicitly, will reload the DREQ.
 
-`dq_info(dq)` will return a tuple of `(root, tag)` for `dq`, or `None`
-if it is unknown.  It will be unknown if it was not loaded with
-`ensure_dq`, or if the cache has been invalidated between the time it
-was loaded the time this function was called (or, in fact, if `dq` is
-just some random object).
+`dq_info(dq)` will return either
+
+* a tuple of `(root, tag)` for `dq`, if it was loaded by root & tag;
+* a single string speficying the path it was loaded from if it was
+   loaded by path;
+* `None` if it is unknown.
+
+It will be unknown if it was not loaded with `ensure_dq`, or if the
+cache has been invalidated between the time it was loaded the time
+this function was called (or, in fact, if `dq` is just some random
+object).
 
 There are some functions for noise control, exported from `djq.low`.
 
@@ -305,6 +313,10 @@ version.  So when specifying tags there are three options:
 
 Note that you can specify the trunk as the ambient default tag with a
 call to `default_dqtag(False)` for instance.
+
+### A note on loading by path
+This is much less well tested than loading by root & tag: it works,
+but there may still be nasties.
 
 ### Controlling how variables are computed
 There are several possible approaches to computing the variables

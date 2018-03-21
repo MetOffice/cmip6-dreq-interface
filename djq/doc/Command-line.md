@@ -1,4 +1,4 @@
-<!-- (C) British Crown Copyright 2016, Met Office.
+<!-- (C) British Crown Copyright 2016, 2018 Met Office.
      See LICENSE.md in the top directory for license details. -->
 
 # Command line interfaces for `djq`
@@ -35,7 +35,7 @@ it should be, what back end to use and so on.  `djq -h` will print a
 usage message:
 
 ```
-usage: djq [-h] [-r DQROOT] [-t DQTAG] [-u] [-i IMPLEMENTATION]
+usage: djq [-h] [-r DQROOT] [-t DQTAG] [-u] [-p DQPATH] [-i IMPLEMENTATION]
            [-j JSONIFY_IMPLEMENTATION] [-v] [-d] [-b] [-c CHECK_PRIORITY]
            [-o OUTPUT]
            [request]
@@ -55,6 +55,11 @@ Here are some details:
   the `DJQ_DQTAG` environment variable, with a fallback to `latest`
   (which often is right).
 * `-u` will load the DREQ from the trunk rather than from a tag.
+* `-p` *PATH* is an alternative way of specifying where the XML files
+  are: if given it should be a directory containing the XML files for
+  the DREQ (in the DREQ distribution this is a directory which looks
+  like `.../dreqPy/docs/`).  If this option is given then the root and
+  tag options are ignored.
 * `-i` *IMPLEMENTATION* lets you set the implementation for computing
   variables.  See the [the API documentation](Pythin-interface.md) and
   [the implementations documentation](Implementations.md).
@@ -100,16 +105,16 @@ and no experiments for each MIP.  It has some of the same options that
 `djq` has.
 
 ```
-usage: all-requests [-h] [-r DQROOT] [-t DQTAG] [-u] [-v] [-d] [-b]
-                    [-c CHECK_PRIORITY]
-                    [output]
-```
+usage: all-requests [-h] [-r DQROOT] [-t DQTAG] [-u] [-p DQPATH] [-v] [-d]
+                    [-b] [-c CHECK_PRIORITY]
+                    [output]```
 
 * *output* tells it where the output should go: by default it is
-standard output .
+standard output.
 * `-r` *DQROOT* sets the root, as for `djq`.
 * `-t` *DQTAG* sets the tag.
 * `-u` loads from the trunk rather than from a tag.
+* `-p` *PATH* specifies where the XML files are explicitly.
 * `-v` makes it more verbose.
 * `-d` prints internal debugging output.
 * `-b` does not suppress backtraces.
