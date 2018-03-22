@@ -1,4 +1,4 @@
-<!-- (C) British Crown Copyright 2016, 2017, Met Office.
+<!-- (C) British Crown Copyright 2016-2018, Met Office.
      See LICENSE.md in the top directory for license details. -->
 
 # DREQ JSON interface
@@ -18,7 +18,7 @@ In the syntax below nonterminals are in *italics*, optional things are in (paren
 |---:|:---|
 | *request*|array of *single-requests* |
 | *single-request*|object, with keys as follows |
-||(`"dreq"`): identifies the DREQ version: this is the SVN tag in the implementation |
+||(`"dreq"`): identifies the DREQ version: this is the SVN tag in the implementation (see note below) |
 ||`"mip"`: the name of the MIP, a string |
 ||`"experiment"`: the name of experiment within the MIP, a string, or `true` meaning 'all experiments in the MIP', or `false` or `null` meaning 'just the direct MIP variables', with the normal stringy case returning the variables specified by the MIP *and* the experiment |
 ||other keys may be present, and must have names which begin with the string `"request-"` |
@@ -44,6 +44,8 @@ A request for for just direct MIP variables
 
 ### Notes
 The reason that *requests* are arrays of *single-requests* is to allow multiple requests to be bundled, and to allow extra data to be provided in due course.
+
+The value of the `"dreq"` key will be ignored if you have pointed `djq` at a specific set of XML files for the DREQ, via `-p` on the command-line or the `dqpath` option in the API: it only means anything if you are using an SVN checkout with multiple versions available.
 
 ## Reply
 A reply is either an array of *single-reply*s, or a single *catastrophic-reply* object, if something horrible went wrong.  These two cases are immediately distinguishable: if you get an array then all is basically well, if you don't then a catastrophe has happened.
@@ -78,6 +80,8 @@ What is described here is what the default JSONifier does.  The JSONifier is res
 
 ### Notes
 Each *single-request* will have exactly one *single-reply* and the `"dreq"`, `"mip`" and `"experiment`" as well as any additional request keys will be the same as in the request.  *single-reply*s should be in the same order as the *single-request*s they are replies to.
+
+The value of the `"dreq"` key is filled in even when you load the DREQ by path: it's derived from information in the XML.
 
 ### Examples
 An example successful reply might look like:

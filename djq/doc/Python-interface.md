@@ -249,13 +249,14 @@ with loading the DREQ if need be.
 There are some functions to get and set the default DREQ root and tag,
 and to check it.
 
-* `default_dqroot(dqroot=None)` will return the default root if `root`
+* `default_dqroot(dqroot=None)` will return the default root if `dqroot`
   is not given, and set it if it is.
 * `valid_dqroot(dqroot=None)` will return true if the given root, or
   the default root if none is given, is probably valid.
 * `default_dqtag(dqtag=None)` will return or set the default tag.
 * `valid_dqtag(dqtag=None, dqroot=None)` will check the given or
   default tag within the given or default root.
+* `default_dqpath(dqpath=None)` will return or set the default path.
 
 These functions set and get the default values used by
 `process_request`.  The checks are heuristic: what they do is to check
@@ -263,13 +264,20 @@ that the provided paths (and the paths constructed for the tag) smell
 like DREQ checkouts, but they don't actually try and load a DREQ from
 them.  All the default values are thread-local.
 
-`ensure_dq(dqtag=None, dqroot=None, force=False)` will return an
-instance of the DREQ, loading it if needed.  By default `dqtag` and
-`dqroot` are the values set by `default_dqtag` and `default_dqroot`.
-This is the function that `process_request` calls to get hold of the
-DREQ, but it can be called directly to get hold of an instance to
-explore.  If `force` is true then the cache is bypassed and a new
-instance of the DREQ is loaded, replacing any old cached instance.
+Note that there is no checker for `default_dqpath` at present.  Note
+also that you can't *unset* something (`default_dqpath(None)` is the
+same as `default_dqpath()`: it just returns the current default), so
+once you've called `default_dqpath("/path/to/files")` you can't ever
+use the root / tag mechanism again.
+
+`ensure_dq(dqtag=None, dqroot=None, dqpath=None, force=False)` will
+return an instance of the DREQ, loading it if needed.  By default
+`dqtag`, `dqroot` & `dqpath` are the values set by `default_dqtag`,
+`default_dqroot` & `default_dqpath`.  This is the function that
+`process_request` calls to get hold of the DREQ, but it can be called
+directly to get hold of an instance to explore.  If `force` is true
+then the cache is bypassed and a new instance of the DREQ is loaded,
+replacing any old cached instance.
 
 `invalidate_dq_cache()` will obliterate any cached DREQs that have
 been loaded.  This will save some memory, and might be useful if you
@@ -280,7 +288,7 @@ reason.  The first subsequent call to `process_request`, or to
 `dq_info(dq)` will return either
 
 * a tuple of `(root, tag)` for `dq`, if it was loaded by root & tag;
-* a single string speficying the path it was loaded from if it was
+* a single string specifying the path it was loaded from if it was
    loaded by path;
 * `None` if it is unknown.
 
