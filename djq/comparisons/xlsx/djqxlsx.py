@@ -1,4 +1,4 @@
-# (C) British Crown Copyright 2016, Met Office.
+# (C) British Crown Copyright 2016, 2018, Met Office.
 # See LICENSE.md in the top directory for license details.
 #
 
@@ -13,8 +13,9 @@ __all__ = ('DJQMap', 'XLSXMap')
 from os.path import join
 from collections import defaultdict
 from re import split
-from djq import (process_request, default_dqroot, default_dqtag, ensure_dq,
-                 valid_dqtag, valid_dqroot)
+from djq import (process_request, default_dqroot, valid_dqroot,
+                 default_dqtag, valid_dqtag, default_dqpath,
+                 ensure_dq)
 import djq.variables.cv_invert_varmip as civ
 
 from openpyxl import load_workbook
@@ -30,20 +31,22 @@ class MTMap(object):
     # superclass for miptable maps
     #
     # The interesting attributes are:
-    # - root & tag are what you think
+    # - root, tag & path are what you think
     # - name is a name for the object
     # - results is a dict mapping miptables to dicts mapping CMORvar
     #   UIDs to sets of MIPs
     #
-    def __init__(self, tag=None, root=None, name=None,
+    def __init__(self, tag=None, root=None, path=None, name=None,
                  *args, **kwargs):
         # Is there any part of Python's argument defaulting and object
         # system which is not broken? How did it get to be this way?
         super(MTMap, self).__init__(*args, **kwargs)
         self.root = root if root is not None else default_dqroot()
         self.tag = tag if tag is not None else default_dqtag()
-        assert valid_dqroot(self.root), "bad root"
-        assert valid_dqtag(self.tag), "bad tag"
+        self.path = path if path is not None else default_dqpath()
+        if self.path is None:
+            assert  valid_dqroot(self.root), "bad root"
+            assert valid_dqtag(self.tag), "bad tag"
         self.name = name
         self.__results = None
 
@@ -61,7 +64,7 @@ class MTMap(object):
 
     @property
     def dq(self):
-        return ensure_dq(dqtag=self.tag, dqroot=self.root)
+        return ensure_dq(dqtag=self.tag, dqroot=self.root, dqpath=self.path)
 
     def missing_uids(self):
         # Return the UIDs missing from the dreq in self's results
@@ -157,17 +160,19 @@ class XLSXMap(MTMap):
     def __init__(self, skip={'Notes'}, name="xlsx", *args, **kwargs):
         super(XLSXMap, self).__init__(*args, name=name, **kwargs)
         self.wb = load_workbook(
-            filename=(join(self.root, "tags", self.tag,
-                           "dreqPy/docs/CMIP6_MIP_tables.xlsx")
-                      if self.tag is not False
-                      else join(self.root, "trunk",
-                                "dreqPy/docs/CMIP6_MIP_tables.xlsx")),
+            filename=((join(self.root, "tags", self.tag,
+                            "dreqPy/docs/CMIP6_MIP_tables.xlsx")
+                       if self.tag is not False
+                       else join(self.root, "trunk",
+                                 "dreqPy/docs/CMIP6_MIP_tables.xlsx"))
+                      if self.path is None
+                      else join(self.path, "CMIP6_MIP_tables.xlsx")),
             read_only=True)
         # this is just for inspectability: it is not used
         self.headers = tuple(
             (i, c.value)
             for (i, c) in enumerate(tuple(self.wb['Amon'].rows)[0]))
-        assert len(self.headers) == 24, "wrong number of columns"
+        assert len(self.headers) == 28, "wrong number of columns"
         self.skip = skip
         self.__results = None
 
@@ -180,14 +185,16 @@ class XLSXMap(MTMap):
                    else ())
 
     def compute_results(self):
-        # The columns we want are 18 (UID), 22 and 23 (the two lists
-        # of MIPs), and again we want to build a map from {miptable:
-        # {uid: mips}}
+        # The columns we want are 18 (UID), and the last two columns
+        # (the two lists of MIPs).  This is obviously terribly fragile
+        # if anything changes in the spreadsheet format (which it has
+        # done in the past).  Again we want to build a map from
+        # {miptable: {uid: mips}}
         wb = self.wb
         setify = self.setify_mips
         skip = self.skip
-        return {miptable: {r[18].value: (setify(r[22].value)
-                                         | setify(r[23].value))
+        return {miptable: {r[18].value: (setify(r[-2].value)
+                                         | setify(r[-1].value))
                            for r in tuple(wb[miptable].rows)[1:]}
                 for miptable in wb.sheetnames
                 if miptable not in skip}
