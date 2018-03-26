@@ -1,7 +1,10 @@
 <!-- (C) British Crown Copyright 2016, 2018, Met Office.
      See LICENSE.md in the top directory for license details. -->
 
-# Changes since 20180320
+# 20180326
+This release lets you specify the path to the DREQ XML files directly
+('direct paths'), and includes some other fixes.
+
 The diagnostic reveiewers script is gone: it was never used and serves
 no purpose now.
 
@@ -10,6 +13,12 @@ Support for direct paths.
 Update copyright dates.
 
 If there is no ambient metadata don't give up.
+
+Documentation is slightly better.
+
+The xslx sanity checker, which checks djq against what is in the
+spreadsheet works again, and supports direct paths at the module
+level.  The sanity tests still fail.
 
 # 20180320
 This is a catch-up release, just coagulating everything that has
