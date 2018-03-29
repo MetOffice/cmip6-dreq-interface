@@ -41,6 +41,8 @@ def validate_jsonify_implementation(impl, bootstrap=False):
     """Validate a jsonify implementation, returning it.
 
     Raise an exception if it is invalid.
+
+    The second argument is for internal use only.
     """
     # Note that the very first call to this with a non-None argument,
     # and with bootstrap given actually sets up the fluid.  This is
