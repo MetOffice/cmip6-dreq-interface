@@ -157,8 +157,11 @@ class DJQMap(MTMap):
 #
 
 class XLSXMap(MTMap):
-    def __init__(self, skip={'Notes'}, name="xlsx", *args, **kwargs):
+    def __init__(self, skip={'Notes'}, name="xlsx", cols=None,
+                 *args, **kwargs):
         super(XLSXMap, self).__init__(*args, name=name, **kwargs)
+        if cols is None:
+            cols=28
         self.wb = load_workbook(
             filename=((join(self.root, "tags", self.tag,
                             "dreqPy/docs/CMIP6_MIP_tables.xlsx")
@@ -172,7 +175,8 @@ class XLSXMap(MTMap):
         self.headers = tuple(
             (i, c.value)
             for (i, c) in enumerate(tuple(self.wb['Amon'].rows)[0]))
-        assert len(self.headers) == 28, "wrong number of columns"
+        assert len(self.headers) == cols, ("expected {} cols, got {}"
+                                           .format(cols, len(self.headers)))
         self.skip = skip
         self.__results = None
 

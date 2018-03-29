@@ -138,7 +138,7 @@ def report_mt_varmip_differences(m1, m2):
                 bad = True
     return bad
 
-def load_and_prune_maps(tag=None):
+def load_and_prune_maps(tag=None, cols=None):
     # load the maps and prune them
     if tag is None:
         if getenv("DREQ_TRUNK"):
@@ -150,9 +150,12 @@ def load_and_prune_maps(tag=None):
             chatter("dreq trunk")
         else:
             chatter("dreq tag {}", tag)
-
+    if cols is None and getenv("DREQ_SPREADSHEET_COLS"):
+            cols = int(getenv("DREQ_SPREADSHEET_COLS"))
+    if cols is not None:
+        chatter("expecting {} columns", cols)
     return(prune(DJQMap(tag=tag)),
-           prune(XLSXMap(tag=tag)))
+           prune(XLSXMap(tag=tag, cols=cols)))
 
 def count_badnesses(dmap, xmap):
     # Find what badnesses there are, and count them
