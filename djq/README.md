@@ -7,6 +7,20 @@ request](https://w3id.org/cmip6dr) (DREQ below): you can hand it requests
 specifying MIPs and experiments within those MIPs and it will reply
 with lists of variables.
 
+Because the mapping from MIPs and experiments to variables is not very
+well-defined by the DREQ, `djq` also provides a simple interface which
+allows you to define your own mapping function: this function doesn't
+need to know anything about `djq` at all other than how it is called.
+It is possible to specify which function to use both from the Python
+API and from the command line.  Multiple such functions can exist
+concurrently.  These functions are called 'implementations' in the
+code.  How to define and select an implementation is described
+[here](doc/Python-interface.md#controlling-how-variables-are-computed),
+the command line option to select an implementation is described
+[here](doc/Command-line.md#djq-a-command-line-interface-to-querying-the-dreq),
+and finally a description of the two existing implementations is
+[here](doc/implementations.md).
+
 See the [documentation directory](doc/).
 
 There are [some samples](samples/): not yet very complete.

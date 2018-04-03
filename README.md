@@ -2,11 +2,13 @@
      See LICENSE.md in the top directory for license details. -->
 
 # CMIP6 DREQ interfaces
-`djq` is the DREQ JSON Query tool, which you should be able to install
-from its `setup.py`.  It requires the `dreqPy` package from the DREQ
-(but is not fussy about version), nose to run tests, and will also
-need access to the a SVN checkout of the DREQ itself: you will almost
-certainly need to teach it where this is.
+`djq` is the DREQ JSON Query tool which allows you to query the DREQ
+for variable mappings, and also provides an interface to explore
+algorithms to implement such mappings.  You should be able to install
+it from its `setup.py`.  It requires the `dreqPy` package from the
+DREQ (but is not fussy about version), nose to run tests, and will
+also need access to the a SVN checkout of the DREQ itself: you will
+almost certainly need to teach it where this is.
 
 `dqi` is the DREQ Query Interface.  You do not need this to use `djq`,
 although some `djq` back ends may need it.
