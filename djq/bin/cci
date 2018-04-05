@@ -1,0 +1,262 @@
+#!/usr/bin/env python2.7
+# -*- mode: Python -*-
+#
+# (C) British Crown Copyright 2018, Met Office.
+# See LICENSE.md in the top directory for license details.
+#
+
+# Compare CV Implementations: read a request, evaluate it with two
+# implementations, and emit a metric for how similar they are.
+#
+# This originated as a copy of djq, and shares far too much code with
+# it.
+#
+
+from sys import stdin, stdout, argv
+from signal import SIGINT
+from os import _exit, EX_IOERR
+from argparse import ArgumentParser
+from importlib import import_module
+from json import dump
+from djq import (default_dqroot, valid_dqroot,
+                 default_dqtag, valid_dqtag,
+                 default_dqpath)
+from djq import read_request, process_request
+from djq.low import verbosity_level, mutter, debug_level, debug
+from djq.low import InternalException, ExternalException, Scram, Disaster
+from djq.low import checks_minpri, checks_enabled
+from djq.low import stringlike
+from djq.variables import (cv_implementation, validate_cv_implementation,
+                           jsonify_implementation)
+from djq import __path__ as djq_path
+
+class BadRoot(ExternalException):
+    def __init__(self, dqroot):
+        self.dqroot = dqroot
+    def __str__(self):
+        return "bad root {}".format(self.dqroot)
+
+class BadTag(ExternalException):
+    def __init__(self, dqtag):
+        self.dqtag = dqtag
+    def __str__(self):
+        return "bad tag {} for root {}".format(self.dqtag, default_dqroot())
+
+class BotchedReply(Disaster):
+    def __init__(self, fmt, *args):
+        self.description = "botched reply: {}".format(fmt.format(*args))
+    def __str__(self):
+        return self.description
+
+class EmitComparisonFailed(InternalException):
+    def __init__(self, string, wrapped=None):
+        super(EmitComparisonFailed, self).__init__(string)
+        self.wrapped = wrapped
+    def __str__(self):
+        return "{}: {}".format(super(EmitComparisonFailed, self).__str__(),
+                               self.wrapped)
+
+def emit_comparison(comparison, output, human=False):
+    """Emit the results of a comparison.
+
+    This is related to djq.emit.emit_reply(), but it can also emit
+    things as human-readable output.
+    """
+    try:
+        if not human:
+            dump(comparison, output, indent=1)
+            output.write("\n")
+        else:
+            for (mip, experiment, similarity) in comparison:
+                if experiment is True:
+                    experiment = "+"
+                elif experiment is None:
+                    experiment = "-"
+                elif not stringlike(experiment):
+                    raise BotchedReply("experiment {} is a {}"
+                                       .format( experiment, type(experiment)))
+                # These widths are empirically OK.  3 decimal places
+                # for the similarity means, say, implementations
+                # returning 999 and 1000 results should always be
+                # visibly different.
+                print >>output, "{:20s} {:30s} {:5.3f}".format(mip,
+                                                               experiment,
+                                                               similarity)
+    except Exception as e:
+        raise EmitComparisonFailed("badness when emitting comparison", e)
+
+def compare_replies(r1, r2):
+    """for each reply in r1 & r2 produce the comparison.
+
+    r1 & r1 are tuples of replies which must match: each element
+    must be for the same mip and experiment or we will doom.
+
+    Return a tuple of comparisons where each element is tuple of (mip,
+    experiment, similarity)
+    """
+
+    def similarity(s1, s2):
+        # How similar are two sets s1 and s2: this is a number between
+        # 0.0 (completely different) and 1.0 (identical), which is
+        # computed based on the size of the symmetric difference
+        # divided by the summed size of the two sets.
+        l = len(s1) + len(s2)
+        if l == 0:
+            # empty sets are identical
+            return 1.0
+        else:
+            return 1.0 - (1.0 * len(s1 ^ s2))/l
+
+    def compare_single_replies(sr1, sr2):
+        debug("{} {} / {} {}".format(sr1['mip'], sr1['experiment'],
+                                     sr2['mip'], sr2['experiment']))
+        if sr1['mip'] != sr2['mip']:
+            raise BotchedReply("mips {} & {} are different",
+                               sr1['mip'], sr2['mip'])
+        if sr1['experiment'] != sr2['experiment']:
+            raise BotchedReply("experiments {} & {} are different in {}",
+                               sr1['experiment'], sr2['experiment'],
+                               sr1['mip'])
+        return (sr1['mip'],
+                sr1['experiment'],
+                similarity(set(v['label']
+                               for v in (sr1['reply-variables']
+                                         if sr1['reply-variables'] is not None
+                                         else ())),
+                           set(v['label']
+                               for v in (sr2['reply-variables']
+                                         if sr2['reply-variables'] is not None
+                                         else ()))))
+
+    if len(r1) != len(r2):
+        raise BotchedReply("reply lengths {} & {} aren't the same",
+                           len(r1), len(r2))
+
+    return(tuple(compare_single_replies(sr1, sr2)
+                 for (sr1, sr2) in zip(r1, r2)))
+
+def stream_compare_implementations(i1, i2, input, output, human=False):
+    rq = read_request(input)
+    emit_comparison(compare_replies(process_request(rq, cvimpl=i1),
+                                    process_request(rq, cvimpl=i2)),
+                    output, human=human)
+
+def main():
+    parser = ArgumentParser(description="djq implementation comparison")
+    parser.add_argument("-r", "--root",
+                        default=None, dest='dqroot',
+                        help="the top of a checked out CMIP6 DREQ")
+    parser.add_argument("-t", "--tag",
+                        default=None, dest='dqtag',
+                        help="the default tag for the DREQ")
+    parser.add_argument("-u", "--use-trunk",
+                        action='store_false', dest='dqtag',
+                        help="use the DREQ trunk instead of a tag")
+    parser.add_argument("-p", "--path-to-xml-directory",
+                        default=None, dest='dqpath',
+                        help="Directory containing the XML files")
+    parser.add_argument("-j", "--jsonify-implementation",
+                        default=None, dest='jsonify_implementation',
+                        help="the name of a JSONify implementation to load")
+    parser.add_argument("-v", "--verbose",
+                        action='count', dest='verbosity',
+                        help="increase verbosity (repeat for more noise)")
+    parser.add_argument("-d", "--debug",
+                        action='count', dest='debug',
+                        help="debugging output (repeat for, perhaps, more)")
+    parser.add_argument("-b", "--backtrace",
+                        action='store_true', dest='backtrace',
+                        help="don't suppress backtraces")
+    parser.add_argument("-c", "--check-priority",
+                        action='store', type=int,
+                        dest='check_priority', default=0,
+                        help="set the lowest check priority that will run")
+    parser.add_argument("-o", "--output",
+                        default=None, dest='output',
+                        help="output file (stdout default)")
+    parser.add_argument("-s", "--simple-output",
+                        action='store_true', dest='human',
+                        help="write human-readable output, not JSON")
+    parser.add_argument("-1", "--implementation-1", dest='i1',
+                        default="djq.variables.cv_default",
+                        help="the name of the first implementation module")
+    parser.add_argument("-2", "--implementation-2", dest='i2',
+                        default="djq.variables.cv_default",
+                        help="the name of the second implementation module")
+    parser.add_argument('request', nargs='?', default=None,
+                        help="JSON request (stdin default)")
+    backtrace = None
+    try:
+        args = parser.parse_args()
+        backtrace = args.backtrace
+        debug_level(args.debug)
+        verbosity_level(args.verbosity)
+        checks_minpri(args.check_priority)
+        debug("djq from {}", djq_path[0])
+        debug("checks {} minpri {}", checks_enabled(), checks_minpri())
+        if args.jsonify_implementation is not None:
+            jsonify_implementation(import_module(args.jsonify_implementation))
+        if args.dqpath is None:
+            # this is normal (older) case: work out a root and a tag &
+            # check them.  They will be used to construct the path later.
+            if args.dqroot is not None:
+                default_dqroot(args.dqroot)
+            # root can be checked, tag can't in general because it can
+            # be set in requests
+            if not valid_dqroot():
+                raise BadRoot(default_dqroot())
+            if args.dqtag is not None:
+                # but we can check it here
+                if not valid_dqtag(args.dqtag):
+                    raise BadTag(args.dqtag)
+                default_dqtag(args.dqtag)
+            mutter("root {} tag {}", default_dqroot(), default_dqtag())
+        else:
+            # This is the new case: we have been given path to the XML
+            # directory and we assume it is correct.  Set the ambient
+            # path in this case.
+            default_dqpath(args.dqpath)
+            mutter("path {}", default_dqpath())
+        if args.jsonify_implementation is not None:
+            mutter("jsonify_implementation {}",
+                   (args.jsonify_implementation.__name__
+                    if hasattr(args.jsonify_implementation, '__name__')
+                    else args.jsonify_implementation))
+        mutter("from {} to {}",
+               (args.request if args.request is not None else "-"),
+               (args.output if args.output is not None else "-"))
+        i1 = validate_cv_implementation(import_module(args.i1))
+        i2 = validate_cv_implementation(import_module(args.i2))
+        with (open(args.request)
+              if args.request is not None
+              else stdin) as input, (open(args.output, 'w')
+                                     if args.output is not None
+                                     else stdout) as output:
+            stream_compare_implementations(i1, i2, input, output,
+                                           human=args.human)
+    except Scram as e:
+        raise
+    except Exception as e:
+        if not backtrace:
+            exit(e)
+        elif backtrace is None:
+            print >>stderr, "{}: very early badness".format(argv[0])
+            raise
+        else:
+            raise
+    except KeyboardInterrupt as e:
+        exit(128 + SIGINT)
+
+    # Try and evade the 'lost stderr' spurions by just bottling out
+    #
+    try:
+        stdout.flush()
+        stdout.close()
+        stderr.flush()
+        stderr.close()
+    except:
+        _exit(EX_IOERR)
+
+
+if __name__ == '__main__':
+    main()

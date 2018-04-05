@@ -23,6 +23,9 @@ class EmitFailed(InternalException):
     def __init__(self, string, wrapped=None):
         super(EmitFailed, self).__init__(string)
         self.wrapped = wrapped
+    def __str__(self):
+        return "{}: {}".format(super(EmitComparisonFailed, self).__str__(),
+                               self.wrapped)
 
 def emit_reply(reply, fp):
     """Emit a reply as JSON on a stream.

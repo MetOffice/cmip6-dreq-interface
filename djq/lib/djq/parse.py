@@ -7,7 +7,7 @@
 
 # Package interface
 
-__all__ = ('BadParse', 'BadJSON', 'BadSyntax')
+__all__ = ('BadParse', 'BadJSON', 'BadSyntax', 'read_request')
 
 # Interface
 # - read_request

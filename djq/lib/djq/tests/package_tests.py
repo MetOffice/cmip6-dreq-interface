@@ -10,6 +10,7 @@ import djq
 from djq.low import validate_package_interface, report_package_interface
 
 categories = {'instances': {FunctionType: ('process_stream', 'process_request',
+                                           'read_request',
                                            'default_dqroot', 'valid_dqroot',
                                            'default_dqtag','valid_dqtag',
                                            'default_dqpath',
