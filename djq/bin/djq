@@ -11,7 +11,7 @@
 # from djq and handle exceptions which propagate to the top-level.
 #
 
-from sys import stdin, stdout, argv
+from sys import stdin, stderr, stdout, argv
 from signal import SIGINT
 from os import _exit, EX_IOERR
 from argparse import ArgumentParser
@@ -145,12 +145,17 @@ def main():
     # Try and evade the 'lost stderr' spurions by just bottling out
     #
     try:
-        stdout.flush()
-        stdout.close()
-        stderr.flush()
-        stderr.close()
+        if not stdout.closed:
+            stdout.flush()
+            stdout.close()
+        if not stderr.closed:
+            stderr.flush()
+            stderr.close()
     except:
-        _exit(EX_IOERR)
+        if debug_level() < 2:
+            _exit(EX_IOERR)
+        else:
+            raise
 
 if __name__ == '__main__':
     main()
