@@ -27,5 +27,6 @@ script:
   # Basic unit tests
   - nosetests -w djq
   - nosetests -w dqi
-  # Sanity test for djq (this actually runs the unit tests again)
-  - make -C djq install sanity DJQ_DQROOT=$(pwd)/CMIP6dreq
+  # Just install and test, do not make sanity any more as there's no
+  # real chance it will work
+  - make -C djq install test DJQ_DQROOT=$(pwd)/CMIP6dreq

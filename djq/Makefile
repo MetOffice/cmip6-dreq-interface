@@ -40,11 +40,10 @@ compare: clean
 sanity: test compare
 
 
-# clean and test before installing, just clean before installing for
-# development
+# clean before installing or installing for development
 #
 
-install: clean test
+install: clean
 	$(PYTHON) setup.py install
 
 develop: clean
