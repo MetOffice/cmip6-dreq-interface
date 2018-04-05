@@ -1,4 +1,4 @@
-<!-- (C) British Crown Copyright 2016, Met Office.
+<!-- (C) British Crown Copyright 2016, 2018, Met Office.
      See LICENSE.md in the top directory for license details. -->
 
 # CMIP6 DREQ interfaces
@@ -36,16 +36,14 @@ recent release.
 This status corresponds to
 [`github.com/tfeb/cmip6-dreq-interface`](https://github.com/tfeb/cmip6-dreq-interface)
 and may not completely correspond to the status of the [Met Office
-repo](https://github.com/MetOffice/cmip6-dreq-interface).  Almost all of the tests are for `djq`: `dqi` has no tests at all.
+repo](https://github.com/MetOffice/cmip6-dreq-interface).  Almost all
+of the tests are for `djq`: `dqi` has no tests at all.
 
-There are two reasons for the `djq` tests failing:
-
-* there are bugs in `djq`;
-* there are problems which causes `djq` to fail its sanity test.
-
-In the second case it is often initially obscure where the problem
-which is causing the sanity tests lies, but it has often been due to
-problems with the DREQ itself.
+The tests should pass unless there are serious bugs in `djq` itself.
+It formerly ran a hairy sanity test which compared what it computes
+against spreadsheets included with the DREQ.  Unfortunately the DREQ
+is so unstable that these essentially never passed, so these are no
+longer included in the Travis CI tests.
 
 ## Browsing the documentation
 All the documentation is in
@@ -76,5 +74,5 @@ and so sends their content to GitHub: it's not suitable for sensitive data.
 
 ---
 
-&copy; British Crown Copyright 2016, Met Office.  See
+&copy; British Crown Copyright 2016, 2018, Met Office.  See
 [LICENSE.md](LICENSE.md) for license details.
