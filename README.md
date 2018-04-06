@@ -2,17 +2,56 @@
      See LICENSE.md in the top directory for license details. -->
 
 # CMIP6 DREQ interfaces
+
+## `djq`
 `djq` is the DREQ JSON Query tool which allows you to query the DREQ
 for variable mappings, and also provides an interface to explore
-algorithms to implement such mappings.  You should be able to install
-it from its `setup.py`.  It requires the `dreqPy` package from the
-DREQ (but is not fussy about version), nose to run tests, and will
-also need access to the a SVN checkout of the DREQ itself: you will
-almost certainly need to teach it where this is.
+algorithms to implement such mappings.  You can hand it requests
+specifying MIPs and experiments within those MIPs and it will reply
+with lists of variables.  You should be able to install it from its
+`setup.py`.  It requires the `dreqPy` package from the DREQ (but is
+not fussy about version), nose to run tests, and will also need access
+to the a SVN checkout of the DREQ itself: you will almost certainly
+need to teach it where this is.
 
+Because the mapping from MIPs and experiments to variables is not very
+well-defined by the DREQ, `djq` also provides a simple interface which
+allows you to define your own mapping function: this function doesn't
+need to know anything about `djq` at all other than how it is called. It
+is possible to specify which function to use both from the Python API
+and from the command line. Multiple such functions can exist
+concurrently. These functions are called 'implementations' in the
+code.
+
+A tool is included, `cci`, which allows you to directly compare
+implementations.
+
+There are four command line programs associated with `djq`.
+
+* `djq` is the main thing: you can use it to make queries and get
+  answers;
+* `cci` compares implementations -- you can give it the names of one
+  or two implementation modules and will tell you whether they differ
+  in the variables they compute, giving a metric of similarity going
+  from 0.0 (completely different) to 1.0 (identical);
+* `all-requests` is a little program which reads the DREQ, and then
+  generates a request for every experiment in every MIP, which can be
+  fed to djq to run a really comprehensive set of queries;
+* `scatter-replies` is another little program which will read a set of
+  replies from `djq` and spit them out into files named after the MIPs
+  and experiments.
+
+As an example, using `cci` to compare the two implementations bundled
+with `djq`, which correspond to what Martin described in his document
+and what he used at to generate his spreadsheets, both at the time
+`djq` was originally written, the results vary from 0.0 to 1.0 for
+different pairs of MIP and experiment.
+
+## `dqi`
 `dqi` is the DREQ Query Interface.  You do not need this to use `djq`,
-although some `djq` back ends may need it.
+although some `djq` back ends may need it (they do not currently).
 
+## `small`
 `small` contains some small, more-or-less ad-hoc programs which are
 related to the CMIP6 DREQ.  These are almost entirely undocumented and
 may or may not work.
