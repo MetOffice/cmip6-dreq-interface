@@ -74,7 +74,7 @@ Here are some details:
   like `.../dreqPy/docs/`).  If this option is given then the root and
   tag options are ignored.
 * `-i` *IMPLEMENTATION* lets you set the implementation for computing
-  variables.  See the [the API documentation](Pythin-interface.md) and
+  variables.  See the [the API documentation](Python-interface.md) and
   [the implementations documentation](Implementations.md).
 * `-j` *JSONIFY_IMPLEMENTATION* does the same for JSONifiers.  Note
   that there is only one such provided at present (although you can
@@ -203,6 +203,11 @@ human-readable format tries to give enough significant figures that
 you can tell whether two implementations give identical or merely very
 close results but could fail to do so in the case of thousands of
 variables.
+
+`cci` doesn't tell you anything more than the metric: there is example
+code inthe samples (`reply_labelsets') which shows you how to extract
+sets of labels from replies which you can then compare in an
+interactive session, for instance.
 
 ## `all-requests`: create all requests for `djq`
 `all-requests` is a program which reads the DREQ and then emits a JSON

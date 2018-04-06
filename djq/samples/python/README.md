@@ -1,4 +1,4 @@
-<!-- (C) British Crown Copyright 2016, Met Office.
+<!-- (C) British Crown Copyright 2016, 2018 Met Office.
      See LICENSE.md in the top directory for license details. -->
 
 # Python samples for `djq`
@@ -26,6 +26,14 @@ query.
 This demonstrates how to write a simple backend, by implementing one
 which computes the union of the results of two existing backends.  The
 function to do this is a single line of code.
+
+## `reply_labelsets.py`
+This is a Python module which contains a single function,
+`reply_labelsets`: this takes the same arguments as `process_request`
+but simplifies its return value to a tuple of tuples of MIP,
+experiment, and a set of variable labels.  This can be useful for
+detailed comparison of two backends, for instance: take differences
+between the sets of labels they return for the same requests.
 
 ## `call_djq.py` (obsolescent)
 Originally the only documented interface to `djq` was through the
