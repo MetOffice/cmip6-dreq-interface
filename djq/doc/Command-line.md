@@ -172,7 +172,7 @@ ScenarioMIP          ssp585                         0.000
 ```
 
 This demonstrates how far apart these two implementations are in some
-cases.  In the human-readable format, `+` means 'all experiments` and
+cases.  In the human-readable format, `+` means 'all experiments' and
 `-` means 'none'.
 
 Here is an example of the JSON output format, comparing against the

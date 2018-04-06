@@ -1,6 +1,48 @@
 <!-- (C) British Crown Copyright 2016, 2018, Met Office.
      See LICENSE.md in the top directory for license details. -->
 
+# 20180406
+This release adds `cci` which lets you compare `djq` implementations
+for computing variables.  It also changes the Travis CI tests,
+removing the sanity test that will never pass, and adding some
+explicit runs of `djq` & `cci` instead to exercise the program.
+
+`cci` is a new program which can be used to compare two `djq`
+implementations, producing a metric of how similar they are.  So, for
+instance
+
+```
+all-requests | cci -s -1 djq.variables.cv_dreq_example
+```
+
+will produce a report describing how similar the DREQ example
+implementation (the one which originated from the DREQ documentation)
+is to the default one.  You can compare any pair of implementations,
+including your own.
+
+`cci` only provides a metric: there is a new sample module which shows
+you how to extract sets of labels from replies, which can then be
+compared in an interactive session for instance.
+
+It's possible to run comparison tests specifying the number of columns the
+spreadsheet has to test old DREQ versions:
+
+```
+make compare DREQ_TAG=<old-tag> DREQ_SPREADSHEET_COLS=24
+```
+
+will work.  The documentation mentions this.
+
+There are clearer pointers in the documentation on selecting and
+writing djq implementations.
+
+Sanity tests are not run, but both `djq` & `cci` are exercised
+significantly more in the Travis CI tests.
+
+There were at least two ugly bugs around closing standard output &
+error in the commands: these have been fixed.  The symptom was that
+they would silendly exit with `EX_IOERR` (which is 74 on my machine).
+
 # 20180326
 This release lets you specify the path to the DREQ XML files directly
 ('direct paths'), and includes some other fixes.
