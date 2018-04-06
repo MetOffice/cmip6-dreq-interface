@@ -17,8 +17,10 @@ language: python
 python: "2.7"
 
 install:
-  # Everything needs the DREQ API
-  - svn co http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq
+  # Everything needs the DREQ API: get the latest tag only to speed it up
+  - svn co http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq/tags/latest CMIP6dreq/tags/latest
+  # and fake up the trunk so djq is happy it's a root
+  - mkdir -p CMIP6dreq/trunk
   - (cd CMIP6dreq/tags/latest && python setup.py install)
   # Sanity tests need openpyxl
   - pip install openpyxl
@@ -30,3 +32,6 @@ script:
   # Just install and test, do not make sanity any more as there's no
   # real chance it will work
   - make -C djq install test DJQ_DQROOT=$(pwd)/CMIP6dreq
+  # run djq & cci in a rudimentary way to make sure something works
+  - all-requests -r CMIP6dreq | djq -r CMIP6dreq >/dev/null
+  - all-requests -r CMIP6dreq | cci -s -r CMIP6dreq
