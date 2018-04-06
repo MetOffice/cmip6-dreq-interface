@@ -45,6 +45,10 @@ against spreadsheets included with the DREQ.  Unfortunately the DREQ
 is so unstable that these essentially never passed, so these are no
 longer included in the Travis CI tests.
 
+If the build status link is dead, that's probably because
+[`github.com/tfeb/cmip6-dreq-interface`](https://github.com/tfeb/cmip6-dreq-interface)
+has gone away.
+
 ## Browsing the documentation
 All the documentation is in
 [Markdown](http://daringfireball.net/projects/markdown/) (and
