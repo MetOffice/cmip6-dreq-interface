@@ -14,12 +14,18 @@ need to know anything about `djq` at all other than how it is called.
 It is possible to specify which function to use both from the Python
 API and from the command line.  Multiple such functions can exist
 concurrently.  These functions are called 'implementations' in the
-code.  How to define and select an implementation is described
+code.  Implementations can be loaded dynamically from user-provided
+modules at run time: no modification to `djq` is needed to use them.
+How to define and select an implementation is described
 [here](doc/Python-interface.md#controlling-how-variables-are-computed),
 the command line option to select an implementation is described
 [here](doc/Command-line.md#djq-a-command-line-interface-to-querying-the-dreq),
 and finally a description of the two existing implementations is
 [here](doc/implementations.md).
+
+Once the set of variables is computed, it needs to be elaborated in various ways
+before being turned into JSON.  This is done by a 'JSONifier', and these are
+also components which can be plugged in to `djq` dynamically.
 
 See the [documentation directory](doc/).
 

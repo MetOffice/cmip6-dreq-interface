@@ -17,11 +17,17 @@ need to teach it where this is.
 Because the mapping from MIPs and experiments to variables is not very
 well-defined by the DREQ, `djq` also provides a simple interface which
 allows you to define your own mapping function: this function doesn't
-need to know anything about `djq` at all other than how it is called. It
-is possible to specify which function to use both from the Python API
-and from the command line. Multiple such functions can exist
-concurrently. These functions are called 'implementations' in the
+need to know anything about `djq` at all other than how it is called, and
+can be loaded dynamically from a module at run time, so no modifications
+are needed to `djq` in order to provide an alternative mapping function . It
+is possible to specify which function or module to use both from the Python API
+and from the command line. Multiple such functions / modules can exist
+concurrently. These functions / modules are called 'implementations' in the
 code.
+
+Once the set of variables is computed, it needs to be elaborated in various ways
+before being turned into JSON.  This is done by a 'JSONifier', and these are
+also components which can be plugged in to `djq` dynamically.
 
 A tool is included, `cci`, which allows you to directly compare
 implementations.
