@@ -73,7 +73,6 @@ What is described here is what the default JSONifier does.  The JSONifier is res
 | *variable-mip-information*|an object describing MIP-related information for a *single-reply-variable*, with keys as follows |
 ||`"mip"`: the name of the MIP, a string |
 ||`"priority"`: the priority in the MIP, a number |
-||`"objectives"`: an array of strings describing MIP objectives |
 | *catastrophic-reply*|an object with keys as follows |
 ||`"catastrophe"`: a string describing the catastrophe |
 ||other keys which may describe the nature of the catastrophe |
@@ -96,8 +95,7 @@ An example successful reply might look like:
                        "miptable": ...,
                        "priority": ...,
                        "mips": [{"mip": ...,
-                                 "priority": ...,
-                                 "objectives: [...]},
+                                 "priority": ...},
                                 ...]},
                       ...]}]
 ```

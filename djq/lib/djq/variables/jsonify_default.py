@@ -1,4 +1,4 @@
-# (C) British Crown Copyright 2016, Met Office.
+# (C) British Crown Copyright 2016, 2018 Met Office.
 # See LICENSE.md in the top directory for license details.
 #
 
@@ -31,8 +31,8 @@ def validate_results(dq, cmvids, results):
                        'priority': number,
                        'mips': every_element(
                            {'mip': stringlike,
-                            'priority': number,
-                            'objectives': every_element(stringlike)})}))
+                            'priority': number})}))
+
 
 def jsonify_cmvids(dq, cmvids):
     """Convert a bunch of CMORvar IDs to JSON."""
@@ -50,8 +50,5 @@ def mipinfo_of_cmv(dq, cmv):
     # compute the mipinfo for a variable.  This could easily be cached
     # as it gets called many many times for the same MIPs
     return tuple({'mip': mip,
-                  'objectives': tuple(o.description
-                                      for o in dq.coll['objective'].items
-                                      if o.mip == mip),
                   'priority': priority_of_cmv_in_mip(dq, cmv, mip)}
                  for mip in mips_of_cmv(dq, cmv))
