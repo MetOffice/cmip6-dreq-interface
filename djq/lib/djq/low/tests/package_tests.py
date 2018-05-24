@@ -1,4 +1,4 @@
-# (C) British Crown Copyright 2016, Met Office.
+# (C) British Crown Copyright 2016, 2018, Met Office.
 # See LICENSE.md in the top directory for license details.
 #
 
@@ -14,7 +14,8 @@ from djq.low import validate_package_interface, report_package_interface
 categories = {'types': {Exception: ('DJQException', 'InternalException',
                                     'ExternalException', 'Disaster', 'Scram',
                                     'Unbound'),
-                        object: ('fluids',)},
+                        object: (('fluids',)
+                                 + ('Memos',))},
               'instances': {FunctionType:
                             (('arraylike', 'stringlike', 'setlike')
                              + ('verbosity_level', 'debug_level',
@@ -25,6 +26,7 @@ categories = {'types': {Exception: ('DJQException', 'InternalException',
                              + ('validate_object', 'every_element', 'one_of',
                                 'all_of')
                              + ('fluid', 'boundp', 'globalize', 'localize')
+                             + ('memoizable', 'memos')
                              + ('validate_package_interface',
                                 'report_package_interface'))}}
 

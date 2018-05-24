@@ -11,6 +11,7 @@ __all__ = ('ensure_dq', 'invalidate_dq_cache', 'dq_info',
 from collections import defaultdict
 from low import DJQException, InternalException, ExternalException, Scram
 from low import mutter, debug, verbosity_level, debug_level
+from low import memos, Memos
 from low import fluids
 from emit import emit_reply, emit_catastrophe
 from parse import (read_request, validate_toplevel_request,
@@ -84,7 +85,8 @@ def process_stream(input, output, backtrace=False,
                  (validate_jsonify_implementation(jsimpl)
                   if jsimpl is not None
                   else jsonify_implementation())),
-                (reply_metadata, dict())):
+                (reply_metadata, dict()),
+                (memos, Memos())):
         try:
             emit_reply(tuple(process_single_request(s, dq=dq)
                              for s in read_request(input)),

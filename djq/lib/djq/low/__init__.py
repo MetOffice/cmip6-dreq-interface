@@ -29,6 +29,10 @@ from .checks import *
 from . import valob
 from .valob import *
 
-# fluid variables
+# Fluid variables
 from . import nfluid
 from .nfluid import *
+
+# Memoizable functions
+from . import memoize
+from .memoize import *
