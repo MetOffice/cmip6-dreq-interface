@@ -10,6 +10,7 @@ __all__ = ('jsonify_cmvids',)
 from sys import modules
 from djq.low import checker
 from djq.low import validate_object, every_element, one_of, all_of, stringlike
+from djq.low import memoizable
 from jsonify import checks
 from varmip import mips_of_cmv, priority_of_cmv_in_mip
 
@@ -38,6 +39,7 @@ def jsonify_cmvids(dq, cmvids):
     """Convert a bunch of CMORvar IDs to JSON."""
     return tuple(jsonify_cmvid(dq, cmvid) for cmvid in cmvids)
 
+@memoizable(spread=True)
 def jsonify_cmvid(dq, cmvid):
     cmv = dq.inx.uid[cmvid]
     return {'uid': cmvid,
