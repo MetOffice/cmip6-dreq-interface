@@ -166,7 +166,8 @@ def process_request(request, dqroot=None, dqtag=None, dqpath=None,
                  (validate_jsonify_implementation(jsimpl)
                   if jsimpl is not None
                   else jsonify_implementation())),
-                (reply_metadata, dict())):
+                (reply_metadata, dict()),
+                (memos, Memos())):
         return tuple(process_single_request(s, dq=dq)
                      for s in validate_toplevel_request(request))
 
