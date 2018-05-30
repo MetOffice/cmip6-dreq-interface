@@ -15,7 +15,8 @@ categories = {'types': {Exception: ('DJQException', 'InternalException',
                                     'ExternalException', 'Disaster', 'Scram',
                                     'Unbound'),
                         object: (('fluids',)
-                                 + ('Memos',))},
+                                 + ('Memos',)
+                                 + ('FeatureBundle',))},
               'instances': {FunctionType:
                             (('arraylike', 'stringlike', 'setlike')
                              + ('verbosity_level', 'debug_level',
@@ -27,6 +28,7 @@ categories = {'types': {Exception: ('DJQException', 'InternalException',
                                 'all_of')
                              + ('fluid', 'boundp', 'globalize', 'localize')
                              + ('memoizable', 'memos')
+                             + ('feature_bundle',)
                              + ('validate_package_interface',
                                 'report_package_interface'))}}
 

@@ -36,3 +36,7 @@ from .nfluid import *
 # Memoizable functions
 from . import memoize
 from .memoize import *
+
+# JSON-based feature bundles
+from . import fbundle
+from .fbundle import *
