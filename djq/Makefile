@@ -26,10 +26,10 @@ recent:
 #
 
 clean:
-	find . -type f -name '*.pyc' -print0 | xargs -0 -r rm
+	find . -type f -name '*.pyc' -print0 | xargs -0 rm -f
 
 veryclean: clean
-	find . -type f -name '*~' -print0 | xargs -0 -r rm
+	find . -type f -name '*~' -print0 | xargs -0 rm -f
 
 test: clean
 	nosetests
