@@ -12,7 +12,7 @@ from collections import defaultdict
 from low import DJQException, InternalException, ExternalException, Scram
 from low import mutter, debug, verbosity_level, debug_level
 from low import memos, Memos
-from low import features, Features
+from low import feature_bundle, FeatureBundle
 from low import fluids
 from emit import emit_reply, emit_catastrophe
 from parse import (read_request, validate_toplevel_request,
@@ -65,6 +65,7 @@ def process_stream(input, output, backtrace=False,
 
     """
 
+    validate_dq_info(dqroot=dqroot, dqtag=dqtag, dqpath=dqpath)
     with fluids((debug_level, (dbg
                                if dbg is not None
                                else debug_level())),
@@ -89,9 +90,7 @@ def process_stream(input, output, backtrace=False,
                   else jsonify_implementation())),
                 (reply_metadata, dict()),
                 (memos, Memos()),
-                (features, (fbundle
-                            if fbundle is not None
-                            else Features()))):
+                (feature_bundle, FeatureBundle(source=fbundle))):
         try:
             emit_reply(tuple(process_single_request(s, dq=dq)
                              for s in read_request(input)),
@@ -150,6 +149,7 @@ def process_request(request, dqroot=None, dqtag=None, dqpath=None,
     context.
     """
 
+    validate_dq_info(dqroot=dqroot, dqtag=dqtag, dqpath=dqpath)
     with fluids((debug_level, (dbg
                                if dbg is not None
                                else debug_level())),
@@ -174,9 +174,7 @@ def process_request(request, dqroot=None, dqtag=None, dqpath=None,
                   else jsonify_implementation())),
                 (reply_metadata, dict()),
                 (memos, Memos()),
-                (features, (fbundle
-                            if fbundle is not None
-                            else Features()))):
+                (feature_bundle, FeatureBundle(source=fbundle))):
         return tuple(process_single_request(s, dq=dq)
                      for s in validate_toplevel_request(request))
 
@@ -372,3 +370,45 @@ def process_single_request(r, dq=None):
                 'reply-status': 'bad-request',
                 'reply-status-detail': "{}".format(e),
                 'reply-metadata': reply_metadata()}
+
+class BadRoot(ExternalException):
+    def __init__(self, dqroot):
+        self.dqroot = dqroot
+    def __str__(self):
+        return "bad root {}".format(self.dqroot)
+
+class BadTag(ExternalException):
+    def __init__(self, dqtag, dqroot):
+        self.dqtag = dqtag
+        self.dqroot = dqroot
+    def __str__(self):
+        return "bad tag {} for root {}".format(self.dqtag, self.dqroot)
+
+def validate_dq_info(dqroot=None, dqtag=None, dqpath=None):
+    """Validate location information for the dreq.
+
+    This returns no useful value but will throw an informative
+    exception if things are detectably bogus.  Not all bogus cases are
+    found, but if if it does blow up then something is certainly
+    wrong.
+    """
+    if dqpath is None:
+        # this is normal (older) case: work out a root and a tag &
+        # check them.  They will be used to construct the path later.
+        # be set in requests
+        if dqroot is not None:
+            # root can be checked, tag can't in general because it can
+            # be set in requests
+            if not valid_dqroot(dqroot):
+                raise BadRoot(dqroot)
+            if dqtag is not None:
+                # but we can check it here
+                if not valid_dqtag(dqtag, dqroot):
+                    raise BadTag(dqtag, dqroot)
+        mutter("root {} tag {}",
+               dqroot or default_dqroot(),
+               dqtag or default_dqtag())
+    else:
+        # This is the new case: we have been given path to the XML
+        # directory and we assume it is correct.  Set the ambient
+        mutter("path {}", dqpath)

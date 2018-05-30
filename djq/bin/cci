@@ -12,35 +12,20 @@
 # it.
 #
 
+from __future__ import print_function
 from sys import stdin, stdout, stderr, argv
 from signal import SIGINT
 from os import _exit, EX_IOERR
 from argparse import ArgumentParser
 from importlib import import_module
 from json import dump
-from djq import (default_dqroot, valid_dqroot,
-                 default_dqtag, valid_dqtag,
-                 default_dqpath)
 from djq import read_request, process_request
 from djq.low import verbosity_level, mutter, debug_level, debug
-from djq.low import InternalException, ExternalException, Scram, Disaster
+from djq.low import InternalException, Scram, Disaster
 from djq.low import checks_minpri, checks_enabled
 from djq.low import stringlike
-from djq.variables import (cv_implementation, validate_cv_implementation,
-                           jsonify_implementation)
+from djq.variables import validate_cv_implementation
 from djq import __path__ as djq_path
-
-class BadRoot(ExternalException):
-    def __init__(self, dqroot):
-        self.dqroot = dqroot
-    def __str__(self):
-        return "bad root {}".format(self.dqroot)
-
-class BadTag(ExternalException):
-    def __init__(self, dqtag):
-        self.dqtag = dqtag
-    def __str__(self):
-        return "bad tag {} for root {}".format(self.dqtag, default_dqroot())
 
 class BotchedReply(Disaster):
     def __init__(self, fmt, *args):
@@ -135,13 +120,16 @@ def compare_replies(r1, r2):
     return(tuple(compare_single_replies(sr1, sr2)
                  for (sr1, sr2) in zip(r1, r2)))
 
-def stream_compare_implementations(i1, i2, input, output, human=False):
+def stream_compare_implementations(i1, i2, input, output,
+                                   human=False,
+                                   **pr_kws):
     rq = read_request(input)
-    emit_comparison(compare_replies(process_request(rq, cvimpl=i1),
-                                    process_request(rq, cvimpl=i2)),
+    emit_comparison(compare_replies(process_request(rq, cvimpl=i1, **pr_kws),
+                                    process_request(rq, cvimpl=i2, **pr_kws)),
                     output, human=human)
 
 def main():
+    early = True                # nothing is sane until this is false
     parser = ArgumentParser(description="djq implementation comparison")
     parser.add_argument("-r", "--root",
                         default=None, dest='dqroot',
@@ -158,6 +146,9 @@ def main():
     parser.add_argument("-j", "--jsonify-implementation",
                         default=None, dest='jsonify_implementation',
                         help="the name of a JSONify implementation to load")
+    parser.add_argument("-f", "--feature-bundle",
+                        default=None, dest='fbundle',
+                        help="the name of a JSON feature bundle file")
     parser.add_argument("-v", "--verbose",
                         action='count', dest='verbosity',
                         help="increase verbosity (repeat for more noise)")
@@ -187,63 +178,49 @@ def main():
                         help="JSON request (stdin default)")
     backtrace = None
     try:
+        # Some things need to be set up right away, but only set up
+        # what we must set up.
         args = parser.parse_args()
-        backtrace = args.backtrace
-        debug_level(args.debug)
-        verbosity_level(args.verbosity)
-        checks_minpri(args.check_priority)
-        debug("djq from {}", djq_path[0])
+        early = False
+        debug_level(args.debug)            # must set this now
+        verbosity_level(args.verbosity)    # also
+        checks_minpri(args.check_priority) # no argument for this
+        debug("cci from {}", djq_path[0])
         debug("checks {} minpri {}", checks_enabled(), checks_minpri())
-        if args.jsonify_implementation is not None:
-            jsonify_implementation(import_module(args.jsonify_implementation))
-        if args.dqpath is None:
-            # this is normal (older) case: work out a root and a tag &
-            # check them.  They will be used to construct the path later.
-            if args.dqroot is not None:
-                default_dqroot(args.dqroot)
-            # root can be checked, tag can't in general because it can
-            # be set in requests
-            if not valid_dqroot():
-                raise BadRoot(default_dqroot())
-            if args.dqtag is not None:
-                # but we can check it here
-                if not valid_dqtag(args.dqtag):
-                    raise BadTag(args.dqtag)
-                default_dqtag(args.dqtag)
-            mutter("root {} tag {}", default_dqroot(), default_dqtag())
-        else:
-            # This is the new case: we have been given path to the XML
-            # directory and we assume it is correct.  Set the ambient
-            # path in this case.
-            default_dqpath(args.dqpath)
-            mutter("path {}", default_dqpath())
-        if args.jsonify_implementation is not None:
-            mutter("jsonify_implementation {}",
-                   (args.jsonify_implementation.__name__
-                    if hasattr(args.jsonify_implementation, '__name__')
-                    else args.jsonify_implementation))
         mutter("from {} to {}",
                (args.request if args.request is not None else "-"),
                (args.output if args.output is not None else "-"))
         i1 = validate_cv_implementation(import_module(args.i1))
         i2 = validate_cv_implementation(import_module(args.i2))
+        js = (import_module(args.jsonify_implementation)
+              if args.jsonify_implementation is not None
+              else None)
         with (open(args.request)
               if args.request is not None
               else stdin) as input, (open(args.output, 'w')
                                      if args.output is not None
                                      else stdout) as output:
             stream_compare_implementations(i1, i2, input, output,
-                                           human=args.human)
+                                           human=args.human,
+                                           dqroot=args.dqroot,
+                                           dqtag=args.dqtag,
+                                           dqpath=args.dqpath,
+                                           dq=None,
+                                           dbg=args.debug,           # rebind
+                                           verbosity=args.verbosity, # also
+                                           jsimpl=js,
+                                           fbundle=args.fbundle)
     except Scram as e:
         raise
     except Exception as e:
-        if not backtrace:
-            exit(e)
-        elif backtrace is None:
-            print >>stderr, "{}: very early badness".format(argv[0])
+        if early:
+            # something has gone wrong before anything is set up
+            print("{}: very early badness".format(argv[0]), file=stderr)
+            raise
+        elif args.backtrace:
             raise
         else:
-            raise
+            exit(e)
     except KeyboardInterrupt as e:
         exit(128 + SIGINT)
 
