@@ -22,8 +22,6 @@ class FbundleJSONBadness(ExternalException):
              if src is not None
              else "a badness reading JSON feature bundle"))
 
-feature_bundle = globalize(fluid(), None, threaded=True)
-
 class FeatureBundle(dict):
     def __init__(self, source=None):
         d = None
@@ -40,7 +38,17 @@ class FeatureBundle(dict):
                 raise TypeError("bogus source for feature bundle")
         if d is not None:
             for (k, v) in d.iteritems():
-                self[k] = v
+                super(FeatureBundle, self).__setitem__(k, v)
+
+    # This is probably not enough to make FBs immutable, but it at
+    # least makes it hard to do things to them by mistake.
+    #
+
+    def __setitem__(self, k, v):
+        raise TypeError("FeatureBundles are meant to be immutable")
+
+    def __delitem__(self, k):
+        raise TypeError("FeatureBundles are meant to be immutable")
 
     def getfeature(self, feature, default=None):
         """Get a feature from a feature bundle
@@ -88,3 +96,5 @@ class FeatureBundle(dict):
             return fallback.getfeature(feat, default)
         else:
             return default
+
+feature_bundle = globalize(fluid(), FeatureBundle(), threaded=True)
