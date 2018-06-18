@@ -23,19 +23,33 @@ class FbundleJSONBadness(ExternalException):
              else "a badness reading JSON feature bundle"))
 
 class FeatureBundle(dict):
-    def __init__(self, source=None):
-        d = None
+    def __init__(self, source=None, prefix=()):
+        features = None
         if source is not None:
             if stringlike(source):
                 try:
                     with open(source) as json:
-                        d = load(json)
+                        features = load(json)
                 except Exception as e:
                     raise FbundleJSONBadness(src=source, wrapped=e)
+                if not isinstance(features, dict):
+                    raise TypeError("JSON source should specify a dict")
             elif isinstance(source, dict):
-                d = source
+                features = source
             else:
                 raise TypeError("bogus source for feature bundle")
+
+        def prefixify(p):
+            if features is None:
+                return None
+            elif len(p) == 0:
+                return features
+            elif len(p) == 1:
+                return {p[0]: features}
+            else:
+                return {p[0]: prefixify(p[1:])}
+
+        d = prefixify(prefix)
         if d is not None:
             for (k, v) in d.iteritems():
                 super(FeatureBundle, self).__setitem__(k, v)
