@@ -76,23 +76,16 @@ recent release.
 * [Subversion repo for the DREQ](http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq/), also browsable
 
 ## Builds and tests
-[![Build Status](https://travis-ci.org/tfeb/cmip6-dreq-interface.svg)](https://travis-ci.org/tfeb/cmip6-dreq-interface)
-
-This status corresponds to
-[`github.com/tfeb/cmip6-dreq-interface`](https://github.com/tfeb/cmip6-dreq-interface)
-and may not completely correspond to the status of the [Met Office
-repo](https://github.com/MetOffice/cmip6-dreq-interface).  Almost all
-of the tests are for `djq`: `dqi` has no tests at all.
+If you use Travis CI, you should be able to persuade it to run tests:
+look at at `.travis.yml`.  These previously worked, but Travis CI
+needs access to the repo to do them, and it doesn't have access to the
+Met Office repo (nor should it, I think).
 
 The tests should pass unless there are serious bugs in `djq` itself.
 It formerly ran a hairy sanity test which compared what it computes
 against spreadsheets included with the DREQ.  Unfortunately the DREQ
 is so unstable that these essentially never passed, so these are no
 longer included in the Travis CI tests.
-
-If the build status link is dead, that's probably because
-[`github.com/tfeb/cmip6-dreq-interface`](https://github.com/tfeb/cmip6-dreq-interface)
-has gone away.
 
 ## Browsing the documentation
 All the documentation is in

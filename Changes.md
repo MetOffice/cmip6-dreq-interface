@@ -1,6 +1,45 @@
 <!-- (C) British Crown Copyright 2016, 2018, Met Office.
      See LICENSE.md in the top directory for license details. -->
 
+# 20180625
+This is the final release I'll do, and it largely cleans up some things
+to leave the system in a tidy state.
+
+The default JSONifier no longer returns MIP objectives: they were
+never useful and bloated the return data enormously.
+
+There is support for memoization. The `djq.low.memoize` module can
+memoize functions, using a fluid to hold the memos (so it is
+thread-safe and works per-request).  By default it memoizes
+single-argument functions, and the argument needs to be hashable.
+There is an optional `key` function which can extract a hashable key
+from an unhashable argument, and additionally if the `spread` option
+is given the wrapper gets a tuple of the arguments to the wrapped
+function which it then spreads to call the wrapped function if need
+be: tuples are hashable if all their elements are, so it can memoize
+some multiple-argument functions.
+
+The appropriate fluid (`memos`) is bound in the toplevel call, and
+some functions in the default JSONifier are memoized. I had hoped that
+this would allow big improvements to performance. It still may but
+they are not as easy to find as I had hoped.
+
+There are things called 'feature bundles' which can be used to pass
+complicated options & defaults down to things like variable-computing
+functions.  They can be read from JSON files.  This code is unused at
+present: it was intended to replace globals in a backend which I did
+not implement.
+
+Neither memoization nor feature bundles are well (or at all)
+documented.
+
+Fluids are bound in a better way: previously defaults were set right
+at the top-level and then the `process_*` functions rebound
+everything.  Now almost nothing is set at top-level except things
+which must be set.
+
+The Travis CI links are gone, as my repo will shortly disappear.
+
 # 20180406
 This release adds `cci` which lets you compare `djq` implementations
 for computing variables.  It also changes the Travis CI tests,
